@@ -17,9 +17,11 @@ function WalletButton() {
   };
 
   const shortAddress = account?.address
-    ? ${account.address.toString().slice(0, 6)}...${account.address
+    ? `${account.address
         .toString()
-        .slice(-4)}
+        .slice(0, 6)}...${account.address
+        .toString()
+        .slice(-4)}`
     : "";
 
   return (
