@@ -1,119 +1,166 @@
 "use client";
 
-import {
-AptosWalletAdapterProvider,
-useWallet
-} from "@aptos-labs/wallet-adapter-react";
+import { useEffect, useState } from "react";
 
-import { useState } from "react";
+export default function Home() {
 
-function WalletButton(){
-
-const {
-connect,
-disconnect,
-account
-}=useWallet();
-
-const [file,setFile]=useState<File|null>(null);
-
-const [preview,setPreview]=useState("");
-
-const [
-uploadProgress,
-setUploadProgress
-]=useState(0);
-
-const [
-uploaded,
-setUploaded
-]=useState(false);
-
-const [
-history,
-setHistory
-]=useState<string[]>([]);
-
-const [
-fileInfo,
-setFileInfo
-]=useState<{
-name:string;
-size:string;
-time:string;
-}|null>(null);
-
-const connectWallet=
-async()=>{
-
-try{
-
-await connect(
-"Petra"
+const [wallet] =
+useState(
+"0xb59a...0ea9"
 );
 
-}catch(e){
+const [
+selectedFile,
+setSelectedFile
+] =
+useState<File|null>(
+null
+);
 
-console.log(e);
+const [
+preview,
+setPreview
+] =
+useState("");
+
+const [
+progress,
+setProgress
+] =
+useState(0);
+
+const [
+uploadedFiles,
+setUploadedFiles
+] =
+useState<any[]>([]);
+
+const [
+search,
+setSearch
+] =
+useState("");
+
+
+
+useEffect(()=>{
+
+const saved =
+localStorage.getItem(
+"shelby_uploads"
+);
+
+if(saved){
+
+setUploadedFiles(
+JSON.parse(saved)
+);
 
 }
+
+},[]);
+
+
+
+useEffect(()=>{
+
+localStorage.setItem(
+
+"shelby_uploads",
+
+JSON.stringify(
+uploadedFiles
+)
+
+);
+
+},[
+uploadedFiles
+]);
+
+
+
+const handleFile=
+(
+e:any
+)=>{
+
+const file =
+e.target.files[0];
+
+if(!file)return;
+
+setSelectedFile(
+file
+);
+
+setPreview(
+
+URL.createObjectURL(
+file
+)
+
+);
 
 };
 
-const shortAddress=
-account?.address
 
-?
 
-`${account.address
-.toString()
-.slice(0,6)}
+const handleUpload=
+()=>{
 
-...
+if(
+!selectedFile
+)return;
 
-${account.address
-.toString()
-.slice(-4)}`
+setProgress(0);
 
-:
+let value=0;
 
-"";
+const interval=
 
-const handleUpload=()=>{
-
-if(!file){
-
-alert(
-"Select file first"
-);
-
-return;
-
-}
-
-setUploaded(false);
-
-let i=0;
-
-const timer=
 setInterval(()=>{
 
-i+=10;
+value+=10;
 
-setUploadProgress(i);
-
-if(i>=100){
-
-clearInterval(
-timer
+setProgress(
+value
 );
 
-setUploaded(true);
+if(
+value>=100
+){
 
-setHistory(prev=>[
-file.name,
+clearInterval(
+interval
+);
+
+const newFile={
+
+name:
+selectedFile.name,
+
+size:
+(
+selectedFile.size
+/1024
+).toFixed(2),
+
+time:
+new Date()
+.toLocaleTimeString(),
+
+status:
+"Uploaded"
+
+};
+
+setUploadedFiles(
+prev=>[
+newFile,
 ...prev
-]);
+]
+);
 
 }
 
@@ -121,53 +168,39 @@ file.name,
 
 };
 
+
+
+const filtered=
+
+uploadedFiles.filter(
+
+file=>
+
+file.name
+
+.toLowerCase()
+
+.includes(
+
+search
+
+.toLowerCase()
+
+)
+
+);
+
+
+
 return(
 
-<div
+<main className="min-h-screen bg-slate-950 text-white p-8">
 
-style={{
-
-minHeight:"100vh",
-
-background:
-"linear-gradient(135deg,#050816,#07172a,#111827)",
-
-color:"white",
-
-padding:"40px"
-
-}}
-
->
-
-<div
-
-style={{
-
-display:"flex",
-
-justifyContent:
-"space-between",
-
-marginBottom:"40px"
-
-}}
-
->
+<div className="flex justify-between mb-10">
 
 <div>
 
-<h1
-
-style={{
-
-fontSize:"42px",
-
-color:"#38bdf8"
-
-}}
-
->
+<h1 className="text-6xl font-bold text-cyan-400">
 
 Shelby
 
@@ -181,29 +214,41 @@ Storage Dashboard
 
 </div>
 
-<div>
-
-{
-
-account ?
-
-<div>
-
-{shortAddress}
+<div className="flex gap-3">
 
 <button
 
-onClick={
-disconnect
-}
+onClick={()=>{
 
-style={{
-
-marginLeft:"10px",
-
-padding:"10px"
+navigator
+.clipboard
+.writeText(
+wallet
+)
 
 }}
+
+className="
+bg-cyan-600
+px-5
+py-2
+rounded-xl
+"
+
+>
+
+Copy Wallet
+
+</button>
+
+<button
+
+className="
+bg-red-600
+px-5
+py-2
+rounded-xl
+"
 
 >
 
@@ -213,279 +258,133 @@ Disconnect
 
 </div>
 
-:
-
-<button
-
-onClick={
-connectWallet
-}
-
-style={{
-
-padding:
-"12px 22px",
-
-borderRadius:
-"14px",
-
-background:
-"#0ea5e9",
-
-border:"none",
-
-color:"white"
-
-}}
-
->
-
-Connect Wallet
-
-</button>
-
-}
-
 </div>
 
-</div>
 
-<div
 
-style={{
+<div className="
+grid
+md:grid-cols-4
+gap-5
+mb-8
+">
 
-display:"grid",
-
-gridTemplateColumns:
-"repeat(auto-fit,minmax(220px,1fr))",
-
-gap:"20px",
-
-marginBottom:"35px"
-
-}}
-
->
-
-<div style={cardStyle}>
+<div className="
+bg-slate-900
+p-5
+rounded-2xl
+">
 
 Files Uploaded
 
-<h2>
-
-{history.length}
-
-</h2>
-
-</div>
-
-<div style={cardStyle}>
-
-Storage
-
-<h2>
-
-Active
-
-</h2>
-
-</div>
-
-<div style={cardStyle}>
-
-Network
-
-<h2>
+<h2 className="
+text-3xl
+font-bold
+">
 
 {
-
-account ?
-
-"Connected"
-
-:
-
-"Offline"
-
+uploadedFiles.length
 }
 
 </h2>
 
 </div>
 
-<div style={cardStyle}>
 
-Last Upload
 
-<h2>
+<div className="
+bg-slate-900
+p-5
+rounded-2xl
+">
 
-{
+Storage Active
 
-history.length>0
+</div>
 
-?
 
-history[0]
 
-:
+<div className="
+bg-slate-900
+p-5
+rounded-2xl
+">
 
-"None"
+Network Connected
 
-}
+</div>
 
-</h2>
+
+
+<div className="
+bg-slate-900
+p-5
+rounded-2xl
+">
+
+Wallet Connected
 
 </div>
 
 </div>
 
-<div
 
-style={{
 
-maxWidth:"850px",
+<div className="
+bg-slate-900
+rounded-3xl
+p-10
+">
 
-margin:"auto",
-
-padding:"40px",
-
-borderRadius:"28px",
-
-background:
-"rgba(255,255,255,.04)",
-
-backdropFilter:
-"blur(14px)",
-
-boxShadow:
-"0 0 40px rgba(56,189,248,.18)"
-
-}}
-
->
-
-<h1
-
-style={{
-
-fontSize:"60px",
-
-textAlign:"center",
-
-color:"#38bdf8"
-
-}}
-
->
+<h1 className="
+text-center
+text-5xl
+text-cyan-400
+">
 
 Shelby File Uploader
 
 </h1>
 
-<p
+<p className="
+text-center
+mb-8
+">
 
-style={{
-
-textAlign:"center",
-
-marginBottom:"30px"
-
-}}
-
->
-
-Secure file upload and ownership verification powered by Aptos
+Powered by Aptos
 
 </p>
 
-<div
 
-style={{
 
-padding:"50px",
+<div className="
+border-2
+border-dashed
+border-cyan-500
+h-56
+rounded-3xl
+flex
+items-center
+justify-center
+mb-6
+">
 
-border:
-"3px dashed #38bdf8",
-
-borderRadius:"24px",
-
-textAlign:"center"
-
-}}
-
->
-
-<h2>
-
-Drag & Drop Files
-
-</h2>
-
-<p>
-
-or browse files
-
-</p>
+Drag Files
 
 </div>
 
-<br/>
+
 
 <input
 
 type="file"
 
-onChange={(e)=>{
-
-const selected=
-
-e.target.files
-
-?
-
-e.target.files[0]
-
-:
-
-null;
-
-setFile(selected);
-
-if(selected){
-
-setPreview(
-
-URL.createObjectURL(
-selected
-)
-
-);
-
-setFileInfo({
-
-name:
-selected.name,
-
-size:
-(
-selected.size/
-1024
-).toFixed(2)
-+" KB",
-
-time:
-new Date()
-.toLocaleTimeString()
-
-});
-
-}
-
-}}
+onChange=
+{handleFile}
 
 />
 
-<br/><br/>
+
 
 {
 
@@ -495,13 +394,13 @@ preview && (
 
 src={preview}
 
-style={{
-
-width:"240px",
-
-borderRadius:"18px"
-
-}}
+className="
+w-40
+h-40
+mt-5
+rounded-xl
+object-cover
+"
 
 />
 
@@ -509,272 +408,176 @@ borderRadius:"18px"
 
 }
 
-<br/><br/>
+
+
+<div className="
+mt-5
+">
 
 <button
 
-onClick={
-handleUpload
-}
+onClick=
+{handleUpload}
 
-style={{
-
-padding:
-"18px 36px",
-
-borderRadius:
-"18px",
-
-background:
-"linear-gradient(to right,#38bdf8,#22d3ee)",
-
-border:"none",
-
-color:"white",
-
-fontWeight:"bold"
-
-}}
+className="
+bg-cyan-500
+px-6
+py-3
+rounded-xl
+"
 
 >
 
-Upload to Shelby
+Upload To Shelby
 
 </button>
 
-{
+</div>
 
-uploadProgress>0 && (
+
+
+<div className="
+mt-5
+">
+
+<div className="
+w-full
+h-4
+bg-slate-700
+rounded
+">
 
 <div
 
 style={{
-
-marginTop:"25px"
-
+width:
+`${progress}%`
 }}
 
+className="
+bg-cyan-400
+h-4
+rounded
+"
+
 >
+
+</div>
+
+</div>
+
+<p>
 
 Upload:
 
-{uploadProgress}%
-
-<div
-
-style={{
-
-height:"10px",
-
-background:"#222",
-
-borderRadius:"10px"
-
-}}
-
->
-
-<div
-
-style={{
-
-width:
-`${uploadProgress}%`,
-
-height:"100%",
-
-background:
-"#38bdf8"
-
-}}
-
-/>
-
-</div>
-
-</div>
-
-)
-
-}
-
-{
-
-uploaded && (
-
-<div
-
-style={{
-
-marginTop:"20px",
-
-padding:"16px",
-
-background:
-"rgba(34,197,94,.15)",
-
-border:
-"1px solid #22c55e",
-
-borderRadius:"14px"
-
-}}
-
->
-
-Upload Complete
-
-</div>
-
-)
-
-}
-
-{
-
-fileInfo && (
-
-<div
-
-style={{
-
-marginTop:"30px",
-
-padding:"20px",
-
-borderRadius:"18px",
-
-background:
-"rgba(255,255,255,.04)"
-
-}}
-
->
-
-<h3>
-
-Selected File
-
-</h3>
-
-<p>
-
-Name:
-{fileInfo.name}
-
-</p>
-
-<p>
-
-Size:
-{fileInfo.size}
-
-</p>
-
-<p>
-
-Time:
-{fileInfo.time}
+{progress}%
 
 </p>
 
 </div>
 
-)
-
-}
-
-<div
-
-style={{
-
-display:"grid",
-
-gap:"16px",
-
-marginTop:"30px"
-
-}}
-
->
-
-<div style={featureStyle}>
-
-File Ownership Verification
-
 </div>
 
-<div style={featureStyle}>
 
-Decentralized Storage Ready
 
-</div>
+<div className="
+grid
+md:grid-cols-2
+gap-8
+mt-10
+">
 
-<div style={featureStyle}>
+<div className="
+bg-slate-900
+p-6
+rounded-2xl
+">
 
-Aptos Wallet Integration
-
-</div>
-
-<div style={featureStyle}>
-
-Wallet:
-
-{
-
-account ?
-
-"Connected"
-
-:
-
-"Not Connected"
-
-}
-
-</div>
-
-</div>
-
-<h2
-
-style={{
-
-marginTop:"30px"
-
-}}
-
->
+<h2>
 
 Upload History
 
 </h2>
 
+<input
+
+value=
+{search}
+
+onChange=
 {
 
-history.map(
-(item,index)=>(
+e=>
+
+setSearch(
+
+e.target.value
+
+)
+
+}
+
+placeholder=
+"search"
+
+className="
+w-full
+p-3
+bg-slate-800
+rounded
+mt-4
+mb-4
+"
+
+/>
+
+
+
+{
+
+filtered.map(
+
+(file,i)=>(
 
 <div
 
-key={index}
+key={i}
 
-style={{
-
-padding:"12px",
-
-marginTop:"10px",
-
-background:
-"rgba(255,255,255,.04)",
-
-borderRadius:"12px"
-
-}}
+className="
+bg-slate-800
+p-4
+rounded-xl
+mb-3
+"
 
 >
 
-{item}
+<p>
+
+{file.name}
+
+</p>
+
+<p>
+
+{file.size}
+KB
+
+</p>
+
+<p>
+
+{file.time}
+
+</p>
+
+<p className="
+text-green-400
+">
+
+{file.status}
+
+</p>
 
 </div>
 
@@ -784,71 +587,111 @@ borderRadius:"12px"
 
 }
 
-<div
 
-style={{
 
-marginTop:"40px",
+<button
 
-textAlign:"center",
+onClick={()=>
 
-opacity:.7
+{
 
-}}
+setUploadedFiles(
+[]
+);
 
->
+localStorage.removeItem(
 
-Shelby Storage Protocol
-
-Built with Aptos
-
-</div>
-
-</div>
-
-</div>
+"shelby_uploads"
 
 );
 
 }
 
-const cardStyle={
+}
 
-padding:"25px",
-
-borderRadius:"18px",
-
-background:
-"rgba(255,255,255,.04)"
-
-};
-
-const featureStyle={
-
-padding:"20px",
-
-borderRadius:"16px",
-
-background:
-"rgba(255,255,255,.04)",
-
-textAlign:
-"center" as const
-
-};
-
-export default function Page(){
-
-return(
-
-<AptosWalletAdapterProvider
-autoConnect={false}
+className="
+bg-red-500
+px-5
+py-2
+rounded
+"
 
 >
 
-<WalletButton/>
+Clear History
 
-</AptosWalletAdapterProvider>
+</button>
+
+</div>
+
+
+
+<div className="
+bg-slate-900
+p-6
+rounded-2xl
+">
+
+<h2>
+
+Recent Activity
+
+</h2>
+
+<div className="
+space-y-3
+mt-4
+">
+
+<div className="
+bg-slate-800
+p-4
+rounded
+">
+
+Wallet Connected
+
+</div>
+
+<div className="
+bg-slate-800
+p-4
+rounded
+">
+
+Storage Active
+
+</div>
+
+<div className="
+bg-slate-800
+p-4
+rounded
+">
+
+File Verified
+
+</div>
+
+</div>
+
+</div>
+
+</div>
+
+
+
+<footer className="
+text-center
+mt-10
+text-slate-400
+">
+
+Shelby Storage Protocol Built With Aptos
+
+</footer>
+
+</main>
 
 );
 
