@@ -9,12 +9,12 @@ function WalletButton() {
   const { connect, account } = useWallet();
 
   const connectWallet = async () => {
-    try {
-      await connect("Petra");
-    } catch (e) {
-      console.log(e);
-    }
-  };
+  try {
+    await connect("Petra Wallet");
+  } catch (e) {
+    console.log(e);
+  }
+};
 
   return (
     <div
