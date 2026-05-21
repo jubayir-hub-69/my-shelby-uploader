@@ -17,9 +17,7 @@ function WalletButton() {
   };
 
   const shortAddress = account?.address
-    ? `${account.address
-        .toString()
-        .slice(0, 6)}...${account.address
+    ? `${account.address.toString().slice(0,6)}...${account.address
         .toString()
         .slice(-4)}`
     : "";
@@ -27,42 +25,70 @@ function WalletButton() {
   return (
     <div
       style={{
-        display: "flex",
-        justifyContent: "flex-end",
-        padding: "20px",
-        gap: "10px",
+        minHeight: "100vh",
+        background: "#0b0b0b",
+        color: "white",
+        padding: "30px",
       }}
     >
-      {account ? (
-        <>
-          <span
-            style={{
-              color: "white",
-              paddingTop: "8px",
-            }}
-          >
-            {shortAddress}
-          </span>
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "flex-end",
+          gap: "10px",
+        }}
+      >
+        {account ? (
+          <>
+            <span>{shortAddress}</span>
 
+            <button
+              onClick={disconnect}
+              style={{
+                padding: "8px 12px",
+              }}
+            >
+              Disconnect
+            </button>
+          </>
+        ) : (
           <button
-            onClick={disconnect}
+            onClick={connectWallet}
             style={{
               padding: "8px 12px",
             }}
           >
-            Disconnect
+            Connect Wallet
           </button>
-        </>
-      ) : (
+        )}
+      </div>
+
+      <div
+        style={{
+          maxWidth: "700px",
+          margin: "80px auto",
+          textAlign: "center",
+        }}
+      >
+        <h1>Shelby Uploader</h1>
+
+        <p>
+          Upload and verify files on Aptos
+        </p>
+
+        <input type="file" />
+
+        <br />
+        <br />
+
         <button
-          onClick={connectWallet}
           style={{
-            padding: "8px 12px",
+            padding: "10px 20px",
           }}
         >
-          Connect Wallet
+          Upload File
         </button>
-      )}
+      </div>
     </div>
   );
 }
