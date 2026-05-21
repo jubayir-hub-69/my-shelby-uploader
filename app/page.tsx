@@ -3,263 +3,279 @@
 import { useEffect, useState } from "react";
 
 declare global {
-interface Window {
-aptos?: any;
-petra?: any;
-}
-}
-
-export default function Home(){
-
-const [walletConnected,setWalletConnected]=useState(false);
-const [walletAddress,setWalletAddress]=useState("");
-
-const [selectedFile,setSelectedFile]=useState<File|null>(null);
-const [preview,setPreview]=useState("");
-
-const [progress,setProgress]=useState(0);
-
-const [uploadedFiles,setUploadedFiles]=useState<any[]>([]);
-
-const [search,setSearch]=useState("");
-
-useEffect(()=>{
-
-const savedWallet=
-localStorage.getItem(
-"shelby_wallet"
-);
-
-if(savedWallet){
-
-const data=
-JSON.parse(
-savedWallet
-);
-
-setWalletConnected(
-data.connected
-);
-
-setWalletAddress(
-data.address
-);
-
+  interface Window {
+    aptos?: any;
+    petra?: any;
+  }
 }
 
-const uploads=
-localStorage.getItem(
-"shelby_uploads"
-);
+export default function Home() {
+  const [walletConnected, setWalletConnected] = useState(false);
+  const [walletAddress, setWalletAddress] = useState("");
+
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [preview, setPreview] = useState("");
+  const [progress, setProgress] = useState(0);
 
-if(uploads){
+  const [uploadedFiles, setUploadedFiles] = useState<any[]>([]);
+  const [search, setSearch] = useState("");
 
-setUploadedFiles(
-JSON.parse(
-uploads
-)
-);
+  useEffect(() => {
+    const savedWallet =
+      localStorage.getItem(
+        "shelby_wallet"
+      );
 
-}
+    if (savedWallet) {
+      const data =
+        JSON.parse(
+          savedWallet
+        );
 
-},[]);
+      setWalletConnected(
+        data.connected || false
+      );
 
-useEffect(()=>{
+      setWalletAddress(
+        data.address || ""
+      );
+    }
 
-localStorage.setItem(
+    const uploads =
+      localStorage.getItem(
+        "shelby_uploads"
+      );
 
-"shelby_uploads",
+    if (uploads) {
+      setUploadedFiles(
+        JSON.parse(
+          uploads
+        )
+      );
+    }
+  }, []);
 
-JSON.stringify(
-uploadedFiles
-)
+  useEffect(() => {
+    localStorage.setItem(
+      "shelby_uploads",
 
-);
+      JSON.stringify(
+        uploadedFiles
+      )
+    );
+  }, [uploadedFiles]);
 
-},[
-uploadedFiles
-]);
+  async function connectWallet() {
+    try {
 
-async function connectWallet(){
+      let provider = null;
 
-try{
+      if (window.aptos) {
+        provider =
+          window.aptos;
+      }
 
-const provider=
+      else if (
+        window.petra
+      ) {
+        provider =
+          window.petra;
+      }
 
-window.aptos||
+      if (!provider) {
 
-window.petra;
+        alert(
+          "Petra Wallet পাওয়া যায়নি"
+        );
 
-if(provider){
+        return;
+      }
 
-await provider.connect();
+      const response =
+        await provider.connect();
 
-const account=
+      const address =
 
-await provider.account();
+        response?.address ||
 
-const address=
+        (
+          await provider.account?.()
+        )?.address ||
 
-account.address||
-"";
+        "";
 
-setWalletConnected(
-true
-);
+      if (address) {
 
-setWalletAddress(
-address
-);
+        setWalletConnected(
+          true
+        );
 
-localStorage.setItem(
+        setWalletAddress(
+          address
+        );
 
-"shelby_wallet",
+        localStorage.setItem(
 
-JSON.stringify({
+          "shelby_wallet",
 
-connected:true,
+          JSON.stringify({
 
-address
+            connected:
+              true,
 
-})
+            address
 
-);
+          })
 
-return;
+        );
 
-}
+      }
 
-window.open(
-"https://petra.app/",
-"_blank"
-);
+    } catch (err) {
 
-}catch(err){
+      console.log(err);
 
-console.log(err);
+      alert(
+        "Wallet connection failed"
+      );
 
-alert(
-"Wallet connection failed"
-);
+    }
+  }
 
-}
+  async function disconnectWallet() {
 
-}
+    try {
 
-function disconnectWallet(){
+      const provider =
 
-setWalletConnected(
-false
-);
+        window.aptos ||
 
-setWalletAddress(
-""
-);
+        window.petra;
 
-localStorage.removeItem(
-"shelby_wallet"
-);
+      if (
+        provider?.disconnect
+      ) {
 
-}
+        await provider.disconnect();
 
-function handleFile(
-e:any
-){
+      }
 
-const file=
-e.target.files[0];
+    } catch {}
 
-if(!file)return;
+    setWalletConnected(
+      false
+    );
 
-setSelectedFile(
-file
-);
+    setWalletAddress(
+      ""
+    );
 
-setPreview(
+    localStorage.removeItem(
+      "shelby_wallet"
+    );
 
-URL.createObjectURL(
-file
-)
+  }
 
-);
+  function handleFile(
+    e: any
+  ) {
 
-}
+    const file =
+      e.target.files[0];
 
-function uploadFile(){
+    if (!file) return;
 
-if(
-!selectedFile
-)return;
+    setSelectedFile(
+      file
+    );
 
-let p=0;
+    setPreview(
+      URL.createObjectURL(
+        file
+      )
+    );
 
-setProgress(0);
+  }
 
-const interval=
+  function uploadFile() {
 
-setInterval(()=>{
+    if (
+      !selectedFile
+    ) return;
 
-p+=10;
+    let p = 0;
 
-setProgress(p);
+    setProgress(0);
 
-if(p>=100){
+    const interval =
 
-clearInterval(
-interval
-);
+      setInterval(() => {
 
-setUploadedFiles(
-prev=>[
+      p += 10;
 
-{
+      setProgress(
+        p
+      );
 
-name:
-selectedFile.name,
+      if (
+        p >= 100
+      ) {
 
-size:
-(
-selectedFile.size
-/1024
-).toFixed(2),
+        clearInterval(
+          interval
+        );
 
-time:
-new Date()
-.toLocaleTimeString()
+        setUploadedFiles(
+          prev => [
 
-},
+            {
 
-...prev
+              name:
+                selectedFile.name,
 
-]
+              size:
+                (
+                  selectedFile.size /
+                  1024
+                ).toFixed(2),
 
-);
+              time:
+                new Date()
+                .toLocaleTimeString()
 
-}
+            },
 
-},150);
+            ...prev
 
-}
+          ]
+        );
 
-const filtered=
+      }
 
-uploadedFiles.filter(
-x=>
+    }, 150);
 
-x.name
+  }
 
-.toLowerCase()
+  const filtered =
 
-.includes(
+    uploadedFiles.filter(
+      x =>
 
-search
-.toLowerCase()
+        x.name
 
-)
+        .toLowerCase()
 
-);
+        .includes(
 
-return(
+          search
+
+          .toLowerCase()
+
+        )
+
+    );
+
+  return (
 
 <main className="
 min-h-screen
@@ -271,8 +287,8 @@ p-5
 <div className="
 flex
 justify-between
-mb-8
 items-start
+mb-8
 ">
 
 <div>
@@ -297,7 +313,28 @@ Storage Dashboard
 
 {
 
-walletConnected?
+!walletConnected ?
+
+<button
+
+onClick={
+connectWallet
+}
+
+className="
+bg-cyan-500
+px-5
+py-3
+rounded-xl
+"
+
+>
+
+Connect Wallet
+
+</button>
+
+:
 
 <div className="
 flex
@@ -345,27 +382,6 @@ Disconnect
 </button>
 
 </div>
-
-:
-
-<button
-
-onClick={
-connectWallet
-}
-
-className="
-bg-cyan-500
-px-5
-py-3
-rounded-xl
-"
-
->
-
-Connect Wallet
-
-</button>
 
 }
 
@@ -419,15 +435,10 @@ Network
 
 {
 walletConnected
-
 ?
-
 " Connected"
-
 :
-
 " Offline"
-
 }
 
 </div>
@@ -442,7 +453,7 @@ Last Upload
 
 {
 uploadedFiles[0]
-?.name||
+?.name ||
 "None"
 }
 
@@ -457,9 +468,9 @@ rounded-3xl
 ">
 
 <h1 className="
+text-center
 text-5xl
 text-cyan-400
-text-center
 ">
 
 Shelby File Uploader
@@ -482,8 +493,8 @@ border-cyan-500
 rounded-3xl
 h-56
 flex
-justify-center
 items-center
+justify-center
 mt-8
 ">
 
@@ -492,22 +503,18 @@ Drag & Drop Files
 </div>
 
 <input
-
 type="file"
-
 onChange={
 handleFile
 }
-
 className="
 mt-5
 "
-
 />
 
 {
 
-preview&&
+preview &&
 
 <img
 
@@ -516,9 +523,9 @@ src={preview}
 className="
 w-32
 h-32
+object-cover
 rounded
 mt-5
-object-cover
 "
 
 />
@@ -599,7 +606,7 @@ Upload History
 
 <button
 
-onClick={()=>{
+onClick={() => {
 
 setUploadedFiles(
 []
