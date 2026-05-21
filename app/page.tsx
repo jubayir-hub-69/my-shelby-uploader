@@ -110,13 +110,25 @@ function WalletButton() {
         <br />
 
         <button
-          style={{
-            padding: "12px 22px",
-            borderRadius: "10px",
-          }}
-        >
-          Upload File
-        </button>
+  onClick={() => {
+    if (!file) {
+      alert("Select a file first");
+      return;
+    }
+
+    alert(`Uploading: ${file.name}`);
+  }}
+  style={{
+    padding: "12px 22px",
+    borderRadius: "10px",
+    background: "#2563eb",
+    color: "white",
+    border: "none",
+    cursor: "pointer",
+  }}
+>
+  Upload File
+</button>
       </div>
     </div>
   );
