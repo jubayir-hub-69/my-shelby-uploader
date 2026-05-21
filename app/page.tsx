@@ -15,30 +15,42 @@ disconnect,
 account
 }=useWallet();
 
-const [file,setFile]=
-useState<File|null>(null);
+const [file,setFile]=useState<File|null>(null);
 
-const [preview,setPreview]=
-useState("");
+const [preview,setPreview]=useState("");
 
-const [uploadProgress,
-setUploadProgress]=
-useState(0);
+const [
+uploadProgress,
+setUploadProgress
+]=useState(0);
 
-const [uploaded,
-setUploaded]=
-useState(false);
+const [
+uploaded,
+setUploaded
+]=useState(false);
 
-const [history,
-setHistory]=
-useState<string[]>([]);
+const [
+history,
+setHistory
+]=useState<string[]>([]);
+
+const [
+fileInfo,
+setFileInfo
+]=useState<{
+name:string;
+size:string;
+time:string;
+}|null>(null);
 
 const connectWallet=
 async()=>{
 
 try{
 
-await connect("Petra");
+await connect(
+"Petra"
+);
 
 }catch(e){
 
@@ -92,7 +104,9 @@ setUploadProgress(i);
 
 if(i>=100){
 
-clearInterval(timer);
+clearInterval(
+timer
+);
 
 setUploaded(true);
 
@@ -116,7 +130,7 @@ style={{
 minHeight:"100vh",
 
 background:
-"linear-gradient(135deg,#050816 0%,#07172a 50%,#111827 100%)",
+"linear-gradient(135deg,#050816,#07172a,#111827)",
 
 color:"white",
 
@@ -179,7 +193,9 @@ account ?
 
 <button
 
-onClick={disconnect}
+onClick={
+disconnect
+}
 
 style={{
 
@@ -201,13 +217,14 @@ Disconnect
 
 <button
 
-onClick=
-{connectWallet}
+onClick={
+connectWallet
+}
 
 style={{
 
 padding:
-"12px 20px",
+"12px 22px",
 
 borderRadius:
 "14px",
@@ -244,7 +261,7 @@ gridTemplateColumns:
 
 gap:"20px",
 
-marginBottom:"40px"
+marginBottom:"35px"
 
 }}
 
@@ -296,13 +313,37 @@ account ?
 
 </div>
 
+<div style={cardStyle}>
+
+Last Upload
+
+<h2>
+
+{
+
+history.length>0
+
+?
+
+history[0]
+
+:
+
+"None"
+
+}
+
+</h2>
+
+</div>
+
 </div>
 
 <div
 
 style={{
 
-maxWidth:"820px",
+maxWidth:"850px",
 
 margin:"auto",
 
@@ -317,7 +358,7 @@ backdropFilter:
 "blur(14px)",
 
 boxShadow:
-"0 0 35px rgba(56,189,248,.18)"
+"0 0 40px rgba(56,189,248,.18)"
 
 }}
 
@@ -368,9 +409,7 @@ border:
 
 borderRadius:"24px",
 
-textAlign:"center",
-
-marginBottom:"25px"
+textAlign:"center"
 
 }}
 
@@ -390,6 +429,8 @@ or browse files
 
 </div>
 
+<br/>
+
 <input
 
 type="file"
@@ -397,6 +438,7 @@ type="file"
 onChange={(e)=>{
 
 const selected=
+
 e.target.files
 
 ?
@@ -412,10 +454,30 @@ setFile(selected);
 if(selected){
 
 setPreview(
+
 URL.createObjectURL(
 selected
 )
+
 );
+
+setFileInfo({
+
+name:
+selected.name,
+
+size:
+(
+selected.size/
+1024
+).toFixed(2)
++" KB",
+
+time:
+new Date()
+.toLocaleTimeString()
+
+});
 
 }
 
@@ -423,9 +485,7 @@ selected
 
 />
 
-<br/>
-
-<br/>
+<br/><br/>
 
 {
 
@@ -449,14 +509,13 @@ borderRadius:"18px"
 
 }
 
-<br/>
-
-<br/>
+<br/><br/>
 
 <button
 
-onClick=
-{handleUpload}
+onClick={
+handleUpload
+}
 
 style={{
 
@@ -497,13 +556,9 @@ marginTop:"25px"
 
 >
 
-<div>
-
 Upload:
 
 {uploadProgress}%
-
-</div>
 
 <div
 
@@ -529,9 +584,7 @@ width:
 height:"100%",
 
 background:
-"#38bdf8",
-
-borderRadius:"10px"
+"#38bdf8"
 
 }}
 
@@ -553,9 +606,9 @@ uploaded && (
 
 style={{
 
-padding:"18px",
-
 marginTop:"20px",
+
+padding:"16px",
 
 background:
 "rgba(34,197,94,.15)",
@@ -563,7 +616,7 @@ background:
 border:
 "1px solid #22c55e",
 
-borderRadius:"16px"
+borderRadius:"14px"
 
 }}
 
@@ -577,13 +630,67 @@ Upload Complete
 
 }
 
+{
+
+fileInfo && (
+
+<div
+
+style={{
+
+marginTop:"30px",
+
+padding:"20px",
+
+borderRadius:"18px",
+
+background:
+"rgba(255,255,255,.04)"
+
+}}
+
+>
+
+<h3>
+
+Selected File
+
+</h3>
+
+<p>
+
+Name:
+{fileInfo.name}
+
+</p>
+
+<p>
+
+Size:
+{fileInfo.size}
+
+</p>
+
+<p>
+
+Time:
+{fileInfo.time}
+
+</p>
+
+</div>
+
+)
+
+}
+
 <div
 
 style={{
 
 display:"grid",
 
-gap:"18px",
+gap:"16px",
 
 marginTop:"30px"
 
@@ -633,7 +740,7 @@ account ?
 
 style={{
 
-marginTop:"35px"
+marginTop:"30px"
 
 }}
 
@@ -676,6 +783,26 @@ borderRadius:"12px"
 )
 
 }
+
+<div
+
+style={{
+
+marginTop:"40px",
+
+textAlign:"center",
+
+opacity:.7
+
+}}
+
+>
+
+Shelby Storage Protocol
+
+Built with Aptos
+
+</div>
 
 </div>
 
