@@ -2,50 +2,50 @@
 
 import { useEffect, useState } from "react";
 
-export default function Home() {
+export default function Home(){
 
-const [wallet] =
-useState(
-"0xb59a...0ea9"
-);
+const[
+walletConnected,
+setWalletConnected
+]=useState(false);
 
-const [
+const[
+walletAddress,
+setWalletAddress
+]=useState("");
+
+const[
 selectedFile,
 setSelectedFile
-] =
-useState<File|null>(
+]=useState<File|null>(
 null
 );
 
-const [
+const[
 preview,
 setPreview
-] =
-useState("");
+]=useState("");
 
-const [
+const[
 progress,
 setProgress
-] =
-useState(0);
+]=useState(0);
 
-const [
+const[
 uploadedFiles,
 setUploadedFiles
-] =
-useState<any[]>([]);
+]=useState<any[]>([]);
 
-const [
+const[
 search,
 setSearch
-] =
-useState("");
+]=useState("");
 
 
 
 useEffect(()=>{
 
-const saved =
+const saved=
 localStorage.getItem(
 "shelby_uploads"
 );
@@ -80,12 +80,71 @@ uploadedFiles
 
 
 
-const handleFile=
-(
-e:any
-)=>{
+const connectWallet=
+async()=>{
 
-const file =
+try{
+
+if(
+(window as any)
+.aptos
+){
+
+const res=
+
+await(
+window as any
+)
+
+.aptos
+
+.connect();
+
+setWalletConnected(
+true
+);
+
+setWalletAddress(
+res.address
+);
+
+}else{
+
+alert(
+"Petra wallet not installed"
+);
+
+}
+
+}catch(err){
+
+console.log(err);
+
+}
+
+};
+
+
+
+const disconnectWallet=
+()=>{
+
+setWalletConnected(
+false
+);
+
+setWalletAddress(
+""
+);
+
+};
+
+
+
+const handleFile=
+(e:any)=>{
+
+const file=
 e.target.files[0];
 
 if(!file)return;
@@ -113,29 +172,29 @@ if(
 !selectedFile
 )return;
 
-setProgress(0);
+let val=0;
 
-let value=0;
+setProgress(0);
 
 const interval=
 
 setInterval(()=>{
 
-value+=10;
+val+=10;
 
-setProgress(
-value
-);
+setProgress(val);
 
-if(
-value>=100
-){
+if(val>=100){
 
 clearInterval(
 interval
 );
 
-const newFile={
+setUploadedFiles(
+
+prev=>[
+
+{
 
 name:
 selectedFile.name,
@@ -148,18 +207,14 @@ selectedFile.size
 
 time:
 new Date()
-.toLocaleTimeString(),
+.toLocaleTimeString()
 
-status:
-"Uploaded"
+},
 
-};
-
-setUploadedFiles(
-prev=>[
-newFile,
 ...prev
+
 ]
+
 );
 
 }
@@ -173,10 +228,9 @@ newFile,
 const filtered=
 
 uploadedFiles.filter(
+x=>
 
-file=>
-
-file.name
+x.name
 
 .toLowerCase()
 
@@ -194,13 +248,27 @@ search
 
 return(
 
-<main className="min-h-screen bg-slate-950 text-white p-8">
+<main className="
+min-h-screen
+bg-slate-950
+text-white
+p-6
+">
 
-<div className="flex justify-between mb-10">
+<div className="
+flex
+justify-between
+items-center
+mb-10
+">
 
 <div>
 
-<h1 className="text-6xl font-bold text-cyan-400">
+<h1 className="
+text-5xl
+font-bold
+text-cyan-400
+">
 
 Shelby
 
@@ -214,7 +282,18 @@ Storage Dashboard
 
 </div>
 
-<div className="flex gap-3">
+
+
+{
+
+walletConnected?
+
+(
+
+<div className="
+flex
+gap-3
+">
 
 <button
 
@@ -223,16 +302,16 @@ onClick={()=>{
 navigator
 .clipboard
 .writeText(
-wallet
+walletAddress
 )
 
 }}
 
 className="
 bg-cyan-600
-px-5
+px-4
 py-2
-rounded-xl
+rounded
 "
 
 >
@@ -243,11 +322,16 @@ Copy Wallet
 
 <button
 
+onClick=
+{
+disconnectWallet
+}
+
 className="
 bg-red-600
-px-5
+px-4
 py-2
-rounded-xl
+rounded
 "
 
 >
@@ -258,6 +342,36 @@ Disconnect
 
 </div>
 
+)
+
+:
+
+(
+
+<button
+
+onClick=
+{
+connectWallet
+}
+
+className="
+bg-cyan-500
+px-5
+py-3
+rounded-xl
+"
+
+>
+
+Connect Wallet
+
+</button>
+
+)
+
+}
+
 </div>
 
 
@@ -265,22 +379,19 @@ Disconnect
 <div className="
 grid
 md:grid-cols-4
-gap-5
+gap-4
 mb-8
 ">
 
 <div className="
 bg-slate-900
 p-5
-rounded-2xl
+rounded
 ">
 
 Files Uploaded
 
-<h2 className="
-text-3xl
-font-bold
-">
+<h2>
 
 {
 uploadedFiles.length
@@ -290,27 +401,59 @@ uploadedFiles.length
 
 </div>
 
-
-
 <div className="
 bg-slate-900
 p-5
-rounded-2xl
+rounded
 ">
 
 Storage Active
 
 </div>
 
+<div className="
+bg-slate-900
+p-5
+rounded
+">
 
+Network
+
+{
+
+walletConnected?
+
+" Connected"
+
+:
+
+" Offline"
+
+}
+
+</div>
 
 <div className="
 bg-slate-900
 p-5
-rounded-2xl
+rounded
 ">
 
-Network Connected
+Wallet
+
+{
+
+walletConnected?
+
+" Connected"
+
+:
+
+" Not Connected"
+
+}
+
+</div>
 
 </div>
 
@@ -318,22 +461,8 @@ Network Connected
 
 <div className="
 bg-slate-900
-p-5
-rounded-2xl
-">
-
-Wallet Connected
-
-</div>
-
-</div>
-
-
-
-<div className="
-bg-slate-900
+p-8
 rounded-3xl
-p-10
 ">
 
 <h1 className="
@@ -346,17 +475,6 @@ Shelby File Uploader
 
 </h1>
 
-<p className="
-text-center
-mb-8
-">
-
-Powered by Aptos
-
-</p>
-
-
-
 <div className="
 border-2
 border-dashed
@@ -364,16 +482,14 @@ border-cyan-500
 h-56
 rounded-3xl
 flex
-items-center
 justify-center
-mb-6
+items-center
+mt-8
 ">
 
 Drag Files
 
 </div>
-
-
 
 <input
 
@@ -382,24 +498,25 @@ type="file"
 onChange=
 {handleFile}
 
+className="
+mt-5
+"
+
 />
-
-
 
 {
 
-preview && (
+preview&&(
 
 <img
 
 src={preview}
 
 className="
-w-40
-h-40
-mt-5
-rounded-xl
-object-cover
+w-32
+h-32
+mt-4
+rounded
 "
 
 />
@@ -410,20 +527,19 @@ object-cover
 
 
 
-<div className="
-mt-5
-">
-
 <button
 
 onClick=
-{handleUpload}
+{
+handleUpload
+}
 
 className="
 bg-cyan-500
-px-6
+px-5
 py-3
-rounded-xl
+rounded
+mt-5
 "
 
 >
@@ -432,19 +548,14 @@ Upload To Shelby
 
 </button>
 
-</div>
 
-
-
-<div className="
-mt-5
-">
 
 <div className="
 w-full
 h-4
 bg-slate-700
 rounded
+mt-5
 ">
 
 <div
@@ -455,24 +566,14 @@ width:
 }}
 
 className="
-bg-cyan-400
 h-4
+bg-cyan-400
 rounded
 "
 
 >
 
 </div>
-
-</div>
-
-<p>
-
-Upload:
-
-{progress}%
-
-</p>
 
 </div>
 
@@ -483,14 +584,14 @@ Upload:
 <div className="
 grid
 md:grid-cols-2
-gap-8
+gap-6
 mt-10
 ">
 
 <div className="
 bg-slate-900
-p-6
-rounded-2xl
+p-5
+rounded
 ">
 
 <h2>
@@ -501,6 +602,9 @@ Upload History
 
 <input
 
+placeholder=
+"search"
+
 value=
 {search}
 
@@ -510,15 +614,10 @@ onChange=
 e=>
 
 setSearch(
-
 e.target.value
-
 )
 
 }
-
-placeholder=
-"search"
 
 className="
 w-full
@@ -526,17 +625,13 @@ p-3
 bg-slate-800
 rounded
 mt-4
-mb-4
 "
 
 />
 
-
-
 {
 
 filtered.map(
-
 (file,i)=>(
 
 <div
@@ -546,38 +641,13 @@ key={i}
 className="
 bg-slate-800
 p-4
-rounded-xl
-mb-3
+rounded
+mt-3
 "
 
 >
 
-<p>
-
 {file.name}
-
-</p>
-
-<p>
-
-{file.size}
-KB
-
-</p>
-
-<p>
-
-{file.time}
-
-</p>
-
-<p className="
-text-green-400
-">
-
-{file.status}
-
-</p>
 
 </div>
 
@@ -586,41 +656,6 @@ text-green-400
 )
 
 }
-
-
-
-<button
-
-onClick={()=>
-
-{
-
-setUploadedFiles(
-[]
-);
-
-localStorage.removeItem(
-
-"shelby_uploads"
-
-);
-
-}
-
-}
-
-className="
-bg-red-500
-px-5
-py-2
-rounded
-"
-
->
-
-Clear History
-
-</button>
 
 </div>
 
@@ -628,68 +663,15 @@ Clear History
 
 <div className="
 bg-slate-900
-p-6
-rounded-2xl
+p-5
+rounded
 ">
-
-<h2>
 
 Recent Activity
 
-</h2>
-
-<div className="
-space-y-3
-mt-4
-">
-
-<div className="
-bg-slate-800
-p-4
-rounded
-">
-
-Wallet Connected
-
-</div>
-
-<div className="
-bg-slate-800
-p-4
-rounded
-">
-
-Storage Active
-
-</div>
-
-<div className="
-bg-slate-800
-p-4
-rounded
-">
-
-File Verified
-
 </div>
 
 </div>
-
-</div>
-
-</div>
-
-
-
-<footer className="
-text-center
-mt-10
-text-slate-400
-">
-
-Shelby Storage Protocol Built With Aptos
-
-</footer>
 
 </main>
 
