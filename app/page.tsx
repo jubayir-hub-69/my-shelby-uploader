@@ -94,6 +94,7 @@ backdropFilter:"blur(12px)",
 
 boxShadow:"0 0 30px rgba(0,255,255,0.12)",
         }}
+        >
       <h1
   style={{
     fontSize: "38px",
@@ -102,6 +103,7 @@ boxShadow:"0 0 30px rgba(0,255,255,0.12)",
     WebkitBackgroundClip: "text",
     WebkitTextFillColor: "transparent"
   }}
+>
 >
   Shelby File Uploader
 </h1>
@@ -112,8 +114,7 @@ boxShadow:"0 0 30px rgba(0,255,255,0.12)",
     fontSize: "15px",
     marginBottom: "25px"
   }}
->
-  Secure file upload and ownership verification powered by Aptos
+ Secure file upload and ownership verification powered by Aptos
 </p>
         <br />
 
