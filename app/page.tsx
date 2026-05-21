@@ -2,74 +2,91 @@
 
 import { useState } from "react";
 
-export default function ShelbyStorage() {
-  const [wallet, setWallet] = useState("");
-  const [file, setFile] = useState<File | null>(null);
+export default function Home() {
+  const [account, setAccount] = useState("");
+  const [fileName, setFileName] = useState("");
 
   const connectWallet = async () => {
     try {
-      const petra = (window as any).aptos;
+      if ("aptos" in window) {
+        const wallet = (window as any).aptos;
 
-      if (!petra) {
-        alert("Petra wallet install করুন");
-        return;
+        const response = await wallet.connect();
+
+        setAccount(response.address);
+
+        alert("Wallet Connected ✅");
+      } else {
+        alert("Petra Wallet install করুন");
       }
-
-      const response = await petra.connect();
-
-      setWallet(response.address);
-
     } catch (err) {
       console.log(err);
+    }
+  };
+
+  const handleFile = (e: any) => {
+    const file = e.target.files[0];
+
+    if (file) {
+      setFileName(file.name);
     }
   };
 
   return (
     <main className="min-h-screen bg-black text-white">
 
-      <div className="flex justify-end p-6">
+      <header className="flex justify-end p-6">
 
         <button
           onClick={connectWallet}
-          className="bg-blue-600 px-5 py-2 rounded-lg"
+          className="bg-blue-600 hover:bg-blue-700 px-5 py-2 rounded-lg"
         >
-          {wallet
-            ? wallet.slice(0,6)+"..."+wallet.slice(-4)
+          {account
+            ? account.slice(0,6) +
+              "..." +
+              account.slice(-4)
             : "Connect Wallet"}
         </button>
 
-      </div>
+      </header>
 
-      <div className="flex justify-center mt-20">
+      <div className="flex justify-center items-center h-[80vh]">
 
-        <div className="bg-zinc-900 w-[520px] p-8 rounded-2xl">
+        <div className="bg-zinc-900 p-8 rounded-2xl w-[420px] text-center shadow-lg">
 
-          <h1 className="text-4xl text-center font-bold">
+          <h1 className="text-4xl font-bold mb-3">
             Shelby Storage
           </h1>
 
-          <p className="text-center mt-3 text-zinc-400">
-            Fast • Secure • Decentralized
+          <p className="text-gray-400 mb-8">
+            Secure decentralized storage
           </p>
 
-          <div className="border border-dashed mt-8 p-10 rounded-xl text-center">
+          <label
+            htmlFor="file"
+            className="border-2 border-dashed border-gray-600 rounded-xl p-10 block cursor-pointer hover:border-blue-500"
+          >
 
-            <input
-              type="file"
-              onChange={(e)=>
-                setFile(
-                  e.target.files?.[0] || null
-                )
-              }
-            />
+            📁 Upload File
 
-            {file && (
-              <p className="mt-4 text-green-400">
-                File Ready 🚀
-              </p>
-            )}
+          </label>
 
-          </div>
+          <input
+            id="file"
+            type="file"
+            hidden
+            onChange={handleFile}
+          />
+
+          {fileName && (
+
+            <p className="mt-4 text-green-400">
+
+              {fileName}
+
+            </p>
+
+          )}
 
         </div>
 
