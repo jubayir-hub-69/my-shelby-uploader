@@ -3,64 +3,54 @@
 import { useState } from "react";
 
 export default function ShelbyUploader() {
-
+  const [wallet, setWallet] = useState("");
   const [file, setFile] = useState<File | null>(null);
 
+  const connectWallet = async () => {
+    if ((window as any).aptos) {
+      const response = await (window as any).aptos.connect();
+      setWallet(response.address);
+    } else {
+      alert("Install Petra wallet");
+    }
+  };
+
   return (
-    <div className="min-h-screen bg-zinc-950 text-white flex items-center justify-center p-6">
+    <main className="min-h-screen bg-black text-white flex items-center justify-center">
 
-      <div className="max-w-lg w-full bg-zinc-900 rounded-2xl p-8 border border-zinc-800">
+      <div className="bg-zinc-900 p-8 rounded-xl w-[420px]">
 
-        <h1 className="text-4xl font-bold text-center mb-2">
-  Shelby Decentralized Storage
-</h1>
-      
+        <h1 className="text-3xl font-bold text-center">
+          Shelby Storage
+        </h1>
 
-        <p className="text-zinc-400 text-center mb-8">
-  Fast • Secure • Decentralized
-</p>
+        <button
+          onClick={connectWallet}
+          className="w-full bg-blue-600 p-3 rounded mt-5"
+        >
+          {wallet ? "Connected" : "Connect Wallet"}
+        </button>
 
-        <div className="border-2 border-dashed border-zinc-700 rounded-xl p-10 text-center">
+        {wallet && (
+          <p className="mt-3 text-sm break-all">
+            {wallet}
+          </p>
+        )}
 
-          <input
-            type="file"
-            onChange={(e) => setFile(e.target.files?.[0] || null)}
-            className="hidden"
-            id="fileInput"
-          />
+        <input
+          type="file"
+          onChange={(e)=>setFile(e.target.files?.[0] || null)}
+          className="mt-5"
+        />
 
-          <label
-            htmlFor="fileInput"
-            className="cursor-pointer"
-          >
-
-            <div className="text-6xl mb-4">
-              📁
-            </div>
-
-            {file && (
-  <p className="mt-2 text-green-400 text-sm">
-    File ready for upload 🚀
-  </p>
-)}
-
-            <p className="text-sm text-zinc-500">
-              Upload any file
-            </p>
-
-          </label>
-          {file && (
-  <p className="mt-2 text-green-400 text-sm">
-    File ready for upload 🚀
-  </p>
-)}
-
-        </div><p className="mt-6 text-center text-xs text-zinc-500">
-  Powered by Shelby Protocol ⚡
-</p>
+        {file && (
+          <p className="mt-3 text-green-400">
+            File ready ✅
+          </p>
+        )}
 
       </div>
 
-    </div>
+    </main>
   );
 }
