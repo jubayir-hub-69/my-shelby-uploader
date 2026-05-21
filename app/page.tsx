@@ -6,19 +6,21 @@ import {
 } from "@aptos-labs/wallet-adapter-react";
 
 function WalletButton() {
-  const { connect, account, connected, wallets } = useWallet();
+  const { connect, disconnect, account } = useWallet();
 
   const connectWallet = async () => {
     try {
-      console.log("wallets =", wallets);
-
       await connect("Petra");
-
-      console.log("connected");
     } catch (e) {
-      console.log("ERROR =", e);
+      console.log(e);
     }
   };
+
+  const shortAddress = account?.address
+    ? ${account.address.toString().slice(0, 6)}...${account.address
+        .toString()
+        .slice(-4)}
+    : "";
 
   return (
     <div
@@ -26,12 +28,36 @@ function WalletButton() {
         display: "flex",
         justifyContent: "flex-end",
         padding: "20px",
+        gap: "10px",
       }}
     >
-      {connected ? (
-        <p>{account?.address?.toString()}</p>
+      {account ? (
+        <>
+          <span
+            style={{
+              color: "white",
+              paddingTop: "8px",
+            }}
+          >
+            {shortAddress}
+          </span>
+
+          <button
+            onClick={disconnect}
+            style={{
+              padding: "8px 12px",
+            }}
+          >
+            Disconnect
+          </button>
+        </>
       ) : (
-        <button onClick={connectWallet}>
+        <button
+          onClick={connectWallet}
+          style={{
+            padding: "8px 12px",
+          }}
+        >
           Connect Wallet
         </button>
       )}
