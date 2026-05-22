@@ -3,308 +3,175 @@
 import { useState, useEffect } from "react";
 
 export default function Home() {
+  const [walletConnected, setWalletConnected] = useState(false);
+  const [walletAddress, setWalletAddress] = useState("");
+  const [selectedFile, setSelectedFile] = useState(null);
+  const [progress, setProgress] = useState(0);
 
-const [walletConnected,setWalletConnected]=useState(false);
+  const [uploadedFiles, setUploadedFiles] = useState(() => {
+    if (typeof window !== "undefined") {
+      return JSON.parse(
+        localStorage.getItem("shelby_uploads") || "[]"
+      );
+    }
+    return [];
+  });
 
-const [walletAddress,setWalletAddress]=useState("");
+  useEffect(() => {
+    localStorage.setItem(
+      "shelby_uploads",
+      JSON.stringify(uploadedFiles)
+    );
+  }, [uploadedFiles]);
 
-const [selectedFile,setSelectedFile]=useState<File|null>(null);
+  async function connectWallet() {
+    try {
+      let provider = null;
 
-const [uploadedFiles,setUploadedFiles]=useState<string[]>([]);
+      if (
+        typeof window !== "undefined" &&
+        window.aptos
+      ) {
+        provider = window.aptos;
+      }
 
-const [progress,setProgress]=useState(0);
+      else if (
+        typeof window !== "undefined" &&
+        window.petra
+      ) {
+        provider = window.petra;
+      }
 
-useEffect(()=>{
+      if (!provider) {
 
-const savedUploads=
+        const mobile =
+          /Android|iPhone|iPad|iPod/i.test(
+            navigator.userAgent
+          );
 
-JSON.parse(
+        if (mobile) {
 
-localStorage.getItem(
+          window.location.href =
+            "petra://";
 
-"shelby_uploads"
+          setTimeout(() => {
 
-)||"[]"
+            window.open(
+              "https://petra.app/",
+              "_blank"
+            );
 
-);
+          },1500);
 
-setUploadedFiles(
+        }
 
-savedUploads
+        else {
 
-);
+          alert(
+            "Petra wallet extension install করুন"
+          );
 
-const savedWallet=
+        }
 
-JSON.parse(
+        return;
+      }
 
-localStorage.getItem(
+      const response =
+        await provider.connect();
 
-"shelby_wallet"
+      const account =
+        await provider.account();
 
-)||"{}"
+      const address =
+        response?.address ||
+        account?.address;
 
-);
+      if (address) {
 
-if(savedWallet.connected){
+        setWalletConnected(true);
 
-setWalletConnected(true);
+        setWalletAddress(address);
 
-setWalletAddress(
+        localStorage.setItem(
+          "wallet",
+          address
+        );
 
-savedWallet.address
+      }
 
-);
+    }
 
-}
+    catch(err){
 
-},[]);
+      console.log(err);
 
-useEffect(()=>{
+      alert(
+        "Wallet connection failed"
+      );
 
-localStorage.setItem(
+    }
+  }
 
-"shelby_uploads",
+  function disconnectWallet() {
 
-JSON.stringify(
+    setWalletConnected(false);
 
-uploadedFiles
+    setWalletAddress("");
 
-)
+    localStorage.removeItem(
+      "wallet"
+    );
 
-);
+  }
 
-},[uploadedFiles]);
+  function uploadFile(){
 
-async function connectWallet(){
+    if(!selectedFile) return;
 
-try{
+    setProgress(100);
 
-let provider:any=null;
+    setUploadedFiles(
+      prev=>[
+        selectedFile.name,
+        ...prev
+      ]
+    );
 
-if(typeof window!=="undefined"){
+  }
 
-if((window as any).aptos){
-
-provider=
-
-(window as any).aptos;
-
-}
-
-else if(
-
-(window as any).petra
-
-){
-
-provider=
-
-(window as any).petra;
-
-}
-
-}
-
-if(!provider){
-
-const mobile=
-
-/android|iphone|ipad/
-
-.test(
-
-navigator.userAgent
-
-.toLowerCase()
-
-);
-
-if(mobile){
-
-window.location.href=
-
-"https://petra.app/?url="+
-
-encodeURIComponent(
-
-window.location.href
-
-);
-
-return;
-
-}
-
-alert(
-
-"Petra Wallet install করুন"
-
-);
-
-return;
-
-}
-
-const response=
-
-await provider.connect();
-
-let address=
-
-response?.address;
-
-if(
-
-!address &&
-
-provider.account
-
-){
-
-const acc=
-
-await provider.account();
-
-address=
-
-acc?.address;
-
-}
-
-if(!address){
-
-throw new Error();
-
-}
-
-setWalletConnected(
-
-true
-
-);
-
-setWalletAddress(
-
-address
-
-);
-
-localStorage.setItem(
-
-"shelby_wallet",
-
-JSON.stringify({
-
-connected:true,
-
-address
-
-})
-
-);
-
-}
-
-catch{
-
-alert(
-
-"Wallet connection failed"
-
-);
-
-}
-
-}
-
-function disconnectWallet(){
-
-setWalletConnected(
-
-false
-
-);
-
-setWalletAddress("");
-
-localStorage.removeItem(
-
-"shelby_wallet"
-
-);
-
-}
-
-function uploadFile(){
-
-if(!selectedFile)return;
-
-setProgress(100);
-
-setUploadedFiles([
-
-selectedFile.name,
-
-...uploadedFiles
-
-]);
-
-}
-
-return(
+  return (
 
 <div
 style={{
-
-background:"#020617",
-
+background:"#020817",
 minHeight:"100vh",
-
 padding:"20px",
-
 color:"white"
-
 }}
-
 >
 
 <div
-
 style={{
-
 display:"flex",
-
 justifyContent:
-
-"space-between"
-
+"space-between",
+alignItems:"center"
 }}
-
 >
 
 <div>
 
 <h1
-
 style={{
-
-color:"#22d3ee",
-
-fontSize:"52px"
-
+fontSize:"55px",
+color:"#14c8ff"
 }}
-
 >
-
 Shelby
-
 </h1>
 
 <p>
-
 Storage Dashboard
-
 </p>
 
 </div>
@@ -312,33 +179,67 @@ Storage Dashboard
 <div>
 
 {
+walletConnected ?
 
-walletConnected?
+<div
+style={{
+display:"flex",
+gap:"10px"
+}}
+>
 
 <button
+style={{
+background:"#14c8ff",
+padding:"12px",
+borderRadius:"8px"
+}}
+>
 
-onClick={
+{
+walletAddress
+.slice(0,6)
 
-disconnectWallet
++
 
+"..."
+
++
+
+walletAddress
+.slice(-4)
 }
 
+</button>
+
+<button
+onClick={
+disconnectWallet
+}
+style={{
+background:"red",
+padding:"12px",
+borderRadius:"8px"
+}}
 >
 
 Disconnect
 
 </button>
 
+</div>
+
 :
 
 <button
-
 onClick={
-
 connectWallet
-
 }
-
+style={{
+background:"#14c8ff",
+padding:"12px",
+borderRadius:"8px"
+}}
 >
 
 Connect Wallet
@@ -354,73 +255,76 @@ Connect Wallet
 <br/>
 
 <div
-
 style={{
-
 display:"grid",
-
 gridTemplateColumns:
-
 "repeat(4,1fr)",
-
-gap:"10px"
-
+gap:"15px"
 }}
-
 >
 
-<div>
+<div
+style={{
+background:"#0f172a",
+padding:"20px",
+borderRadius:"10px"
+}}
+>
 
 Files Uploaded
 
 <br/>
 
 {
-
 uploadedFiles.length
-
 }
 
 </div>
 
-<div>
+<div
+style={{
+background:"#0f172a",
+padding:"20px",
+borderRadius:"10px"
+}}
+>
 
 Storage Active
 
 </div>
 
-<div>
+<div
+style={{
+background:"#0f172a",
+padding:"20px",
+borderRadius:"10px"
+}}
+>
 
 {
-
-walletConnected?
-
+walletConnected
+?
 "Network Connected"
-
 :
-
 "Network Offline"
-
 }
 
 </div>
 
-<div>
+<div
+style={{
+background:"#0f172a",
+padding:"20px",
+borderRadius:"10px"
+}}
+>
 
 {
-
-walletConnected?
-
-walletAddress.slice(
-
-0,10
-
-)+"..."
-
+walletConnected
+?
+"Wallet Connected"
 :
-
 "Wallet Not Connected"
-
 }
 
 </div>
@@ -430,29 +334,19 @@ walletAddress.slice(
 <br/>
 
 <div
-
 style={{
-
-background:"#071229",
-
-padding:"30px",
-
+background:"#081224",
+padding:"40px",
 borderRadius:"20px"
-
 }}
-
 >
 
 <h1
-
 style={{
-
 textAlign:"center",
-
-color:"#22d3ee"
-
+fontSize:"60px",
+color:"#14c8ff"
 }}
-
 >
 
 Shelby File Uploader
@@ -460,13 +354,9 @@ Shelby File Uploader
 </h1>
 
 <p
-
 style={{
-
 textAlign:"center"
-
 }}
-
 >
 
 Powered by Aptos
@@ -479,15 +369,11 @@ Powered by Aptos
 
 type="file"
 
-onChange={(e)=>
+onChange={e=>
 
 setSelectedFile(
 
-e.target.files?.[0]
-
-||
-
-null
+e.target.files[0]
 
 )
 
@@ -495,11 +381,22 @@ null
 
 />
 
-<br/><br/>
+<br/>
+<br/>
 
 <button
 
 onClick={uploadFile}
+
+style={{
+
+background:"#14c8ff",
+
+padding:"15px",
+
+borderRadius:"10px"
+
+}}
 
 >
 
@@ -507,9 +404,8 @@ Upload To Shelby
 
 </button>
 
-<br/><br/>
-
-<div>
+<br/>
+<br/>
 
 Upload:
 
@@ -517,51 +413,43 @@ Upload:
 
 </div>
 
-</div>
-
 <br/>
 
 <div
-
 style={{
-
 display:"grid",
-
 gridTemplateColumns:
-
 "1fr 1fr",
-
 gap:"20px"
-
 }}
-
 >
 
-<div>
-
-<h3>
+<div
+style={{
+background:"#0f172a",
+padding:"20px",
+borderRadius:"10px"
+}}
+>
 
 Upload History
 
-</h3>
+<br/>
+<br/>
 
 {
 
 uploadedFiles.map(
+(
+item,
+i
+)=>
 
-(file,index)=>(
+<div key={i}>
 
-<div
-
-key={index}
-
->
-
-{file}
+{item}
 
 </div>
-
-)
 
 )
 
@@ -569,37 +457,31 @@ key={index}
 
 </div>
 
-<div>
-
-<h3>
+<div
+style={{
+background:"#0f172a",
+padding:"20px",
+borderRadius:"10px"
+}}
+>
 
 Recent Activity
 
-</h3>
-
-<div>
+<br/>
 
 {
-
-walletConnected?
-
+walletConnected
+?
 "Wallet Connected"
-
 :
-
 "Wallet Offline"
-
 }
 
-</div>
-
-<div>
+<br/>
 
 Storage Active
 
-</div>
-
-<div>
+<br/>
 
 File Verified
 
@@ -607,26 +489,15 @@ File Verified
 
 </div>
 
-</div>
-
 <br/>
 
-<p
-
-style={{
-
-textAlign:"center"
-
-}}
-
->
+<center>
 
 Shelby Storage Protocol Built With Aptos
 
-</p>
+</center>
 
 </div>
 
-);
-
+  );
 }
