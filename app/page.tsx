@@ -1,497 +1,250 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState, useEffect } from "react";
 
 declare global {
   interface Window {
-    aptos?: any;
-    petra?: any;
+    aptos?: {
+      connect: () => Promise<{ address: string }>;
+      account: () => Promise<{ address: string }>;
+      isConnected: () => Promise<boolean>;
+      disconnect: () => Promise<void>;
+    };
+      petra?: {
+      connect: () => Promise<{ address: string }>;
+      account: () => Promise<{ address: string }>;
+      isConnected: () => Promise<boolean>;
+      disconnect: () => Promise<void>;
+    };
   }
 }
 
 export default function Home() {
-
-  const [walletConnected, setWalletConnected] =
-    useState(false);
-
-  const [walletAddress, setWalletAddress] =
-    useState("");
-
-  const [uploadedFiles, setUploadedFiles] =
-    useState<string[]>([]);
-
-  const [uploadProgress, setUploadProgress] =
-    useState(0);
+  const [wallet, setWallet] = useState<string>("");
+  const [connected, setConnected] = useState(false);
+  const [network, setNetwork] = useState("Offline");
+  const [uploadProgress, setUploadProgress] = useState(0);
 
   useEffect(() => {
-
-    const savedFiles =
-      localStorage.getItem(
-        "shelby_uploads"
-      );
-
-    if (savedFiles) {
-      setUploadedFiles(
-        JSON.parse(savedFiles)
-      );
-    }
-
-    const savedWallet =
-      localStorage.getItem(
-        "wallet_address"
-      );
-
-    if (savedWallet) {
-
-      setWalletConnected(
-        true
-      );
-
-      setWalletAddress(
-        savedWallet
-      );
-
-    }
-
+    checkWallet();
   }, []);
 
-  useEffect(() => {
-
-    localStorage.setItem(
-      "shelby_uploads",
-      JSON.stringify(
-        uploadedFiles
-      )
-    );
-
-  }, [uploadedFiles]);
-
-  async function connectWallet() {
-
+  async function checkWallet() {
     try {
+      const provider = window.aptos || window.petra;
 
-      let wallet = null;
-
-      if (
-        typeof window !==
-        "undefined" &&
-        window.aptos
-      ) {
-
-        wallet =
-          window.aptos;
-
-      }
-
-      else if (
-        typeof window !==
-        "undefined" &&
-        window.petra
-      ) {
-
-        wallet =
-          window.petra;
-
-      }
-
-      if (!wallet) {
-
-        const mobile =
-          /Android|iPhone|iPad/i
-          .test(
-            navigator.userAgent
-          );
-
-        if (mobile) {
-
-          window.location.href =
-            "petra://";
-
-        }
-
-        alert(
-          "Petra Wallet পাওয়া যায়নি"
-        );
-
+      if (!provider) {
+        console.log("Wallet not found");
         return;
       }
 
-      let connected =
-        false;
+      const isConnected = await provider.isConnected();
 
-      try {
+      if (isConnected) {
+        const account = await provider.account();
 
-        connected =
-          await wallet
-          .isConnected();
-
+        setWallet(account.address);
+        setConnected(true);
+        setNetwork("Online");
       }
-
-      catch {}
-
-      if (
-        !connected
-      ) {
-
-        await wallet
-        .connect();
-
-      }
-
-      const account =
-        await wallet
-        .account();
-
-      if (
-        !account ||
-        !account.address
-      ) {
-
-        throw new Error(
-          "No address"
-        );
-
-      }
-
-      setWalletConnected(
-        true
-      );
-
-      setWalletAddress(
-        account.address
-      );
-
-      localStorage.setItem(
-        "wallet_address",
-        account.address
-      );
-
-      alert(
-        "Wallet Connected"
-      );
-
+    } catch (err) {
+      console.log(err);
     }
-
-    catch (e) {
-
-      console.log(e);
-
-      alert(
-        "Wallet connection failed"
-      );
-
-    }
-
   }
 
-  function uploadFile(
-    e:
-    React.ChangeEvent<
-      HTMLInputElement
-    >
-  ) {
+  async function connectWallet() {
+    try {
+      const provider = window.aptos || window.petra;
 
-    const file =
-      e.target.files?.[0];
+      if (!provider) {
+        alert(
+          "Petra wallet not found. Install Petra browser extension or mobile app."
+        );
+        return;
+      }
 
-    if (!file)
-      return;
+      const response = await provider.connect();
 
-    setUploadProgress(
-      20
-    );
+      setWallet(response.address);
+      setConnected(true);
+      setNetwork("Online");
 
-    setTimeout(
-      () => {
+      alert("Wallet connected");
+    } catch (err) {
+      console.log(err);
 
-      setUploadProgress(
-        60
-      );
+      alert("Wallet connection failed");
+    }
+  }
 
-    }, 500);
+  async function disconnectWallet() {
+    try {
+      const provider = window.aptos || window.petra;
 
-    setTimeout(
-      () => {
+      if (provider) {
+        await provider.disconnect();
+      }
 
-      setUploadProgress(
-        100
-      );
-
-      setUploadedFiles(
-        prev => [
-          ...prev,
-          file.name
-        ]
-      );
-
-    }, 1200);
-
+      setWallet("");
+      setConnected(false);
+      setNetwork("Offline");
+    } catch (err) {
+      console.log(err);
+    }
   }
 
   return (
-
     <main
       style={{
-        minHeight:
-          "100vh",
-
-        background:
-          "#02061d",
-
-        color:
-          "white",
-
-        padding:
-          "15px"
+        minHeight: "100vh",
+        background: "#020817",
+        color: "white",
+        padding: "20px",
       }}
     >
-
       <div
         style={{
-          display:
-            "flex",
-
-          justifyContent:
-            "space-between",
-
-          alignItems:
-            "center"
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          marginBottom: "20px",
         }}
       >
-
         <div>
-
           <h1
             style={{
-              color:
-                "#12b7ff",
-
-              fontSize:
-                "58px",
-
-              margin:
-                "0"
+              color: "#38bdf8",
+              fontSize: "58px",
+              marginBottom: "10px",
             }}
           >
-
             Shelby
-
           </h1>
 
-          <p>
-
+          <p style={{ color: "#cbd5e1" }}>
             Storage Dashboard
-
           </p>
-
         </div>
 
-        <button
-
-          onClick={
-            connectWallet
-          }
-
-          style={{
-
-            background:
-              "#00bcd4",
-
-            color:
-              "white",
-
-            border:
-              "none",
-
-            borderRadius:
-              "10px",
-
-            padding:
-              "12px"
-
-          }}
-
-        >
-
-          {
-
-            walletConnected
-
-            ?
-
-            walletAddress
-            .slice(
-              0,
-              8
-            )
-
-            + "..."
-
-            :
-
-            "Connect Wallet"
-
-          }
-
-        </button>
-
+        {!connected ? (
+          <button
+            onClick={connectWallet}
+            style={{
+              background: "#0891b2",
+              border: "none",
+              padding: "12px 20px",
+              borderRadius: "10px",
+              color: "white",
+            }}
+          >
+            Connect Wallet
+          </button>
+        ) : (
+          <button
+            onClick={disconnectWallet}
+            style={{
+              background: "#dc2626",
+              border: "none",
+              padding: "12px 20px",
+              borderRadius: "10px",
+              color: "white",
+            }}
+          >
+            Disconnect
+          </button>
+        )}
       </div>
-
-      <br />
 
       <div
         style={{
-
-          display:
-            "grid",
-
+          display: "grid",
           gridTemplateColumns:
-            "repeat(4,1fr)",
-
-          gap:
-            "10px"
-
+            "repeat(auto-fit,minmax(180px,1fr))",
+          gap: "15px",
+          marginBottom: "30px",
         }}
       >
-
-        <div>
-
+        <div
+          style={{
+            background: "#071226",
+            padding: "20px",
+            borderRadius: "12px",
+          }}
+        >
           Files Uploaded
-
           <br />
-
-          {
-            uploadedFiles
-            .length
-          }
-
+          0
         </div>
 
-        <div>
-
+        <div
+          style={{
+            background: "#071226",
+            padding: "20px",
+            borderRadius: "12px",
+          }}
+        >
           Storage Active
-
         </div>
 
-        <div>
-
-          Network Online
-
+        <div
+          style={{
+            background: "#071226",
+            padding: "20px",
+            borderRadius: "12px",
+          }}
+        >
+          Network {network}
         </div>
 
-        <div>
-
-          {
-
-            walletConnected
-
-            ?
-
-            "Wallet Connected"
-
-            :
-
-            "Wallet Not Connected"
-
-          }
-
+        <div
+          style={{
+            background: "#071226",
+            padding: "20px",
+            borderRadius: "12px",
+            overflow: "hidden",
+          }}
+        >
+          {connected
+            ? wallet.slice(0, 8) +
+              "..." +
+              wallet.slice(-6)
+            : "Wallet Not Connected"}
         </div>
-
       </div>
-
-      <br />
 
       <div
-
         style={{
-
-          background:
-            "#041233",
-
-          padding:
-            "25px",
-
-          borderRadius:
-            "15px"
-
+          background: "#06142b",
+          padding: "30px",
+          borderRadius: "15px",
         }}
-
       >
+        <h3
+          style={{
+            color: "#38bdf8",
+            textAlign: "center",
+          }}
+        >
+          Shelby File Uploader
+        </h3>
 
-        <center>
+        <p
+          style={{
+            textAlign: "center",
+          }}
+        >
+          Powered by Aptos
+        </p>
 
-          <h3>
+        <br />
 
-            Shelby File Uploader
-
-          </h3>
-
-          <p>
-
-            Powered by Aptos
-
-          </p>
-
-        </center>
-
-        <input
-
-          type="file"
-
-          onChange={
-            uploadFile
-          }
-
-        />
+        <input type="file" />
 
         <br />
         <br />
 
-        Upload:
-
-        {
-          uploadProgress
-        }
-
-        %
-
+        Upload: {uploadProgress}%
       </div>
-
-      <br />
-
-      <h3>
-
-        Upload History
-
-      </h3>
-
-      {
-
-        uploadedFiles.map(
-
-          (
-            file,
-            index
-          ) => (
-
-            <div
-              key={
-                index
-              }
-            >
-
-              {file}
-
-            </div>
-
-          )
-
-        )
-
-      }
-
     </main>
-
   );
-
 }
