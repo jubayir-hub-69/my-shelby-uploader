@@ -1,77 +1,75 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 
 declare global {
   interface Window {
-    aptos?: {
-      connect: () => Promise<{ address: string }>;
-      account: () => Promise<{ address: string }>;
-      isConnected: () => Promise<boolean>;
-      disconnect: () => Promise<void>;
-    };
-      petra?: {
-      connect: () => Promise<{ address: string }>;
-      account: () => Promise<{ address: string }>;
-      isConnected: () => Promise<boolean>;
-      disconnect: () => Promise<void>;
-    };
+    aptos?: any;
+    petra?: any;
   }
 }
 
 export default function Home() {
-  const [wallet, setWallet] = useState<string>("");
+  const [walletAddress, setWalletAddress] = useState("");
   const [connected, setConnected] = useState(false);
   const [network, setNetwork] = useState("Offline");
-  const [uploadProgress, setUploadProgress] = useState(0);
+
+  const getProvider = () => {
+    if (typeof window === "undefined") return null;
+
+    if (window.aptos) return window.aptos;
+
+    if (window.petra?.aptos) return window.petra.aptos;
+
+    return null;
+  };
 
   useEffect(() => {
-    checkWallet();
+    autoConnect();
   }, []);
 
-  async function checkWallet() {
+  async function autoConnect() {
     try {
-      const provider = window.aptos || window.petra;
+      const provider = getProvider();
 
-      if (!provider) {
-        console.log("Wallet not found");
-        return;
-      }
+      if (!provider) return;
 
-      const isConnected = await provider.isConnected();
+      const status = await provider.isConnected();
 
-      if (isConnected) {
+      if (status) {
         const account = await provider.account();
 
-        setWallet(account.address);
+        setWalletAddress(account.address);
+
         setConnected(true);
+
         setNetwork("Online");
       }
-    } catch (err) {
-      console.log(err);
+    } catch (e) {
+      console.log(e);
     }
   }
 
   async function connectWallet() {
     try {
-      const provider = window.aptos || window.petra;
+      const provider = getProvider();
 
       if (!provider) {
-        alert(
-          "Petra wallet not found. Install Petra browser extension or mobile app."
-        );
+        alert("Petra wallet not detected");
         return;
       }
 
-      const response = await provider.connect();
+      await provider.connect();
 
-      setWallet(response.address);
+      const account = await provider.account();
+
+      setWalletAddress(account.address);
+
       setConnected(true);
-      setNetwork("Online");
 
-      alert("Wallet connected");
-    } catch (err) {
-      console.log(err);
+      setNetwork("Online");
+    } catch (e) {
+      console.log(e);
 
       alert("Wallet connection failed");
     }
@@ -79,17 +77,19 @@ export default function Home() {
 
   async function disconnectWallet() {
     try {
-      const provider = window.aptos || window.petra;
+      const provider = getProvider();
 
       if (provider) {
         await provider.disconnect();
       }
 
-      setWallet("");
+      setWalletAddress("");
+
       setConnected(false);
+
       setNetwork("Offline");
-    } catch (err) {
-      console.log(err);
+    } catch (e) {
+      console.log(e);
     }
   }
 
@@ -97,7 +97,7 @@ export default function Home() {
     <main
       style={{
         minHeight: "100vh",
-        background: "#020817",
+        background: "#020617",
         color: "white",
         padding: "20px",
       }}
@@ -106,24 +106,21 @@ export default function Home() {
         style={{
           display: "flex",
           justifyContent: "space-between",
-          alignItems: "center",
-          marginBottom: "20px",
+          marginBottom: "30px",
         }}
       >
         <div>
           <h1
             style={{
               color: "#38bdf8",
-              fontSize: "58px",
-              marginBottom: "10px",
+              fontSize: "60px",
+              margin: 0,
             }}
           >
             Shelby
           </h1>
 
-          <p style={{ color: "#cbd5e1" }}>
-            Storage Dashboard
-          </p>
+          <p>Storage Dashboard</p>
         </div>
 
         {!connected ? (
@@ -131,10 +128,10 @@ export default function Home() {
             onClick={connectWallet}
             style={{
               background: "#0891b2",
-              border: "none",
-              padding: "12px 20px",
-              borderRadius: "10px",
               color: "white",
+              border: "none",
+              padding: "12px",
+              borderRadius: "10px",
             }}
           >
             Connect Wallet
@@ -143,11 +140,11 @@ export default function Home() {
           <button
             onClick={disconnectWallet}
             style={{
-              background: "#dc2626",
-              border: "none",
-              padding: "12px 20px",
-              borderRadius: "10px",
+              background: "red",
               color: "white",
+              border: "none",
+              padding: "12px",
+              borderRadius: "10px",
             }}
           >
             Disconnect
@@ -161,7 +158,6 @@ export default function Home() {
           gridTemplateColumns:
             "repeat(auto-fit,minmax(180px,1fr))",
           gap: "15px",
-          marginBottom: "30px",
         }}
       >
         <div
@@ -201,20 +197,20 @@ export default function Home() {
             background: "#071226",
             padding: "20px",
             borderRadius: "12px",
-            overflow: "hidden",
           }}
         >
           {connected
-            ? wallet.slice(0, 8) +
+            ? walletAddress.slice(0, 8) +
               "..." +
-              wallet.slice(-6)
+              walletAddress.slice(-6)
             : "Wallet Not Connected"}
         </div>
       </div>
 
       <div
         style={{
-          background: "#06142b",
+          background: "#071226",
+          marginTop: "30px",
           padding: "30px",
           borderRadius: "15px",
         }}
@@ -228,22 +224,11 @@ export default function Home() {
           Shelby File Uploader
         </h3>
 
-        <p
-          style={{
-            textAlign: "center",
-          }}
-        >
+        <p style={{ textAlign: "center" }}>
           Powered by Aptos
         </p>
 
-        <br />
-
         <input type="file" />
-
-        <br />
-        <br />
-
-        Upload: {uploadProgress}%
       </div>
     </main>
   );
