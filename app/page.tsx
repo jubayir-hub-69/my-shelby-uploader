@@ -70,127 +70,156 @@ export default function Home() {
   }, [connected]);
 
   return (
-    <main
+  <main
+    style={{
+      minHeight: "100vh",
+      background:
+        "linear-gradient(180deg,#07111f,#0c1830)",
+      color: "white",
+      padding: "25px",
+      fontFamily: "sans-serif",
+    }}
+  >
+    <div
       style={{
-        minHeight:
-          "100vh",
-        background:
-          "#020617",
-        color:
-          "white",
-        padding:
-          "20px",
+        display: "flex",
+        justifyContent: "space-between",
+        alignItems: "center",
+        marginBottom: "30px",
       }}
     >
-      <div
-        style={{
-          display:
-            "flex",
-
-          justifyContent:
-            "space-between",
-
-          alignItems:
-            "center",
-        }}
-      >
-        <div>
-          <h1
-            style={{
-              fontSize:
-                "58px",
-
-              color:
-                "#00bfff",
-            }}
-          >
-            Shelby
-          </h1>
-
-          <p>
-            Storage Dashboard
-          </p>
-        </div>
-
-        <button
-          onClick={
-            connected
-              ? disconnect
-              : connectWallet
-          }
+      <div>
+        <h1
           style={{
-            background:
-              "#06b6d4",
-
-            color:
-              "white",
-
-            padding:
-              "14px",
-
-            border:
-              "none",
-
-            borderRadius:
-              "12px",
+            fontSize: "48px",
+            margin: 0,
+            color: "#34d3ff",
           }}
         >
-          {connected
-            ? account
-                ?.address
-                ?.toString()
-                .slice(
-                  0,
-                  6
-                ) +
-              "..." +
-              account
-                ?.address
-                ?.toString()
-                .slice(
-                  -4
-                )
-            : "Connect Wallet"}
-        </button>
+          Shelby
+        </h1>
+
+        <p
+          style={{
+            opacity: 0.7,
+          }}
+        >
+          Storage Dashboard
+        </p>
+      </div>
+
+      <button
+        onClick={
+          connected
+            ? disconnect
+            : connectWallet
+        }
+        style={{
+          background:
+            "linear-gradient(90deg,#00c6ff,#0072ff)",
+          border: "none",
+          padding: "14px 20px",
+          borderRadius: "15px",
+          color: "white",
+        }}
+      >
+        {connected
+          ? account?.address
+              ?.toString()
+              .slice(0,6)
+            + "..."
+            + account?.address
+              ?.toString()
+              .slice(-4)
+          : "Connect Wallet"}
+      </button>
+    </div>
+
+    <div
+      style={{
+        display: "grid",
+        gridTemplateColumns:
+          "repeat(auto-fit,minmax(220px,1fr))",
+        gap: "18px",
+      }}
+    >
+
+      <div
+        style={{
+          background:"#101d36",
+          padding:"20px",
+          borderRadius:"20px",
+        }}
+      >
+        <h3>Files Uploaded</h3>
+        <h1>1</h1>
       </div>
 
       <div
         style={{
-          display:
-            "grid",
-
-          gridTemplateColumns:
-            "repeat(auto-fit,minmax(180px,1fr))",
-
-          gap:
-            "15px",
-
-          marginTop:
-            "30px",
+          background:"#101d36",
+          padding:"20px",
+          borderRadius:"20px",
         }}
       >
-        <div>
-          Files Uploaded
-          <br />
-          1
-        </div>
-
-        <div>
-          Storage Active
-        </div>
-
-        <div>
-          Network
-          <br />
-          {network}
-        </div>
-
-        <div>
-          {connected
-            ? "Wallet Connected"
-            : "Wallet Not Connected"}
-        </div>
+        <h3>Storage</h3>
+        <h1>Active</h1>
       </div>
-    </main>
-  );
-}
+
+      <div
+        style={{
+          background:"#101d36",
+          padding:"20px",
+          borderRadius:"20px",
+        }}
+      >
+        <h3>Network</h3>
+        <h1>{network}</h1>
+      </div>
+
+      <div
+        style={{
+          background:"#101d36",
+          padding:"20px",
+          borderRadius:"20px",
+        }}
+      >
+        <h3>Status</h3>
+
+        <h1>
+          {connected
+            ? "Connected"
+            : "Disconnected"}
+        </h1>
+
+      </div>
+
+    </div>
+
+    <div
+      style={{
+        marginTop:"30px",
+        background:"#101d36",
+        padding:"25px",
+        borderRadius:"20px",
+      }}
+    >
+      <h2>Upload Area</h2>
+
+      <div
+        style={{
+          border:
+            "2px dashed #34d3ff",
+          padding:"50px",
+          textAlign:"center",
+          borderRadius:"20px",
+        }}
+      >
+        Drop file here
+      </div>
+
+    </div>
+
+  </main>
+);
+
