@@ -1,25 +1,27 @@
+"use client";
+
 import React, { useState, useEffect, useRef } from 'react';
 import { ShelbyClient } from '@shelby-protocol/sdk';
 
 export default function Home() {
   const [connected, setConnected] = useState(false);
-  const [account, setAccount] = useState(null);
+  const [account, setAccount] = useState<any>(null);
   const [filesUploaded, setFilesUploaded] = useState(1);
   const = useState("Active");
   const [network, setNetwork] = useState("Offline");
   const [uploading, setUploading] = useState(false);
-  const fileInputRef = useRef(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // ১. Petra Wallet কানেক্ট করার ফাংশন (Aptos Labs Wallet Adapter)
+  // ১. Petra Wallet কানেক্ট করার ফাংশন
   async function connectWallet() {
     try {
-      if (typeof window!== 'undefined' && window.aptos) {
-        const response = await window.aptos.connect();
+      if (typeof window!== 'undefined' && (window as any).aptos) {
+        const response = await (window as any).aptos.connect();
         setAccount(response);
         setConnected(true);
-        setNetwork("Devnet"); // ওয়ালেট কানেক্ট হলে নেটওয়ার্ক ডাইনামিকালি সেট হবে
+        setNetwork("Devnet"); // কানেক্ট হলে Devnet দেখাবে
       } else {
-        // Petra ব্রাউজারে ইনস্টল করা না থাকলে Petra ডাউনলোডের সাইটে নিয়ে যাবে
+        // Petra এক্সটেনশন না থাকলে Petra ডাউনলোডের সাইটে নিয়ে যাবে
         window.open('https://petra.app', '_blank');
       }
     } catch (error) {
@@ -31,8 +33,8 @@ export default function Home() {
   // ২. ওয়ালেট ডিসকানেক্ট করার ফাংশন
   async function disconnectWallet() {
     try {
-      if (typeof window!== 'undefined' && window.aptos) {
-        await window.aptos.disconnect();
+      if (typeof window!== 'undefined' && (window as any).aptos) {
+        await (window as any).aptos.disconnect();
       }
       setConnected(false);
       setAccount(null);
@@ -42,14 +44,14 @@ export default function Home() {
     }
   }
 
-  // ৩. পেজ রিফ্রেশ হলে ওয়ালেটের পূর্ববর্তী কানেকশন স্বয়ংক্রিয়ভাবে চেক করবে
+  // ৩. ব্রাউজার রিফ্রেশ হলে ওয়ালেটের পূর্ববর্তী কানেকশন স্বয়ংক্রিয়ভাবে চেক করার হুক
   useEffect(() => {
     const checkConnection = async () => {
-      if (typeof window!== 'undefined' && window.aptos) {
+      if (typeof window!== 'undefined' && (window as any).aptos) {
         try {
-          const isConnected = await window.aptos.isConnected();
+          const isConnected = await (window as any).aptos.isConnected();
           if (isConnected) {
-            const response = await window.aptos.account();
+            const response = await (window as any).aptos.account();
             setAccount(response);
             setConnected(true);
             setNetwork("Devnet");
@@ -60,23 +62,24 @@ export default function Home() {
       }
     };
     checkConnection();
-  },); // এখানে আগের ভুল বন্ধনীটি সঠিকভাবে ঠিক করা হয়েছে
+  },); // খালি ডিপেন্ডেন্সি অ্যারে [ ] সহ সঠিক ব্র্যাকেট বসানো হয়েছে
 
   // ৪. Shelby SDK ব্যবহার করে ফাইল আপলোড করার ফাংশন
-  const uploadFileToShelby = async (files) => {
+  const uploadFileToShelby = async (files: FileList | null) => {
     if (!connected) {
       alert("Please connect your wallet first!");
       return;
     }
     if (!files || files.length === 0) return;
 
-    const file = files; // FileList থেকে প্রথম ফাইলটি সিলেক্ট করা হচ্ছে
+    const file = files;
     setUploading(true);
     try {
       const reader = new FileReader();
       reader.onload = async (event) => {
         try {
-          const fileData = new Uint8Array(event.target.result);
+          if (!event.target ||!event.target.result) return;
+          const fileData = new Uint8Array(event.target.result as ArrayBuffer);
           
           // Shelby Client ইনিশিয়ালাইজেশন
           const client = new ShelbyClient({
@@ -109,7 +112,7 @@ export default function Home() {
   };
 
   // ৫. ড্রপজোন হ্যান্ডলার (Drag and Drop)
-  const handleDrop = (e) => {
+  const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
     if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
       uploadFileToShelby(e.dataTransfer.files);
@@ -117,7 +120,7 @@ export default function Home() {
   };
 
   // ৬. ম্যানুয়ালি ফাইল সিলেক্ট করার হ্যান্ডলার
-  const handleFileSelect = (e) => {
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
       uploadFileToShelby(e.target.files);
     }
@@ -156,16 +159,16 @@ export default function Home() {
             fontWeight: 'bold',
             transition: 'opacity 0.2s'
           }}
-          onMouseOver={(e) => e.target.style.opacity = '0.9'}
-          onMouseOut={(e) => e.target.style.opacity = '1'}
+          onMouseOver={(e) => ((e.target as HTMLButtonElement).style.opacity = '0.9')}
+          onMouseOut={(e) => ((e.target as HTMLButtonElement).style.opacity = '1')}
         >
-          {connected && account
-           ? `${account.address.substring(0, 6)}...${account.address.substring(account.address.length - 4)}`
+          {connected && account && account.address
+          ? `${account.address.substring(0, 6)}...${account.address.substring(account.address.length - 4)}`
             : 'Connect Wallet'}
         </button>
       </div>
 
-          {/* স্ট্যাটাস কার্ডসমূহ (ডাইনামিক গ্রিড) */}
+      {/* স্ট্যাটাস কার্ডসমূহ (ডাইনামিক গ্রিড) */}
       <div style={{
         display: 'grid',
         gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
@@ -209,7 +212,7 @@ export default function Home() {
         <div
           onDragOver={(e) => e.preventDefault()}
           onDrop={handleDrop}
-          onClick={() => fileInputRef.current.click()}
+          onClick={() => fileInputRef.current?.click()}
           style={{
             border: '2px dashed #38bdf8',
             padding: '50px 20px',
