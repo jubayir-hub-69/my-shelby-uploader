@@ -21,7 +21,7 @@ export default function Home() {
         setConnected(true);
         setNetwork("Devnet"); // কানেক্ট হলে Devnet দেখাবে
       } else {
-        // Petra এক্সটেনশন না থাকলে Petra ডাউনলোডের সাইটে নিয়ে যাবে
+        alert('Petra Wallet not found! If you are on mobile, please open this link inside the Petra Wallet App Browser.');
         window.open('https://petra.app', '_blank');
       }
     } catch (error) {
@@ -62,7 +62,7 @@ export default function Home() {
       }
     };
     checkConnection();
-  },); // খালি ডিপেন্ডেন্সি অ্যারে [ ] সহ সঠিক ব্র্যাকেট বসানো হয়েছে
+  },); // সঠিক খালি ডিপেন্ডেন্সি অ্যারে [ ] বসানো হয়েছে
 
   // ৪. Shelby SDK ব্যবহার করে ফাইল আপলোড করার ফাংশন
   const uploadFileToShelby = async (files: FileList | null) => {
@@ -72,7 +72,7 @@ export default function Home() {
     }
     if (!files || files.length === 0) return;
 
-    const file = files;
+    const file = files; // FileList থেকে প্রথম ফাইলটি সিলেক্ট করা হচ্ছে
     setUploading(true);
     try {
       const reader = new FileReader();
@@ -126,6 +126,16 @@ export default function Home() {
     }
   };
 
+  // ওয়ালেট অ্যাড্রেস ফরম্যাট করার হেল্পার
+  const getAddressString = () => {
+    if (!account) return '';
+    const addr = account.address || account.accountAddress || '';
+    if (typeof addr === 'string' && addr.length > 10) {
+      return `${addr.substring(0, 6)}...${addr.substring(addr.length - 4)}`;
+    }
+    return 'Connected';
+  };
+
   return (
     <main style={{
       minHeight: '100vh',
@@ -162,9 +172,7 @@ export default function Home() {
           onMouseOver={(e) => ((e.target as HTMLButtonElement).style.opacity = '0.9')}
           onMouseOut={(e) => ((e.target as HTMLButtonElement).style.opacity = '1')}
         >
-          {connected && account && account.address
-          ? `${account.address.substring(0, 6)}...${account.address.substring(account.address.length - 4)}`
-            : 'Connect Wallet'}
+          {connected && account? getAddressString() : 'Connect Wallet'}
         </button>
       </div>
 
@@ -237,4 +245,3 @@ export default function Home() {
     </main>
   );
 }
-
