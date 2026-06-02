@@ -2,10 +2,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 
-// Vercel build-এ প্ল্যাটফর্মের ব্র্যাকেট বাগ এড়াতে সুরক্ষিত খালি dependency রেফারেন্স
-const EMPTY_DEPS: any = new Array();
-
-// স্কয়ার ব্র্যাকেট ছাড়া state destructuring করার জন্য হেল্পার ফাংশন
+// Safe helper functions to extract array values without using any square brackets to prevent parser swallowing
 const getFirstElement = (array: any): any => {
   return array.slice(0, 1).pop();
 };
@@ -13,6 +10,8 @@ const getFirstElement = (array: any): any => {
 const getSecondElement = (array: any): any => {
   return array.slice(1, 2).pop();
 };
+
+const EMPTY_DEPS: any = new Array();
 
 export default function Home() {
   const connectedState = useState(false);
@@ -41,7 +40,15 @@ export default function Home() {
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // ১. Petra Wallet কানেক্ট করার ফাংশন
+  // Helper function to activate Mock/Demo Mode when wallet connection is unavailable
+  function activateDemoMode() {
+    setAccount({ address: "0x1234567890abcdef1234567890abcdef12345678" });
+    setConnected(true);
+    setNetwork("Devnet (Demo)");
+    alert("Connected in Demo Mode! You can now test the upload area and dashboard status.");
+  }
+
+  // 1. Wallet connection using Petra extension API with dynamic error catcher and Demo Mode fallback
   async function connectWallet() {
     try {
       if (typeof window!== 'undefined') {
@@ -54,15 +61,32 @@ export default function Home() {
           return;
         }
       }
-      alert("Petra Wallet not found! If you are on mobile, please open this link inside the Petra Wallet App Browser.");
-      window.open("https://petra.app", "_blank");
-    } catch (error) {
+      
+      // Fallback to Demo Mode if Petra is not found in the browser
+      const useDemo = confirm("Petra Wallet extension not found!\n\nWould you like to connect in 'Demo Mode' to test the dashboard UI?");
+      if (useDemo) {
+        activateDemoMode();
+      } else {
+        window.open("https://petra.app", "_blank");
+      }
+    } catch (error: any) {
       console.error("Wallet connection failed:", error);
-      alert("Wallet connection failed! Please try again.");
+      
+      // Dynamic error detection (e.g. if the extension is locked or user cancels)
+      const errorMessage = error && error.message? error.message : String(error);
+      
+      const useDemo = confirm(
+        "Wallet Connection Failed!\n\nReason: " + errorMessage + 
+        "\n\nWould you like to bypass this and connect in 'Demo Mode' to test your website?"
+      );
+      
+      if (useDemo) {
+        activateDemoMode();
+      }
     }
   }
 
-  // ২. ওয়ালেট ডিসকানেক্ট করার ফাংশন
+  // 2. Disconnect wallet connection with defensive fallback
   async function disconnectWallet() {
     try {
       if (typeof window!== 'undefined') {
@@ -71,15 +95,17 @@ export default function Home() {
           await win.aptos.disconnect();
         }
       }
+    } catch (error) {
+      console.error("Disconnect error:", error);
+    } finally {
+      // Always reset frontend state to disconnected even if the extension throws an error
       setConnected(false);
       setAccount(null);
       setNetwork("Offline");
-    } catch (error) {
-      console.error("Disconnect failed:", error);
     }
   }
 
-  // ৩. ব্রাউজার রিফ্রেশ হলে ওয়ালেটের কানেকশন স্বয়ংক্রিয়ভাবে চেক করার হুক
+  // 3. Automatically check wallet connection status on refresh
   useEffect(() => {
     const checkConnection = async () => {
       if (typeof window!== 'undefined') {
@@ -102,7 +128,7 @@ export default function Home() {
     checkConnection();
   }, EMPTY_DEPS);
 
-  // ৪. সিমুলেটেড ফাইল আপলোড ফাংশন (কোনো ব্র্যাকেট বা পাইপ ক্যারেক্টার নেই)
+  // 4. Simulated file upload method
   const uploadFileToShelby = async (files: FileList | null) => {
     if (!connected) {
       alert("Please connect your wallet first!");
@@ -115,20 +141,19 @@ export default function Home() {
       return;
     }
 
-    const file = files.item(0); // files এর পরিবর্তে নিরাপদ item(0) মেথড ব্যবহার করা হয়েছে
+    const file = files.item(0);
     if (!file) {
       return;
     }
 
     setUploading(true);
     try {
-      // ফাইল আপলোডের একটি নকল বিলম্ব (Simulated Delay)
       await new Promise((resolve) => setTimeout(resolve, 2000));
       
       const currentCount = filesUploaded? filesUploaded : 0;
       setFilesUploaded(currentCount + 1);
       
-      alert("Success: " + file.name + " simulated upload to Shelby Network completed!");
+      alert("Success: " + file.name + " simulated upload completed successfully!");
     } catch (error) {
       console.error("Upload failed:", error);
       alert("Something went wrong during upload.");
@@ -137,7 +162,7 @@ export default function Home() {
     }
   };
 
-  // ৫. ড্রপজোন হ্যান্ডলার (Drag and Drop)
+  // 5. Drag and Drop handlers
   const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
     if (e.dataTransfer) {
@@ -149,7 +174,7 @@ export default function Home() {
     }
   };
 
-  // ৬. ম্যানুয়ালি ফাইল সিলেক্ট করার হ্যান্ডলার
+  // 6. Manual file selection handler
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
       if (e.target.files.length > 0) {
@@ -158,7 +183,7 @@ export default function Home() {
     }
   };
 
-  // ৭. ওয়ালেট অ্যাড্রেস ফরম্যাট করার হেল্পার
+  // 7. Format connected wallet address smoothly
   const getAddressString = () => {
     if (!account) return "";
     let addr = account.address;
@@ -186,7 +211,6 @@ export default function Home() {
       padding: '40px',
       fontFamily: 'sans-serif'
     }}>
-      {/* হেডার সেকশন */}
       <div style={{
         display: 'flex',
         justifyContent: 'space-between',
@@ -198,7 +222,6 @@ export default function Home() {
           <p style={{ opacity: 0.7, margin: '5px 0 0 0', fontSize: '12px' }}>Storage Dashboard</p>
         </div>
         
-        {/* ওয়ালেট কানেক্ট বাটন */}
         <button 
           onClick={connected? disconnectWallet : connectWallet} 
           style={{
@@ -218,7 +241,6 @@ export default function Home() {
         </button>
       </div>
 
-      {/* স্ট্যাটাস কার্ডসমূহ (ডাইনামিক গ্রিড) */}
       <div style={{
         display: 'grid',
         gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
@@ -250,7 +272,6 @@ export default function Home() {
         </div>
       </div>
 
-      {/* ড্রপ ও আপলোড এরিয়া */}
       <div style={{
         background: '#111827',
         padding: '20px',
