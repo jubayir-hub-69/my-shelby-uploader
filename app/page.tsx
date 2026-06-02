@@ -3,7 +3,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { AptosWalletAdapterProvider, useWallet } from "@aptos-labs/wallet-adapter-react";
 
-// Safe helper functions to extract array values without using any square brackets
+const EMPTY_DEPS: any = new Array();
+
 const getFirstElement = (array: any): any => {
   return array.slice(0, 1).pop();
 };
@@ -12,9 +13,7 @@ const getSecondElement = (array: any): any => {
   return array.slice(1, 2).pop();
 };
 
-const EMPTY_DEPS: any = new Array();
-
-function Home() {
+function DashboardContent() {
   const { connect, disconnect, connected, account, network } = useWallet();
 
   const filesUploadedState = useState(1);
@@ -27,7 +26,6 @@ function Home() {
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // 1. Connect Petra Wallet using official adapter standard
   const handleConnect = async () => {
     try {
       await connect("Petra");
@@ -37,24 +35,29 @@ function Home() {
     }
   };
 
-  // 2. Format connected wallet address smoothly
-  const getAddressString = () => {
-    if (!account) return "";
-    let addr = account.address;
-    if (!addr) {
-      addr = "";
+  const handleDisconnect = async () => {
+    try {
+      await disconnect();
+    } catch (error) {
+      console.error("Disconnect failed:", error);
     }
-    if (typeof addr === "string") {
-      if (addr.length > 10) {
-        const startStr = addr.substring(0, 6);
-        const endStr = addr.substring(addr.length - 4);
-        return startStr + "..." + endStr;
-      }
-    }
-    return "Connected";
   };
 
-  // 3. Simulated file upload method
+  const getAddressString = () => {
+    if (!account) return "";
+    try {
+      const addrStr = account.address.toString();
+      if (addrStr.length > 10) {
+        const startStr = addrStr.substring(0, 6);
+        const endStr = addrStr.substring(addrStr.length - 4);
+        return startStr + "..." + endStr;
+      }
+      return addrStr;
+    } catch (e) {
+      return "Connected";
+    }
+  };
+
   const uploadFileToShelby = async (files: FileList | null) => {
     if (!connected) {
       alert("Please connect your wallet first!");
@@ -77,7 +80,7 @@ function Home() {
       await new Promise((resolve) => setTimeout(resolve, 2000));
       const currentCount = filesUploaded? filesUploaded : 0;
       setFilesUploaded(currentCount + 1);
-      alert("Success: " + file.name + " uploaded completed successfully!");
+      alert("Success: " + file.name + " uploaded successfully!");
     } catch (error) {
       console.error("Upload failed:", error);
       alert("Something went wrong during upload.");
@@ -86,7 +89,6 @@ function Home() {
     }
   };
 
-  // 4. Drag and Drop handlers
   const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
     if (e.dataTransfer) {
@@ -98,7 +100,6 @@ function Home() {
     }
   };
 
-  // 5. Manual file selection handler
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
       if (e.target.files.length > 0) {
@@ -115,7 +116,6 @@ function Home() {
       padding: '40px',
       fontFamily: 'sans-serif'
     }}>
-      {/* Header Section */}
       <div style={{
         display: 'flex',
         justifyContent: 'space-between',
@@ -127,14 +127,13 @@ function Home() {
           <p style={{ opacity: 0.7, margin: '5px 0 0 0', fontSize: '12px' }}>Storage Dashboard</p>
         </div>
         
-        {/* Real Wallet Connection & Disconnection UI */}
         {connected? (
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
             <span style={{ fontSize: '12px', color: '#10b981', background: '#111827', padding: '6px 12px', borderRadius: '6px', border: '1px solid #1f2937' }}>
               {getAddressString()}
             </span>
             <button 
-              onClick={disconnect} 
+              onClick={handleDisconnect} 
               style={{
                 background: 'linear-gradient(90deg, #ef4444, #dc2626)',
                 border: 'none',
@@ -146,8 +145,6 @@ function Home() {
                 fontSize: '12px',
                 transition: 'opacity 0.2s'
               }}
-              onMouseOver={(e) => ((e.target as HTMLButtonElement).style.opacity = '0.9')}
-              onMouseOut={(e) => ((e.target as HTMLButtonElement).style.opacity = '1')}
             >
               Disconnect
             </button>
@@ -165,15 +162,12 @@ function Home() {
               fontWeight: 'bold',
               transition: 'opacity 0.2s'
             }}
-            onMouseOver={(e) => ((e.target as HTMLButtonElement).style.opacity = '0.9')}
-            onMouseOut={(e) => ((e.target as HTMLButtonElement).style.opacity = '1')}
           >
             Connect Wallet
           </button>
         )}
       </div>
 
-      {/* Status Cards */}
       <div style={{
         display: 'grid',
         gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
@@ -193,7 +187,7 @@ function Home() {
         <div style={{ background: '#111827', padding: '15px', borderRadius: '10px', border: '1px solid #1f2937' }}>
           <p style={{ fontSize: '12px', opacity: 0.7, margin: 0 }}>Network</p>
           <h2 style={{ margin: '5px 0 0 0', fontSize: '20px', color: connected? '#3b82f6' : '#ef4444' }}>
-            {connected && network? network.name : 'Offline'}
+            {connected? (network? network.name : 'Devnet') : 'Offline'}
           </h2>
         </div>
         
@@ -205,7 +199,6 @@ function Home() {
         </div>
       </div>
 
-      {/* Upload Area */}
       <div style={{
         background: '#111827',
         padding: '20px',
@@ -247,12 +240,11 @@ function Home() {
   );
 }
 
-// Export wrapper containing official Aptos Wallet Provider
 export default function Page() {
   const OPT_IN_WALLETS = new Array("Petra");
   return (
     <AptosWalletAdapterProvider autoConnect={true} optInWallets={OPT_IN_WALLETS}>
-      <Home />
+      <DashboardContent />
     </AptosWalletAdapterProvider>
   );
 }
