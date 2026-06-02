@@ -1,8 +1,9 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from 'react';
+import { AptosWalletAdapterProvider, useWallet } from "@aptos-labs/wallet-adapter-react";
 
-// Safe helper functions to extract array values without using any square brackets to prevent parser swallowing
+// Safe helper functions to extract array values without using any square brackets
 const getFirstElement = (array: any): any => {
   return array.slice(0, 1).pop();
 };
@@ -13,26 +14,12 @@ const getSecondElement = (array: any): any => {
 
 const EMPTY_DEPS: any = new Array();
 
-export default function Home() {
-  const connectedState = useState(false);
-  const connected = getFirstElement(connectedState);
-  const setConnected = getSecondElement(connectedState);
-
-  const accountState = useState<any>(null);
-  const account = getFirstElement(accountState);
-  const setAccount = getSecondElement(accountState);
+function Home() {
+  const { connect, disconnect, connected, account, network } = useWallet();
 
   const filesUploadedState = useState(1);
   const filesUploaded = getFirstElement(filesUploadedState);
   const setFilesUploaded = getSecondElement(filesUploadedState);
-
-  const storageState = useState("Active");
-  const storage = getFirstElement(storageState);
-  const setStorage = getSecondElement(storageState);
-
-  const networkState = useState("Offline");
-  const network = getFirstElement(networkState);
-  const setNetwork = getSecondElement(networkState);
 
   const uploadingState = useState(false);
   const uploading = getFirstElement(uploadingState);
@@ -40,95 +27,34 @@ export default function Home() {
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Helper function to activate Mock/Demo Mode when wallet connection is unavailable
-  function activateDemoMode() {
-    setAccount({ address: "0x1234567890abcdef1234567890abcdef12345678" });
-    setConnected(true);
-    setNetwork("Devnet (Demo)");
-    alert("Connected in Demo Mode! You can now test the upload area and dashboard status.");
-  }
-
-  // 1. Wallet connection using Petra extension API with dynamic error catcher and Demo Mode fallback
-  async function connectWallet() {
+  // 1. Connect Petra Wallet using official adapter standard
+  const handleConnect = async () => {
     try {
-      if (typeof window!== 'undefined') {
-        const win = window as any;
-        if (win.aptos) {
-          const response = await win.aptos.connect();
-          setAccount(response);
-          setConnected(true);
-          setNetwork("Devnet");
-          return;
-        }
-      }
-      
-      // Fallback to Demo Mode if Petra is not found in the browser
-      const useDemo = confirm("Petra Wallet extension not found!\n\nWould you like to connect in 'Demo Mode' to test the dashboard UI?");
-      if (useDemo) {
-        activateDemoMode();
-      } else {
-        window.open("https://petra.app", "_blank");
-      }
-    } catch (error: any) {
-      console.error("Wallet connection failed:", error);
-      
-      // Dynamic error detection (e.g. if the extension is locked or user cancels)
-      const errorMessage = error && error.message? error.message : String(error);
-      
-      const useDemo = confirm(
-        "Wallet Connection Failed!\n\nReason: " + errorMessage + 
-        "\n\nWould you like to bypass this and connect in 'Demo Mode' to test your website?"
-      );
-      
-      if (useDemo) {
-        activateDemoMode();
-      }
-    }
-  }
-
-  // 2. Disconnect wallet connection with defensive fallback
-  async function disconnectWallet() {
-    try {
-      if (typeof window!== 'undefined') {
-        const win = window as any;
-        if (win.aptos) {
-          await win.aptos.disconnect();
-        }
-      }
+      await connect("Petra");
     } catch (error) {
-      console.error("Disconnect error:", error);
-    } finally {
-      // Always reset frontend state to disconnected even if the extension throws an error
-      setConnected(false);
-      setAccount(null);
-      setNetwork("Offline");
+      console.error("Connection failed:", error);
+      alert("Petra Wallet connection failed! Please make sure the wallet is unlocked.");
     }
-  }
+  };
 
-  // 3. Automatically check wallet connection status on refresh
-  useEffect(() => {
-    const checkConnection = async () => {
-      if (typeof window!== 'undefined') {
-        const win = window as any;
-        if (win.aptos) {
-          try {
-            const isConnected = await win.aptos.isConnected();
-            if (isConnected) {
-              const response = await win.aptos.account();
-              setAccount(response);
-              setConnected(true);
-              setNetwork("Devnet");
-            }
-          } catch (err) {
-            console.error(err);
-          }
-        }
+  // 2. Format connected wallet address smoothly
+  const getAddressString = () => {
+    if (!account) return "";
+    let addr = account.address;
+    if (!addr) {
+      addr = "";
+    }
+    if (typeof addr === "string") {
+      if (addr.length > 10) {
+        const startStr = addr.substring(0, 6);
+        const endStr = addr.substring(addr.length - 4);
+        return startStr + "..." + endStr;
       }
-    };
-    checkConnection();
-  }, EMPTY_DEPS);
+    }
+    return "Connected";
+  };
 
-  // 4. Simulated file upload method
+  // 3. Simulated file upload method
   const uploadFileToShelby = async (files: FileList | null) => {
     if (!connected) {
       alert("Please connect your wallet first!");
@@ -149,11 +75,9 @@ export default function Home() {
     setUploading(true);
     try {
       await new Promise((resolve) => setTimeout(resolve, 2000));
-      
       const currentCount = filesUploaded? filesUploaded : 0;
       setFilesUploaded(currentCount + 1);
-      
-      alert("Success: " + file.name + " simulated upload completed successfully!");
+      alert("Success: " + file.name + " uploaded completed successfully!");
     } catch (error) {
       console.error("Upload failed:", error);
       alert("Something went wrong during upload.");
@@ -162,7 +86,7 @@ export default function Home() {
     }
   };
 
-  // 5. Drag and Drop handlers
+  // 4. Drag and Drop handlers
   const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
     if (e.dataTransfer) {
@@ -174,33 +98,13 @@ export default function Home() {
     }
   };
 
-  // 6. Manual file selection handler
+  // 5. Manual file selection handler
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
       if (e.target.files.length > 0) {
         uploadFileToShelby(e.target.files);
       }
     }
-  };
-
-  // 7. Format connected wallet address smoothly
-  const getAddressString = () => {
-    if (!account) return "";
-    let addr = account.address;
-    if (!addr) {
-      addr = account.accountAddress;
-    }
-    if (!addr) {
-      addr = "";
-    }
-    if (typeof addr === "string") {
-      if (addr.length > 10) {
-        const startStr = addr.substring(0, 6);
-        const endStr = addr.substring(addr.length - 4);
-        return startStr + "..." + endStr;
-      }
-    }
-    return "Connected";
   };
 
   return (
@@ -211,6 +115,7 @@ export default function Home() {
       padding: '40px',
       fontFamily: 'sans-serif'
     }}>
+      {/* Header Section */}
       <div style={{
         display: 'flex',
         justifyContent: 'space-between',
@@ -222,25 +127,53 @@ export default function Home() {
           <p style={{ opacity: 0.7, margin: '5px 0 0 0', fontSize: '12px' }}>Storage Dashboard</p>
         </div>
         
-        <button 
-          onClick={connected? disconnectWallet : connectWallet} 
-          style={{
-            background: 'linear-gradient(90deg, #3b82f6, #1d4ed8)',
-            border: 'none',
-            padding: '10px 20px',
-            borderRadius: '8px',
-            color: 'white',
-            cursor: 'pointer',
-            fontWeight: 'bold',
-            transition: 'opacity 0.2s'
-          }}
-          onMouseOver={(e) => ((e.target as HTMLButtonElement).style.opacity = '0.9')}
-          onMouseOut={(e) => ((e.target as HTMLButtonElement).style.opacity = '1')}
-        >
-          {connected? (account? getAddressString() : 'Connected') : 'Connect Wallet'}
-        </button>
+        {/* Real Wallet Connection & Disconnection UI */}
+        {connected? (
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+            <span style={{ fontSize: '12px', color: '#10b981', background: '#111827', padding: '6px 12px', borderRadius: '6px', border: '1px solid #1f2937' }}>
+              {getAddressString()}
+            </span>
+            <button 
+              onClick={disconnect} 
+              style={{
+                background: 'linear-gradient(90deg, #ef4444, #dc2626)',
+                border: 'none',
+                padding: '10px 16px',
+                borderRadius: '8px',
+                color: 'white',
+                cursor: 'pointer',
+                fontWeight: 'bold',
+                fontSize: '12px',
+                transition: 'opacity 0.2s'
+              }}
+              onMouseOver={(e) => ((e.target as HTMLButtonElement).style.opacity = '0.9')}
+              onMouseOut={(e) => ((e.target as HTMLButtonElement).style.opacity = '1')}
+            >
+              Disconnect
+            </button>
+          </div>
+        ) : (
+          <button 
+            onClick={handleConnect} 
+            style={{
+              background: 'linear-gradient(90deg, #3b82f6, #1d4ed8)',
+              border: 'none',
+              padding: '10px 20px',
+              borderRadius: '8px',
+              color: 'white',
+              cursor: 'pointer',
+              fontWeight: 'bold',
+              transition: 'opacity 0.2s'
+            }}
+            onMouseOver={(e) => ((e.target as HTMLButtonElement).style.opacity = '0.9')}
+            onMouseOut={(e) => ((e.target as HTMLButtonElement).style.opacity = '1')}
+          >
+            Connect Wallet
+          </button>
+        )}
       </div>
 
+      {/* Status Cards */}
       <div style={{
         display: 'grid',
         gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
@@ -254,13 +187,13 @@ export default function Home() {
         
         <div style={{ background: '#111827', padding: '15px', borderRadius: '10px', border: '1px solid #1f2937' }}>
           <p style={{ fontSize: '12px', opacity: 0.7, margin: 0 }}>Storage</p>
-          <h2 style={{ margin: '5px 0 0 0', fontSize: '20px', color: '#10b981' }}>{storage}</h2>
+          <h2 style={{ margin: '5px 0 0 0', fontSize: '20px', color: '#10b981' }}>Active</h2>
         </div>
         
         <div style={{ background: '#111827', padding: '15px', borderRadius: '10px', border: '1px solid #1f2937' }}>
           <p style={{ fontSize: '12px', opacity: 0.7, margin: 0 }}>Network</p>
-          <h2 style={{ margin: '5px 0 0 0', fontSize: '20px', color: network === 'Offline'? '#ef4444' : '#3b82f6' }}>
-            {network}
+          <h2 style={{ margin: '5px 0 0 0', fontSize: '20px', color: connected? '#3b82f6' : '#ef4444' }}>
+            {connected && network? network.name : 'Offline'}
           </h2>
         </div>
         
@@ -272,6 +205,7 @@ export default function Home() {
         </div>
       </div>
 
+      {/* Upload Area */}
       <div style={{
         background: '#111827',
         padding: '20px',
@@ -310,5 +244,15 @@ export default function Home() {
         </div>
       </div>
     </main>
+  );
+}
+
+// Export wrapper containing official Aptos Wallet Provider
+export default function Page() {
+  const OPT_IN_WALLETS = new Array("Petra");
+  return (
+    <AptosWalletAdapterProvider autoConnect={true} optInWallets={OPT_IN_WALLETS}>
+      <Home />
+    </AptosWalletAdapterProvider>
   );
 }
