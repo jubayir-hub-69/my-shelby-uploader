@@ -2,33 +2,42 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 
-// Vercel build-এ ব্র্যাকেট বাগ এড়াতে সুরক্ষিত খালি dependency রেফারেন্স (স্কয়ার ব্র্যাকেট মুক্ত)
+// Vercel build-এ প্ল্যাটফর্মের ব্র্যাকেট বাগ এড়াতে সুরক্ষিত খালি dependency রেফারেন্স
 const EMPTY_DEPS: any = new Array();
+
+// স্কয়ার ব্র্যাকেট ছাড়া state destructuring করার জন্য হেল্পার ফাংশন
+const getFirstElement = (array: any): any => {
+  return array.slice(0, 1).pop();
+};
+
+const getSecondElement = (array: any): any => {
+  return array.slice(1, 2).pop();
+};
 
 export default function Home() {
   const connectedState = useState(false);
-  const connected = connectedState.at(0);
-  const setConnected = connectedState.at(1);
+  const connected = getFirstElement(connectedState);
+  const setConnected = getSecondElement(connectedState);
 
   const accountState = useState<any>(null);
-  const account = accountState.at(0);
-  const setAccount = accountState.at(1);
+  const account = getFirstElement(accountState);
+  const setAccount = getSecondElement(accountState);
 
   const filesUploadedState = useState(1);
-  const filesUploaded = filesUploadedState.at(0);
-  const setFilesUploaded = filesUploadedState.at(1);
+  const filesUploaded = getFirstElement(filesUploadedState);
+  const setFilesUploaded = getSecondElement(filesUploadedState);
 
   const storageState = useState("Active");
-  const storage = storageState.at(0);
-  const setStorage = storageState.at(1);
+  const storage = getFirstElement(storageState);
+  const setStorage = getSecondElement(storageState);
 
   const networkState = useState("Offline");
-  const network = networkState.at(0);
-  const setNetwork = networkState.at(1);
+  const network = getFirstElement(networkState);
+  const setNetwork = getSecondElement(networkState);
 
   const uploadingState = useState(false);
-  const uploading = uploadingState.at(0);
-  const setUploading = uploadingState.at(1);
+  const uploading = getFirstElement(uploadingState);
+  const setUploading = getSecondElement(uploadingState);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -36,19 +45,20 @@ export default function Home() {
   async function connectWallet() {
     try {
       if (typeof window!== 'undefined') {
-        if ((window as any).aptos) {
-          const response = await (window as any).aptos.connect();
+        const win = window as any;
+        if (win.aptos) {
+          const response = await win.aptos.connect();
           setAccount(response);
           setConnected(true);
           setNetwork("Devnet");
           return;
         }
       }
-      alert('Petra Wallet not found! If you are on mobile, please open this link inside the Petra Wallet App Browser.');
-      window.open('https://petra.app', '_blank');
+      alert("Petra Wallet not found! If you are on mobile, please open this link inside the Petra Wallet App Browser.");
+      window.open("https://petra.app", "_blank");
     } catch (error) {
       console.error("Wallet connection failed:", error);
-      alert('Wallet connection failed! Please try again.');
+      alert("Wallet connection failed! Please try again.");
     }
   }
 
@@ -56,8 +66,9 @@ export default function Home() {
   async function disconnectWallet() {
     try {
       if (typeof window!== 'undefined') {
-        if ((window as any).aptos) {
-          await (window as any).aptos.disconnect();
+        const win = window as any;
+        if (win.aptos) {
+          await win.aptos.disconnect();
         }
       }
       setConnected(false);
@@ -68,15 +79,16 @@ export default function Home() {
     }
   }
 
-  // ৩. ব্রাউজার রিফ্রেশ হলে ওয়ালেটের পূর্ববর্তী কানেকশন স্বয়ংক্রিয়ভাবে চেক করার হুক
+  // ৩. ব্রাউজার রিফ্রেশ হলে ওয়ালেটের কানেকশন স্বয়ংক্রিয়ভাবে চেক করার হুক
   useEffect(() => {
     const checkConnection = async () => {
       if (typeof window!== 'undefined') {
-        if ((window as any).aptos) {
+        const win = window as any;
+        if (win.aptos) {
           try {
-            const isConnected = await (window as any).aptos.isConnected();
+            const isConnected = await win.aptos.isConnected();
             if (isConnected) {
-              const response = await (window as any).aptos.account();
+              const response = await win.aptos.account();
               setAccount(response);
               setConnected(true);
               setNetwork("Devnet");
@@ -90,7 +102,7 @@ export default function Home() {
     checkConnection();
   }, EMPTY_DEPS);
 
-  // ৪. ফাইল আপলোড ফাংশন (স্কয়ার ব্র্যাকেট ও ডাবল পাইপ মুক্ত)
+  // ৪. সিমুলেটেড ফাইল আপলোড ফাংশন (কোনো ব্র্যাকেট বা পাইপ ক্যারেক্টার নেই)
   const uploadFileToShelby = async (files: FileList | null) => {
     if (!connected) {
       alert("Please connect your wallet first!");
@@ -113,10 +125,10 @@ export default function Home() {
       // ফাইল আপলোডের একটি নকল বিলম্ব (Simulated Delay)
       await new Promise((resolve) => setTimeout(resolve, 2000));
       
-      const currentUploadedValue = filesUploaded? filesUploaded : 0;
-      setFilesUploaded(currentUploadedValue + 1);
+      const currentCount = filesUploaded? filesUploaded : 0;
+      setFilesUploaded(currentCount + 1);
       
-      alert('"' + file.name + '" simulated upload to Shelby Network successful!');
+      alert("Success: " + file.name + " simulated upload to Shelby Network completed!");
     } catch (error) {
       console.error("Upload failed:", error);
       alert("Something went wrong during upload.");
@@ -128,9 +140,11 @@ export default function Home() {
   // ৫. ড্রপজোন হ্যান্ডলার (Drag and Drop)
   const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
-    if (e.dataTransfer.files) {
-      if (e.dataTransfer.files.length > 0) {
-        uploadFileToShelby(e.dataTransfer.files);
+    if (e.dataTransfer) {
+      if (e.dataTransfer.files) {
+        if (e.dataTransfer.files.length > 0) {
+          uploadFileToShelby(e.dataTransfer.files);
+        }
       }
     }
   };
@@ -146,22 +160,22 @@ export default function Home() {
 
   // ৭. ওয়ালেট অ্যাড্রেস ফরম্যাট করার হেল্পার
   const getAddressString = () => {
-    if (!account) return '';
+    if (!account) return "";
     let addr = account.address;
     if (!addr) {
       addr = account.accountAddress;
     }
     if (!addr) {
-      addr = '';
+      addr = "";
     }
-    if (typeof addr === 'string') {
+    if (typeof addr === "string") {
       if (addr.length > 10) {
         const startStr = addr.substring(0, 6);
         const endStr = addr.substring(addr.length - 4);
         return startStr + "..." + endStr;
       }
     }
-    return 'Connected';
+    return "Connected";
   };
 
   return (
