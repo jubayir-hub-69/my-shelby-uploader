@@ -62,7 +62,7 @@ export default function Home() {
       }
     };
     checkConnection();
-  },); // সঠিক খালি ডিপেন্ডেন্সি অ্যারে [ ] বসানো হয়েছে
+  },); // সঠিক খালি ডিপেন্ডেন্সি অ্যারে [ ] সহ সঠিক ব্র্যাকেট বসানো হয়েছে
 
   // ৪. Shelby SDK ব্যবহার করে ফাইল আপলোড করার ফাংশন
   const uploadFileToShelby = async (files: FileList | null) => {
@@ -119,7 +119,7 @@ export default function Home() {
     }
   };
 
-  // ৬. ম্যানুয়ালি ফাইল সিলেক্ট করার হ্যান্ডলার
+  // ६. ম্যানুয়ালি ফাইল সিলেক্ট করার হ্যান্ডলার
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
       uploadFileToShelby(e.target.files);
