@@ -2,33 +2,33 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 
-// Vercel build-এ ব্র্যাকেট বাগ এড়াতে সুরক্ষিত খালি ডিপেন্ডেন্সি রেফারেন্স
-const EMPTY_DEPS: any =;
+// Vercel build-এ ব্র্যাকেট বাগ এড়াতে সুরক্ষিত খালি dependency রেফারেন্স (স্কয়ার ব্র্যাকেট মুক্ত)
+const EMPTY_DEPS: any = new Array();
 
 export default function Home() {
   const connectedState = useState(false);
-  const connected = connectedState;
-  const setConnected = connectedState[1];
+  const connected = connectedState.at(0);
+  const setConnected = connectedState.at(1);
 
   const accountState = useState<any>(null);
-  const account = accountState;
-  const setAccount = accountState[1];
+  const account = accountState.at(0);
+  const setAccount = accountState.at(1);
 
   const filesUploadedState = useState(1);
-  const filesUploaded = filesUploadedState;
-  const setFilesUploaded = filesUploadedState[1];
+  const filesUploaded = filesUploadedState.at(0);
+  const setFilesUploaded = filesUploadedState.at(1);
 
   const storageState = useState("Active");
-  const storage = storageState;
-  const setStorage = storageState[1];
+  const storage = storageState.at(0);
+  const setStorage = storageState.at(1);
 
   const networkState = useState("Offline");
-  const network = networkState;
-  const setNetwork = networkState[1];
+  const network = networkState.at(0);
+  const setNetwork = networkState.at(1);
 
   const uploadingState = useState(false);
-  const uploading = uploadingState;
-  const setUploading = uploadingState[1];
+  const uploading = uploadingState.at(0);
+  const setUploading = uploadingState.at(1);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -90,7 +90,7 @@ export default function Home() {
     checkConnection();
   }, EMPTY_DEPS);
 
-  // ৪. সিমুলেটেড ফাইল আপলোড ফাংশন (কোনো প্যাকেজ বা টাইপ এরর ছাড়া)
+  // ৪. ফাইল আপলোড ফাংশন (স্কয়ার ব্র্যাকেট ও ডাবল পাইপ মুক্ত)
   const uploadFileToShelby = async (files: FileList | null) => {
     if (!connected) {
       alert("Please connect your wallet first!");
@@ -103,15 +103,20 @@ export default function Home() {
       return;
     }
 
-    const file = files; // সংশোধিত: সঠিকভাবে ফাইললিস্টের প্রথম ফাইলটি নেওয়া হয়েছে
-    if (!file) return;
+    const file = files.item(0); // files এর পরিবর্তে নিরাপদ item(0) মেথড ব্যবহার করা হয়েছে
+    if (!file) {
+      return;
+    }
 
     setUploading(true);
     try {
       // ফাইল আপলোডের একটি নকল বিলম্ব (Simulated Delay)
       await new Promise((resolve) => setTimeout(resolve, 2000));
-      setFilesUploaded((prev) => prev + 1);
-      alert(`"${file.name}" simulated upload to Shelby Network successful!`);
+      
+      const currentUploadedValue = filesUploaded? filesUploaded : 0;
+      setFilesUploaded(currentUploadedValue + 1);
+      
+      alert('"' + file.name + '" simulated upload to Shelby Network successful!');
     } catch (error) {
       console.error("Upload failed:", error);
       alert("Something went wrong during upload.");
@@ -151,7 +156,9 @@ export default function Home() {
     }
     if (typeof addr === 'string') {
       if (addr.length > 10) {
-        return `${addr.substring(0, 6)}...${addr.substring(addr.length - 4)}`;
+        const startStr = addr.substring(0, 6);
+        const endStr = addr.substring(addr.length - 4);
+        return startStr + "..." + endStr;
       }
     }
     return 'Connected';
@@ -197,7 +204,7 @@ export default function Home() {
         </button>
       </div>
 
-      {/* স্ট্যাটাস কার্ডসমূহ */}
+      {/* স্ট্যাটাস কার্ডসমূহ (ডাইনামিক গ্রিড) */}
       <div style={{
         display: 'grid',
         gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
