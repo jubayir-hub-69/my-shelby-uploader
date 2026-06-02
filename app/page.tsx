@@ -3,27 +3,50 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { ShelbyClient } from '@shelby-protocol/sdk';
 
+// Vercel build-এ ব্র্যাকেট বাগ এড়াতে সুরক্ষিত খালি ডিপেন্ডেন্সি রেফারেন্স
+const EMPTY_DEPS: any = Array.of();
+
 export default function Home() {
-  const [connected, setConnected] = useState(false);
-  const [account, setAccount] = useState<any>(null);
-  const [filesUploaded, setFilesUploaded] = useState(1);
-  const = useState("Active");
-  const [network, setNetwork] = useState("Offline");
-  const [uploading, setUploading] = useState(false);
+  const connectedState = useState(false);
+  const connected = connectedState;
+  const setConnected = connectedState[1];
+
+  const accountState = useState<any>(null);
+  const account = accountState;
+  const setAccount = accountState[1];
+
+  const filesUploadedState = useState(1);
+  const filesUploaded = filesUploadedState;
+  const setFilesUploaded = filesUploadedState[1];
+
+  const storageState = useState("Active");
+  const storage = storageState;
+  const setStorage = storageState[1];
+
+  const networkState = useState("Offline");
+  const network = networkState;
+  const setNetwork = networkState[1];
+
+  const uploadingState = useState(false);
+  const uploading = uploadingState;
+  const setUploading = uploadingState[1];
+
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // ১. Petra Wallet কানেক্ট করার ফাংশন
   async function connectWallet() {
     try {
-      if (typeof window!== 'undefined' && (window as any).aptos) {
-        const response = await (window as any).aptos.connect();
-        setAccount(response);
-        setConnected(true);
-        setNetwork("Devnet"); // কানেক্ট হলে Devnet দেখাবে
-      } else {
-        alert('Petra Wallet not found! If you are on mobile, please open this link inside the Petra Wallet App Browser.');
-        window.open('https://petra.app', '_blank');
+      if (typeof window!== 'undefined') {
+        if ((window as any).aptos) {
+          const response = await (window as any).aptos.connect();
+          setAccount(response);
+          setConnected(true);
+          setNetwork("Devnet");
+          return;
+        }
       }
+      alert('Petra Wallet not found! If you are on mobile, please open this link inside the Petra Wallet App Browser.');
+      window.open('https://petra.app', '_blank');
     } catch (error) {
       console.error("Wallet connection failed:", error);
       alert('Wallet connection failed! Please try again.');
@@ -33,8 +56,10 @@ export default function Home() {
   // ২. ওয়ালেট ডিসকানেক্ট করার ফাংশন
   async function disconnectWallet() {
     try {
-      if (typeof window!== 'undefined' && (window as any).aptos) {
-        await (window as any).aptos.disconnect();
+      if (typeof window!== 'undefined') {
+        if ((window as any).aptos) {
+          await (window as any).aptos.disconnect();
+        }
       }
       setConnected(false);
       setAccount(null);
@@ -47,22 +72,24 @@ export default function Home() {
   // ৩. ব্রাউজার রিফ্রেশ হলে ওয়ালেটের পূর্ববর্তী কানেকশন স্বয়ংক্রিয়ভাবে চেক করার হুক
   useEffect(() => {
     const checkConnection = async () => {
-      if (typeof window!== 'undefined' && (window as any).aptos) {
-        try {
-          const isConnected = await (window as any).aptos.isConnected();
-          if (isConnected) {
-            const response = await (window as any).aptos.account();
-            setAccount(response);
-            setConnected(true);
-            setNetwork("Devnet");
+      if (typeof window!== 'undefined') {
+        if ((window as any).aptos) {
+          try {
+            const isConnected = await (window as any).aptos.isConnected();
+            if (isConnected) {
+              const response = await (window as any).aptos.account();
+              setAccount(response);
+              setConnected(true);
+              setNetwork("Devnet");
+            }
+          } catch (err) {
+            console.error(err);
           }
-        } catch (err) {
-          console.error(err);
         }
       }
     };
     checkConnection();
-  },); // সঠিক খালি ডিপেন্ডেন্সি অ্যারে [ ] সহ সঠিক ব্র্যাকেট বসানো হয়েছে
+  }, EMPTY_DEPS);
 
   // ৪. Shelby SDK ব্যবহার করে ফাইল আপলোড করার ফাংশন
   const uploadFileToShelby = async (files: FileList | null) => {
@@ -70,24 +97,31 @@ export default function Home() {
       alert("Please connect your wallet first!");
       return;
     }
-    if (!files || files.length === 0) return;
+    if (!files) {
+      return;
+    }
+    if (files.length === 0) {
+      return;
+    }
 
-    const file = files; // FileList থেকে প্রথম ফাইলটি সিলেক্ট করা হচ্ছে
+    const file = files;
     setUploading(true);
     try {
       const reader = new FileReader();
       reader.onload = async (event) => {
         try {
-          if (!event.target ||!event.target.result) return;
+          if (!event.target) return;
+          if (!event.target.result) return;
           const fileData = new Uint8Array(event.target.result as ArrayBuffer);
           
-          // Shelby Client ইনিশিয়ালাইজেশন
+          const envApiKey = process.env.NEXT_PUBLIC_SHELBY_SHELBYNET_API_KEY;
+          const apiKey = envApiKey? envApiKey : "demo-key";
+
           const client = new ShelbyClient({
-            apiKey: process.env.NEXT_PUBLIC_SHELBY_SHELBYNET_API_KEY || "demo-key",
+            apiKey: apiKey,
             network: "devnet"
           });
 
-          // ফাইল আপলোড কমান্ড
           await client.upload({
             blobData: fileData,
             signer: account,
@@ -114,24 +148,36 @@ export default function Home() {
   // ৫. ড্রপজোন হ্যান্ডলার (Drag and Drop)
   const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
-    if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
-      uploadFileToShelby(e.dataTransfer.files);
+    if (e.dataTransfer.files) {
+      if (e.dataTransfer.files.length > 0) {
+        uploadFileToShelby(e.dataTransfer.files);
+      }
     }
   };
 
-  // ६. ম্যানুয়ালি ফাইল সিলেক্ট করার হ্যান্ডলার
+  // ৬. ম্যানুয়ালি ফাইল সিলেক্ট করার হ্যান্ডলার
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files.length > 0) {
-      uploadFileToShelby(e.target.files);
+    if (e.target.files) {
+      if (e.target.files.length > 0) {
+        uploadFileToShelby(e.target.files);
+      }
     }
   };
 
-  // ওয়ালেট অ্যাড্রেস ফরম্যাট করার হেল্পার
+  // ৭. ওয়ালেট অ্যাড্রেস ফরম্যাট করার হেল্পার (ডাবল পাইপ অপারেটর মুক্ত)
   const getAddressString = () => {
     if (!account) return '';
-    const addr = account.address || account.accountAddress || '';
-    if (typeof addr === 'string' && addr.length > 10) {
-      return `${addr.substring(0, 6)}...${addr.substring(addr.length - 4)}`;
+    let addr = account.address;
+    if (!addr) {
+      addr = account.accountAddress;
+    }
+    if (!addr) {
+      addr = '';
+    }
+    if (typeof addr === 'string') {
+      if (addr.length > 10) {
+        return `${addr.substring(0, 6)}...${addr.substring(addr.length - 4)}`;
+      }
     }
     return 'Connected';
   };
@@ -139,7 +185,7 @@ export default function Home() {
   return (
     <main style={{
       minHeight: '100vh',
-      background: 'linear-gradient(180deg, #0a0f24, #050716)', // আপনার ডার্ক থিম
+      background: 'linear-gradient(180deg, #0a0f24, #050716)',
       color: 'white',
       padding: '40px',
       fontFamily: 'sans-serif'
@@ -172,7 +218,7 @@ export default function Home() {
           onMouseOver={(e) => ((e.target as HTMLButtonElement).style.opacity = '0.9')}
           onMouseOut={(e) => ((e.target as HTMLButtonElement).style.opacity = '1')}
         >
-          {connected && account? getAddressString() : 'Connect Wallet'}
+          {connected? (account? getAddressString() : 'Connected') : 'Connect Wallet'}
         </button>
       </div>
 
@@ -220,7 +266,11 @@ export default function Home() {
         <div
           onDragOver={(e) => e.preventDefault()}
           onDrop={handleDrop}
-          onClick={() => fileInputRef.current?.click()}
+          onClick={() => {
+            if (fileInputRef.current) {
+              fileInputRef.current.click();
+            }
+          }}
           style={{
             border: '2px dashed #38bdf8',
             padding: '50px 20px',
