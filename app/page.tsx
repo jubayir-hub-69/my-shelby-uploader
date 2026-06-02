@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 
 // Vercel build-এ ব্র্যাকেট বাগ এড়াতে সুরক্ষিত খালি ডিপেন্ডেন্সি রেফারেন্স
-const EMPTY_DEPS: any = Array.of();
+const EMPTY_DEPS: any =;
 
 export default function Home() {
   const connectedState = useState(false);
@@ -90,17 +90,22 @@ export default function Home() {
     checkConnection();
   }, EMPTY_DEPS);
 
-  // ৪. সিমুলেটেড ফাইল আপলোড ফাংশন (কোনো প্যাকেজ প্রয়োজন নেই)
+  // ৪. সিমুলেটেড ফাইল আপলোড ফাংশন (কোনো প্যাকেজ বা টাইপ এরর ছাড়া)
   const uploadFileToShelby = async (files: FileList | null) => {
     if (!connected) {
       alert("Please connect your wallet first!");
       return;
     }
-    if (!files || files.length === 0) {
+    if (!files) {
+      return;
+    }
+    if (files.length === 0) {
       return;
     }
 
-    const file = files;
+    const file = files; // সংশোধিত: সঠিকভাবে ফাইললিস্টের প্রথম ফাইলটি নেওয়া হয়েছে
+    if (!file) return;
+
     setUploading(true);
     try {
       // ফাইল আপলোডের একটি নকল বিলম্ব (Simulated Delay)
@@ -264,4 +269,4 @@ export default function Home() {
       </div>
     </main>
   );
-          }
+}
