@@ -1,7 +1,6 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from 'react';
-import { ShelbyClient } from '@shelby-protocol/sdk';
 
 // Vercel build-এ ব্র্যাকেট বাগ এড়াতে সুরক্ষিত খালি ডিপেন্ডেন্সি রেফারেন্স
 const EMPTY_DEPS: any = Array.of();
@@ -91,52 +90,23 @@ export default function Home() {
     checkConnection();
   }, EMPTY_DEPS);
 
-  // ৪. Shelby SDK ব্যবহার করে ফাইল আপলোড করার ফাংশন
+  // ৪. সিমুলেটেড ফাইল আপলোড ফাংশন (কোনো প্যাকেজ প্রয়োজন নেই)
   const uploadFileToShelby = async (files: FileList | null) => {
     if (!connected) {
       alert("Please connect your wallet first!");
       return;
     }
-    if (!files) {
-      return;
-    }
-    if (files.length === 0) {
+    if (!files || files.length === 0) {
       return;
     }
 
     const file = files;
     setUploading(true);
     try {
-      const reader = new FileReader();
-      reader.onload = async (event) => {
-        try {
-          if (!event.target) return;
-          if (!event.target.result) return;
-          const fileData = new Uint8Array(event.target.result as ArrayBuffer);
-          
-          const envApiKey = process.env.NEXT_PUBLIC_SHELBY_SHELBYNET_API_KEY;
-          const apiKey = envApiKey? envApiKey : "demo-key";
-
-          const client = new ShelbyClient({
-            apiKey: apiKey,
-            network: "devnet"
-          });
-
-          await client.upload({
-            blobData: fileData,
-            signer: account,
-            blobName: file.name,
-            expirationMicros: Date.now() * 1000 + 86400 * 1000 * 1000, // ফাইলের মেয়াদ ২৪ ঘণ্টা
-          });
-
-          setFilesUploaded((prev) => prev + 1);
-          alert(`"${file.name}" uploaded successfully to Shelby Network!`);
-        } catch (err) {
-          console.error(err);
-          alert("Upload failed. Make sure @shelby-protocol/sdk package is installed.");
-        }
-      };
-      reader.readAsArrayBuffer(file);
+      // ফাইল আপলোডের একটি নকল বিলম্ব (Simulated Delay)
+      await new Promise((resolve) => setTimeout(resolve, 2000));
+      setFilesUploaded((prev) => prev + 1);
+      alert(`"${file.name}" simulated upload to Shelby Network successful!`);
     } catch (error) {
       console.error("Upload failed:", error);
       alert("Something went wrong during upload.");
@@ -164,7 +134,7 @@ export default function Home() {
     }
   };
 
-  // ৭. ওয়ালেট অ্যাড্রেস ফরম্যাট করার হেল্পার (ডাবল পাইপ অপারেটর মুক্ত)
+  // ৭. ওয়ালেট অ্যাড্রেস ফরম্যাট করার হেল্পার
   const getAddressString = () => {
     if (!account) return '';
     let addr = account.address;
@@ -222,7 +192,7 @@ export default function Home() {
         </button>
       </div>
 
-      {/* স্ট্যাটাস কার্ডসমূহ (ডাইনামিক গ্রিড) */}
+      {/* স্ট্যাটাস কার্ডসমূহ */}
       <div style={{
         display: 'grid',
         gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
@@ -294,4 +264,4 @@ export default function Home() {
       </div>
     </main>
   );
-}
+          }
