@@ -41,15 +41,36 @@ function DashboardContent() {
   const uploadedMemes = getFirstElement(uploadedMemesState);
   const setUploadedMemes = getSecondElement(uploadedMemesState);
 
+  const customImageState = useState<any>(null);
+  const customImage = getFirstElement(customImageState);
+  const setCustomImage = getSecondElement(customImageState);
+
+  const isMobileState = useState(false);
+  const isMobile = getFirstElement(isMobileState);
+  const setIsMobile = getSecondElement(isMobileState);
+
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const customBgInputRef = useRef<HTMLInputElement>(null);
 
-  // Web Audio API Synthesizer for premium click & success sounds
+  // Detect mobile device to apply deep link redirection safely
+  useEffect(() => {
+    if (typeof window!== 'undefined') {
+      const userAgent = navigator.userAgent;
+      const isTouch = navigator.maxTouchPoints > 0;
+      const matchesMobile = userAgent.match(/Android|iPhone|iPad|iPod/i);
+      if (matchesMobile || isTouch) {
+        setIsMobile(true);
+      }
+    }
+  }, EMPTY_DEPS);
+
+  // Web Audio API Synthesizer for premium interface interaction sound effects
   const playSound = (freq: number) => {
     if (typeof window === 'undefined') return;
     try {
       const win = window as any;
-      const AudioCtx = win.AudioContext || win.webkitAudioContext;
+      const AudioCtx = win.AudioContext? win.AudioContext : win.webkitAudioContext;
       if (!AudioCtx) return;
       const ctx = new AudioCtx();
       const osc = ctx.createOscillator();
@@ -64,7 +85,7 @@ function DashboardContent() {
     } catch (e) {}
   };
 
-  // Draw gradient background and meme captions on HTML5 Canvas
+  // Draw gradient background or uploaded custom image with captions on canvas
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -72,21 +93,27 @@ function DashboardContent() {
     if (!ctx) return;
 
     ctx.clearRect(0, 0, canvas.width, canvas.height);
-    const grad = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
-    
-    if (activeGradient === "sunset") {
-      grad.addColorStop(0, "#f43f5e");
-      grad.addColorStop(1, "#eab308");
-    } else if (activeGradient === "green") {
-      grad.addColorStop(0, "#10b981");
-      grad.addColorStop(1, "#06b6d4");
+
+    if (customImage) {
+      ctx.drawImage(customImage, 0, 0, canvas.width, canvas.height);
     } else {
-      grad.addColorStop(0, "#3b82f6");
-      grad.addColorStop(1, "#8b5cf6");
+      const grad = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
+      
+      if (activeGradient === "sunset") {
+        grad.addColorStop(0, "#f43f5e");
+        grad.addColorStop(1, "#eab308");
+      } else if (activeGradient === "green") {
+        grad.addColorStop(0, "#10b981");
+        grad.addColorStop(1, "#06b6d4");
+      } else {
+        grad.addColorStop(0, "#3b82f6");
+        grad.addColorStop(1, "#8b5cf6");
+      }
+
+      ctx.fillStyle = grad;
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
     }
 
-    ctx.fillStyle = grad;
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
     ctx.fillStyle = "white";
     ctx.strokeStyle = "black";
     ctx.lineWidth = 6;
@@ -100,11 +127,19 @@ function DashboardContent() {
     ctx.textBaseline = "bottom";
     ctx.strokeText(bottomText.toUpperCase(), canvas.width / 2, canvas.height - 20);
     ctx.fillText(bottomText.toUpperCase(), canvas.width / 2, canvas.height - 20);
-  }, EMPTY_DEPS);
+  },);
 
   const handleConnect = async () => {
     playSound(600);
     try {
+      if (isMobile) {
+        const isPetraBrowser = typeof window!== 'undefined' && (window as any).aptos;
+        if (!isPetraBrowser) {
+          const deepLink = "https://petra.app/explore?link=" + encodeURIComponent(window.location.href);
+          window.open(deepLink, "_blank");
+          return;
+        }
+      }
       await connect("Petra");
     } catch (error) {
       console.error(error);
@@ -125,25 +160,33 @@ function DashboardContent() {
     return addr.substring(0, 6) + "..." + addr.substring(addr.length - 4);
   };
 
-  const publishMeme = async () => {
-    if (!connected) return alert("Please connect your Petra Wallet first!");
-    const canvas = canvasRef.current;
-    if (!canvas) return;
+  const handleCustomBgUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files) {
+      if (e.target.files.length > 0) {
+        const file = e.target.files.item(0);
+        if (file) {
+          const reader = new FileReader();
+          reader.onload = (event) => {
+            if (event.target) {
+              if (event.target.result) {
+                const img = new Image();
+                img.src = event.target.result as string;
+                img.onload = () => {
+                  setCustomImage(img);
+                  playSound(1000);
+                };
+              }
+            }
+          };
+          reader.readAsDataURL(file);
+        }
+      }
+    }
+  };
 
-    setUploading(true);
-    playSound(800);
-
-    await new Promise((resolve) => setTimeout(resolve, 1500));
-    const newMeme = {
-      id: Math.random(),
-      name: "Meme_" + Math.floor(Math.random() * 1000) + ".png",
-      url: canvas.toDataURL("image/png")
-    };
-
-    setUploadedMemes(new Array(newMeme).concat(uploadedMemes));
-    setFilesUploaded(filesUploaded + 1);
-    setUploading(false);
-    playSound(1000);
+  const clearCustomBg = () => {
+    setCustomImage(null);
+    playSound(300);
   };
 
   const downloadMeme = () => {
@@ -156,11 +199,57 @@ function DashboardContent() {
     link.click();
   };
 
+  const publishMeme = async () => {
+    if (!connected) return alert("Please connect your Petra Wallet first!");
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+
+    setUploading(true);
+    playSound(800);
+
+    await new Promise((resolve) => setTimeout(resolve, 2000));
+    const randomId = Math.floor(Math.random() * 10000);
+    const newMeme = {
+      id: randomId,
+      name: "Meme_" + randomId + ".png",
+      url: canvas.toDataURL("image/png"),
+      size: "2.4 MB",
+      price: "Free",
+      paid: false
+    };
+
+    setUploadedMemes(new Array(newMeme).concat(uploadedMemes));
+    setFilesUploaded(filesUploaded + 1);
+    setUploading(false);
+    playSound(1000);
+    alert("Successfully uploaded your Meme to the Shelby hot storage network!");
+  };
+
+  const copyGatewayLink = (id: number) => {
+    playSound(600);
+    const addr = account? account.address.toString() : "0x0";
+    const link = "https://gateway.shelby.xyz/blob/account/" + addr + "/meme-" + id;
+    navigator.clipboard.writeText(link);
+    alert("Shelby hot storage link copied to clipboard:\n\n" + link);
+  };
+
+  const togglePaywall = (id: number) => {
+    playSound(600);
+    const updated = uploadedMemes.map((m: any) => {
+      if (m.id === id) {
+        const nextPrice = m.price === "Free"? "0.1 APT (Testnet)" : "Free";
+        return {...m, price: nextPrice, paid:!m.paid };
+      }
+      return m;
+    });
+    setUploadedMemes(updated);
+  };
+
   return (
     <main style={{ minHeight: "100vh", background: "#0a0f24", color: "white", padding: "20px", fontFamily: "sans-serif" }}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "20px" }}>
         <div>
-          <h1 style={{ fontSize: "24px", margin: 0, color: "#38bdf8" }}>SHELBY</h1>
+          <h1 style={{ fontSize: "24px", margin: 0, color: "#38bdf8", fontWeight: "bold" }}>SHELBY</h1>
           <p style={{ margin: 0, fontSize: "11px", opacity: 0.6 }}>Meme & Storage Hub</p>
         </div>
         {connected? (
@@ -184,7 +273,7 @@ function DashboardContent() {
         </div>
         <div style={{ background: "#111827", padding: "10px", borderRadius: "8px" }}>
           <p style={{ margin: 0, fontSize: "11px", opacity: 0.6 }}>Network</p>
-          <h3 style={{ margin: 0, color: "#3b82f6" }}>{connected? "Mainnet" : "Offline"}</h3>
+          <h3 style={{ margin: 0, color: "#3b82f6" }}>{connected? (network? network.name : "Testnet") : "Offline"}</h3>
         </div>
       </div>
 
@@ -202,6 +291,17 @@ function DashboardContent() {
           <div>
             <input type="text" value={topText} onChange={e => setTopText(e.target.value)} style={{ width: "100%", padding: "10px", marginBottom: "10px", background: "#030712", border: "1px solid #334155", borderRadius: "6px", color: "white", boxSizing: "border-box" }} placeholder="Top Text" />
             <input type="text" value={bottomText} onChange={e => setBottomText(e.target.value)} style={{ width: "100%", padding: "10px", marginBottom: "10px", background: "#030712", border: "1px solid #334155", borderRadius: "6px", color: "white", boxSizing: "border-box" }} placeholder="Bottom Text" />
+            
+            <div style={{ marginBottom: "10px" }}>
+              <input type="file" ref={customBgInputRef} onChange={handleCustomBgUpload} accept="image/*" style={{ display: "none" }} />
+              <div style={{ display: "flex", gap: "5px" }}>
+                <button onClick={() => customBgInputRef.current?.click()} style={{ flex: 1, padding: "8px", background: "#1e293b", border: "1px solid #334155", borderRadius: "6px", color: "white", cursor: "pointer", fontSize: "11px", fontWeight: "bold" }}>Upload Bg</button>
+                {customImage && (
+                  <button onClick={clearCustomBg} style={{ padding: "8px", background: "#ef4444", border: "none", borderRadius: "6px", color: "white", cursor: "pointer", fontSize: "11px", fontWeight: "bold" }}>Clear</button>
+                )}
+              </div>
+            </div>
+
             <button onClick={downloadMeme} style={{ width: "100%", padding: "8px", background: "#1f2937", border: "none", borderRadius: "6px", color: "white", cursor: "pointer", fontSize: "12px", fontWeight: "bold" }}>Download PNG</button>
           </div>
           <button onClick={publishMeme} disabled={uploading} style={{ width: "100%", marginTop: "10px", padding: "12px", background: uploading? "#1e293b" : "#3b82f6", border: "none", borderRadius: "6px", color: "white", cursor: "pointer", fontWeight: "bold" }}>
@@ -215,9 +315,14 @@ function DashboardContent() {
           <h3 style={{ margin: "0 0 10px 0", fontSize: "14px" }}>Shelby Storage Vault</h3>
           <div style={{ display: "flex", gap: "10px", overflowX: "auto", paddingBottom: "10px" }}>
             {uploadedMemes.map((m: any) => (
-              <div key={m.id} style={{ minWidth: "100px", background: "#030712", padding: "8px", borderRadius: "8px", textAlign: "center" }}>
-                <img src={m.url} style={{ width: "80px", height: "80px", objectFit: "cover", borderRadius: "4px", marginBottom: "5px" }} />
+              <div key={m.id} style={{ minWidth: "160px", background: "#030712", padding: "10px", borderRadius: "8px", textAlign: "center" }}>
+                <img src={m.url} style={{ width: "140px", height: "140px", objectFit: "cover", borderRadius: "4px", marginBottom: "5px" }} />
                 <p style={{ margin: 0, fontSize: "10px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{m.name}</p>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: "5px" }}>
+                  <span style={{ fontSize: "10px", color: m.paid? "#f59e0b" : "#10b981", fontWeight: "bold" }}>{m.price}</span>
+                  <button onClick={() => togglePaywall(m.id)} style={{ padding: "3px 6px", background: "#1f2937", border: "none", borderRadius: "4px", color: "white", fontSize: "9px", cursor: "pointer" }}>Paywall</button>
+                </div>
+                <button onClick={() => copyGatewayLink(m.id)} style={{ width: "100%", marginTop: "5px", padding: "4px", background: "#3b82f6", border: "none", borderRadius: "4px", color: "white", fontSize: "10px", cursor: "pointer", fontWeight: "bold" }}>Get Link</button>
               </div>
             ))}
           </div>
@@ -233,4 +338,4 @@ export default function Page() {
       <DashboardContent />
     </AptosWalletAdapterProvider>
   );
-                     }
+            }
