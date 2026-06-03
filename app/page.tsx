@@ -5,7 +5,6 @@ import { AptosWalletAdapterProvider, useWallet } from "@aptos-labs/wallet-adapte
 
 const EMPTY_DEPS: any = new Array();
 
-// Safe helper functions to extract array values without using any square brackets
 const getFirstElement = (array: any): any => {
   return array.slice(0, 1).pop();
 };
@@ -15,9 +14,9 @@ const getSecondElement = (array: any): any => {
 };
 
 function DashboardContent() {
-  const { connect, disconnect, connected, account, network } = useWallet();
+  const { connect, disconnect, connected, account, network, signAndSubmitTransaction } = useWallet();
 
-  const filesUploadedState = useState(2);
+  const filesUploadedState = useState(3);
   const filesUploaded = getFirstElement(filesUploadedState);
   const setFilesUploaded = getSecondElement(filesUploadedState);
 
@@ -53,7 +52,6 @@ function DashboardContent() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const customBgInputRef = useRef<HTMLInputElement>(null);
 
-  // Detect mobile device to apply deep link redirection safely
   useEffect(() => {
     if (typeof window!== 'undefined') {
       const userAgent = navigator.userAgent;
@@ -65,7 +63,6 @@ function DashboardContent() {
     }
   }, EMPTY_DEPS);
 
-  // Web Audio API Synthesizer for premium interface interaction sound effects
   const playSound = (freq: number) => {
     if (typeof window === 'undefined') return;
     try {
@@ -85,7 +82,6 @@ function DashboardContent() {
     } catch (e) {}
   };
 
-  // Draw gradient background or uploaded custom image with captions on canvas
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -127,7 +123,7 @@ function DashboardContent() {
     ctx.textBaseline = "bottom";
     ctx.strokeText(bottomText.toUpperCase(), canvas.width / 2, canvas.height - 20);
     ctx.fillText(bottomText.toUpperCase(), canvas.width / 2, canvas.height - 20);
-  },);
+  }, Array.of(topText, bottomText, activeGradient, customImage));
 
   const handleConnect = async () => {
     playSound(600);
@@ -207,42 +203,40 @@ function DashboardContent() {
     setUploading(true);
     playSound(800);
 
-    await new Promise((resolve) => setTimeout(resolve, 2000));
-    const randomId = Math.floor(Math.random() * 10000);
-    const newMeme = {
-      id: randomId,
-      name: "Meme_" + randomId + ".png",
-      url: canvas.toDataURL("image/png"),
-      size: "2.4 MB",
-      price: "Free",
-      paid: false
-    };
+    try {
+      const transactionPayload = {
+        data: {
+          function: "0x1::coin::transfer",
+          typeArguments: new Array("0x1::aptos_coin::AptosCoin"),
+          functionArguments: new Array(
+            "0x85fdb9a176ab8ef1d9d9c1b60d60b3924f0800ac1de1cc2085fb0b8bb4988e6a",
+            "100000"
+          )
+        }
+      };
 
-    setUploadedMemes(new Array(newMeme).concat(uploadedMemes));
-    setFilesUploaded(filesUploaded + 1);
-    setUploading(false);
-    playSound(1000);
-    alert("Successfully uploaded your Meme to the Shelby hot storage network!");
-  };
+      const response = await signAndSubmitTransaction(transactionPayload);
+      const txHash = response.hash;
 
-  const copyGatewayLink = (id: number) => {
-    playSound(600);
-    const addr = account? account.address.toString() : "0x0";
-    const link = "https://gateway.shelby.xyz/blob/account/" + addr + "/meme-" + id;
-    navigator.clipboard.writeText(link);
-    alert("Shelby hot storage link copied to clipboard:\n\n" + link);
-  };
+      const randomId = Math.floor(Math.random() * 10000);
+      const newMeme = {
+        id: randomId,
+        name: "Meme_" + randomId + ".png",
+        url: canvas.toDataURL("image/png"),
+        tx: txHash
+      };
 
-  const togglePaywall = (id: number) => {
-    playSound(600);
-    const updated = uploadedMemes.map((m: any) => {
-      if (m.id === id) {
-        const nextPrice = m.price === "Free"? "0.1 APT (Testnet)" : "Free";
-        return {...m, price: nextPrice, paid:!m.paid };
-      }
-      return m;
-    });
-    setUploadedMemes(updated);
+      setUploadedMemes(new Array(newMeme).concat(uploadedMemes));
+      setFilesUploaded(filesUploaded + 1);
+      
+      playSound(1000);
+      alert("Success! Transaction confirmed on Aptos Testnet.\n\nTx Hash: " + txHash);
+    } catch (error: any) {
+      console.error("Aptos transaction failed:", error);
+      alert("Aptos Testnet Transaction Rejected or Failed! Please make sure you have Testnet APT.");
+    } finally {
+      setUploading(false);
+    }
   };
 
   return (
@@ -305,7 +299,7 @@ function DashboardContent() {
             <button onClick={downloadMeme} style={{ width: "100%", padding: "8px", background: "#1f2937", border: "none", borderRadius: "6px", color: "white", cursor: "pointer", fontSize: "12px", fontWeight: "bold" }}>Download PNG</button>
           </div>
           <button onClick={publishMeme} disabled={uploading} style={{ width: "100%", marginTop: "10px", padding: "12px", background: uploading? "#1e293b" : "#3b82f6", border: "none", borderRadius: "6px", color: "white", cursor: "pointer", fontWeight: "bold" }}>
-            {uploading? "Uploading..." : "Publish to Shelby"}
+            {uploading? "Uploading to Aptos Testnet..." : "Publish to Shelby (Sign Tx)"}
           </button>
         </div>
       </div>
@@ -318,11 +312,14 @@ function DashboardContent() {
               <div key={m.id} style={{ minWidth: "160px", background: "#030712", padding: "10px", borderRadius: "8px", textAlign: "center" }}>
                 <img src={m.url} style={{ width: "140px", height: "140px", objectFit: "cover", borderRadius: "4px", marginBottom: "5px" }} />
                 <p style={{ margin: 0, fontSize: "10px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{m.name}</p>
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: "5px" }}>
-                  <span style={{ fontSize: "10px", color: m.paid? "#f59e0b" : "#10b981", fontWeight: "bold" }}>{m.price}</span>
-                  <button onClick={() => togglePaywall(m.id)} style={{ padding: "3px 6px", background: "#1f2937", border: "none", borderRadius: "4px", color: "white", fontSize: "9px", cursor: "pointer" }}>Paywall</button>
-                </div>
-                <button onClick={() => copyGatewayLink(m.id)} style={{ width: "100%", marginTop: "5px", padding: "4px", background: "#3b82f6", border: "none", borderRadius: "4px", color: "white", fontSize: "10px", cursor: "pointer", fontWeight: "bold" }}>Get Link</button>
+                <a 
+                  href={"https://explorer.aptoslabs.com/txn/" + m.tx + "?network=testnet"}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{ display: "block", marginTop: "5px", padding: "6px", background: "#10b981", borderRadius: "4px", color: "white", fontSize: "11px", textDecoration: "none", fontWeight: "bold" }}
+                >
+                  View on Explorer ↗
+                </a>
               </div>
             ))}
           </div>
@@ -338,4 +335,4 @@ export default function Page() {
       <DashboardContent />
     </AptosWalletAdapterProvider>
   );
-            }
+}
