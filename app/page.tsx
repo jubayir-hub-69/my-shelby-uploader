@@ -2,7 +2,6 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { AptosWalletAdapterProvider, useWallet } from "@aptos-labs/wallet-adapter-react";
-import { Network } from "@aptos-labs/ts-sdk";
 
 const EMPTY_DEPS: any = new Array();
 
@@ -322,6 +321,29 @@ function DashboardContent() {
       <div style={{ display: "flex", gap: "10px", marginBottom: "25px" }}>
         <button onClick={() => { playSound(600); setActiveTab("meme"); }} style={{ padding: "10px 20px", background: activeTab === "meme"? "#1e293b" : "transparent", border: activeTab === "meme"? "1px solid #38bdf8" : "1px solid #1e293b", borderRadius: "8px", color: "white", cursor: "pointer", fontWeight: "bold" }}>Meme Studio</button>
         <button onClick={() => { playSound(600); setActiveTab("speed"); }} style={{ padding: "10px 20px", background: activeTab === "speed"? "#1e293b" : "transparent", border: activeTab === "speed"? "1px solid #38bdf8" : "1px solid #1e293b", borderRadius: "8px", color: "white", cursor: "pointer", fontWeight: "bold" }}>Bandwidth Speed Test</button>
+        <a 
+          href="https://docs.shelby.xyz/tools/wallets/petra-setup#apt-faucet" 
+          target="_blank" 
+          rel="noopener noreferrer"
+          onClick={() => playSound(600)}
+          style={{ 
+            display: "inline-flex",
+            alignItems: "center",
+            padding: "10px 20px", 
+            background: "transparent", 
+            border: "1px solid #1e293b", 
+            borderRadius: "8px", 
+            color: "white", 
+            cursor: "pointer", 
+            fontWeight: "bold",
+            textDecoration: "none",
+            fontSize: "13.333px"
+          }}
+          onMouseOver={(e) => ((e.target as HTMLElement).style.borderColor = "#38bdf8")}
+          onMouseOut={(e) => ((e.target as HTMLElement).style.borderColor = "#1e293b")}
+        >
+          Faucet 🚰
+        </a>
       </div>
 
       {activeTab === "meme"? (
@@ -384,28 +406,6 @@ function DashboardContent() {
                     <input type="checkbox" checked={watermark} onChange={(e) => setWatermark(e.target.checked)} style={{ cursor: "pointer" }} />
                     Neon Watermark
                   </label>
-                </div>
-
-                <div style={{ background: "#030712", padding: "12px", borderRadius: "8px", border: "1px dashed #38bdf8", marginBottom: "15px", textAlign: "center" }}>
-                  <p style={{ margin: "0 0 8px 0", fontSize: "11px", color: "#38bdf8", fontWeight: "bold" }}>Fund Testnet Tokens (Faucet)</p>
-                  <div style={{ display: "flex", gap: "6px" }}>
-                    <a 
-                      href="https://docs.shelby.xyz/tools/wallets/petra-setup#apt-faucet" 
-                      target="_blank" 
-                      rel="noopener noreferrer"
-                      style={{ flex: 1, display: "block", background: "linear-gradient(90deg, #10b981, #059669)", color: "white", padding: "6px", borderRadius: "4px", textDecoration: "none", fontSize: "10px", fontWeight: "bold" }}
-                    >
-                      Get APT Gas 💎
-                    </a>
-                    <a 
-                      href="https://docs.shelby.xyz/tools/wallets/petra-setup#apt-faucet" 
-                      target="_blank" 
-                      rel="noopener noreferrer"
-                      style={{ flex: 1, display: "block", background: "linear-gradient(90deg, #3b82f6, #1d4ed8)", color: "white", padding: "6px", borderRadius: "4px", textDecoration: "none", fontSize: "10px", fontWeight: "bold" }}
-                    >
-                      ShelbyUSD Faucet 💵
-                    </a>
-                  </div>
                 </div>
 
                 <button onClick={downloadMeme} style={{ width: "100%", padding: "8px", background: "#1f2937", border: "none", borderRadius: "6px", color: "white", cursor: "pointer", fontSize: "12px", fontWeight: "bold" }}>Download PNG</button>
