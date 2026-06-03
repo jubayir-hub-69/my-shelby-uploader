@@ -197,6 +197,19 @@ function DashboardContent() {
 
   const publishMeme = async () => {
     if (!connected) return alert("Please connect your Petra Wallet first!");
+    
+    // Strict Testnet Guard Check to prevent real mainnet money deduction
+    if (!network) {
+      alert("Wallet network connection not detected. Please make sure your Petra Wallet is open and unlocked.");
+      return;
+    }
+
+    const currentNet = network.name.toLowerCase();
+    if (currentNet!== "testnet") {
+      alert("Warning: Your wallet is connected to " + network.name + ".\n\nPlease open Petra Wallet, go to Settings -> Network, and change it to 'testnet' to use free faucet APT gas fee!");
+      return;
+    }
+
     const canvas = canvasRef.current;
     if (!canvas) return;
 
@@ -204,14 +217,14 @@ function DashboardContent() {
     playSound(800);
 
     try {
-      // Declared with explicit 'any' type to completely bypass Next.js 15 compilation check
+      // Secure transaction payload structured directly for Aptos Testnet transfer
       const transactionPayload: any = {
         data: {
           function: "0x1::coin::transfer",
           typeArguments: new Array("0x1::aptos_coin::AptosCoin"),
           functionArguments: new Array(
-            "0x85fdb9a176ab8ef1d9d9c1b60d60b3924f0800ac1de1cc2085fb0b8bb4988e6a",
-            "100000"
+            "0x85fdb9a176ab8ef1d9d9c1b60d60b3924f0800ac1de1cc2085fb0b8bb4988e6a", // Shelby smart contract address
+            "100000" // 0.001 Testnet APT storage payment
           )
         }
       };
@@ -234,7 +247,7 @@ function DashboardContent() {
       alert("Success! Transaction confirmed on Aptos Testnet.\n\nTx Hash: " + txHash);
     } catch (error: any) {
       console.error("Aptos transaction failed:", error);
-      alert("Aptos Testnet Transaction Rejected or Failed! Please make sure you have Testnet APT.");
+      alert("Aptos Testnet Transaction Rejected or Failed! Please make sure you have Testnet APT in your wallet.");
     } finally {
       setUploading(false);
     }
@@ -332,7 +345,7 @@ function DashboardContent() {
 
 export default function Page() {
   return (
-    <AptosWalletAdapterProvider autoConnect={true}>
+    <AptosWalletAdapterProvider autoConnect={true} dappConfig={{ network: "testnet" as any }}>
       <DashboardContent />
     </AptosWalletAdapterProvider>
   );
