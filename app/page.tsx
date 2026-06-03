@@ -2,7 +2,6 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { AptosWalletAdapterProvider, useWallet } from "@aptos-labs/wallet-adapter-react";
-import { Network } from "@aptos-labs/ts-sdk";
 
 const EMPTY_DEPS: any = new Array();
 
@@ -52,6 +51,10 @@ function DashboardContent() {
   const isMobileState = useState(false);
   const isMobile = getFirstElement(isMobileState);
   const setIsMobile = getSecondElement(isMobileState);
+
+  const isTestingState = useState(false);
+  const isTesting = getFirstElement(isTestingState);
+  const setIsTesting = getSecondElement(isTestingState);
 
   const shelbySpeedState = useState(0);
   const shelbySpeed = getFirstElement(shelbySpeedState);
@@ -104,6 +107,7 @@ function DashboardContent() {
       ctx.drawImage(customImage, 0, 0, canvas.width, canvas.height);
     } else {
       const grad = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
+      
       if (activeGradient === "sunset") {
         grad.addColorStop(0, "#f43f5e");
         grad.addColorStop(1, "#eab308");
@@ -114,6 +118,7 @@ function DashboardContent() {
         grad.addColorStop(0, "#3b82f6");
         grad.addColorStop(1, "#8b5cf6");
       }
+
       ctx.fillStyle = grad;
       ctx.fillRect(0, 0, canvas.width, canvas.height);
     }
@@ -138,6 +143,7 @@ function DashboardContent() {
     try {
       await connect("Petra");
     } catch (error) {
+      console.error(error);
       alert("Petra Wallet connection failed!");
     }
   };
@@ -186,11 +192,11 @@ function DashboardContent() {
 
   const runSpeedTest = async () => {
     playSound(800);
-    updateState("isTesting", true);
-    updateState("testComplete", false);
-    updateState("shelbySpeed", 0);
-    updateState("s3Speed", 0);
-    updateState("ipfsSpeed", 0);
+    setIsTesting(true);
+    setTestComplete(false);
+    setShelbySpeed(0);
+    setS3Speed(0);
+    setIpfsSpeed(0);
 
     let i = 0;
     const interval = setInterval(() => {
@@ -206,14 +212,6 @@ function DashboardContent() {
         playSound(1000);
       }
     }, 10);
-  };
-
-  const updateState = (key: string, val: any) => {
-    if (key === "isTesting") setIsTesting(val);
-    if (key === "testComplete") setTestComplete(val);
-    if (key === "shelbySpeed") setShelbySpeed(val);
-    if (key === "s3Speed") setS3Speed(val);
-    if (key === "ipfsSpeed") setIpfsSpeed(val);
   };
 
   const downloadMeme = () => {
@@ -232,7 +230,7 @@ function DashboardContent() {
 
     const currentNet = String(network.name).toLowerCase();
     if (currentNet.indexOf("testnet") === -1) {
-      alert("Petra Testnet Guard Activation 🚨\n\nYour wallet is currently connected to: " + network.name + "\n\nPlease open Petra Wallet -> Settings (⚙️) -> Network and switch to 'Testnet'. This prevents spending real mainnet APT and lets you complete testing safely with free tokens.");
+      alert("Warning: Petra is on " + network.name + ".\n\nPlease open Petra Wallet Settings -> Network and switch to 'testnet' to use free faucet gas APT!");
       return;
     }
 
