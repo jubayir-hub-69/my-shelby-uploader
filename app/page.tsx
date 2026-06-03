@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { AptosWalletAdapterProvider, useWallet } from "@aptos-labs/wallet-adapter-react";
+import { Network } from "@aptos-labs/ts-sdk";
 
 const EMPTY_DEPS: any = new Array();
 
@@ -158,17 +159,8 @@ function DashboardContent() {
   const handleConnect = async () => {
     playSound(600);
     try {
-      if (isMobile) {
-        const isPetraBrowser = typeof window!== 'undefined' && (window as any).aptos;
-        if (!isPetraBrowser) {
-          const deepLink = "https://petra.app/explore?link=" + encodeURIComponent(window.location.href);
-          window.open(deepLink, "_blank");
-          return;
-        }
-      }
       await connect("Petra");
     } catch (error) {
-      console.error(error);
       alert("Petra Wallet connection failed!");
     }
   };
@@ -364,7 +356,20 @@ function DashboardContent() {
           </div>
 
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: "20px", marginBottom: "20px" }}>
-            <div style={{ background: "#111827", padding: "15px", borderRadius: "12px", textAlign: "center" }}>
+            <div style={{ background: "#111827", padding: "15px", borderRadius: "12px", textAlign: "center", position: "relative" }}>
+              {uploading? (
+                <div style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0, background: "rgba(10, 15, 36, 0.95)", display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "center", borderRadius: "12px", zIndex: 10 }}>
+                  <div style={{ color: "#38bdf8", fontWeight: "bold", fontSize: "16px", marginBottom: "15px" }}>Clay Erasure Coding...</div>
+                  <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: "8px", width: "120px" }}>
+                    {Array.of(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16).map((num) => (
+                      <div key={num} style={{ width: "24px", height: "24px", background: num <= 10? "#38bdf8" : "#f43f5e", borderRadius: "4px", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "9px", fontWeight: "bold", color: "white", animation: "pulse 1s infinite" }}>
+                        {num <= 10? "D" : "P"}
+                      </div>
+                    ))}
+                  </div>
+                  <div style={{ marginTop: "15px", fontSize: "11px", color: "#9ca3af" }}>Replicating to 16 Storage Nodes</div>
+                </div>
+              ) : null}
               <canvas ref={canvasRef} width={250} height={250} style={{ borderRadius: "8px", border: "1px solid #334155", maxWidth: "100%", marginBottom: "10px" }} />
               <div style={{ display: "flex", gap: "5px", justifyContent: "center" }}>
                 <button onClick={() => { playSound(600); setActiveGradient("blue"); }} style={{ padding: "6px 10px", background: "#3b82f6", border: "none", borderRadius: "4px", color: "white", cursor: "pointer", fontSize: "11px" }}>Blue</button>
