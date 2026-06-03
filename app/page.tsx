@@ -241,9 +241,8 @@ function DashboardContent() {
 }
 
 export default function Page() {
-  const OPT_IN_WALLETS = new Array("Petra");
   return (
-    <AptosWalletAdapterProvider autoConnect={true} optInWallets={OPT_IN_WALLETS}>
+    <AptosWalletAdapterProvider autoConnect={true}>
       <DashboardContent />
     </AptosWalletAdapterProvider>
   );
