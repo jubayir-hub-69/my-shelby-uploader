@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { AptosWalletAdapterProvider, useWallet } from "@aptos-labs/wallet-adapter-react";
+import { Network } from "@aptos-labs/ts-sdk";
 
 const EMPTY_DEPS: any = new Array();
 
@@ -39,6 +40,14 @@ function DashboardContent() {
   const activeGradientState = useState("blue");
   const activeGradient = getFirstElement(activeGradientState);
   const setActiveGradient = getSecondElement(activeGradientState);
+
+  const expirationState = useState("1day");
+  const expiration = getFirstElement(expirationState);
+  const setExpiration = getSecondElement(expirationState);
+
+  const watermarkState = useState(true);
+  const watermark = getFirstElement(watermarkState);
+  const setWatermark = getSecondElement(watermarkState);
 
   const uploadedMemesState = useState<any>(new Array());
   const uploadedMemes = getFirstElement(uploadedMemesState);
@@ -79,7 +88,10 @@ function DashboardContent() {
     if (typeof window === 'undefined') return;
     try {
       const win = window as any;
-      const AudioCtx = win.AudioContext? win.AudioContext : win.webkitAudioContext;
+      let AudioCtx = win.AudioContext;
+      if (!AudioCtx) {
+        AudioCtx = win.webkitAudioContext;
+      }
       if (!AudioCtx) return;
       const ctx = new AudioCtx();
       const osc = ctx.createOscillator();
@@ -107,7 +119,6 @@ function DashboardContent() {
       ctx.drawImage(customImage, 0, 0, canvas.width, canvas.height);
     } else {
       const grad = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
-      
       if (activeGradient === "sunset") {
         grad.addColorStop(0, "#f43f5e");
         grad.addColorStop(1, "#eab308");
@@ -118,7 +129,6 @@ function DashboardContent() {
         grad.addColorStop(0, "#3b82f6");
         grad.addColorStop(1, "#8b5cf6");
       }
-
       ctx.fillStyle = grad;
       ctx.fillRect(0, 0, canvas.width, canvas.height);
     }
@@ -136,11 +146,27 @@ function DashboardContent() {
     ctx.textBaseline = "bottom";
     ctx.strokeText(bottomText.toUpperCase(), canvas.width / 2, canvas.height - 20);
     ctx.fillText(bottomText.toUpperCase(), canvas.width / 2, canvas.height - 20);
-  }, Array.of(topText, bottomText, activeGradient, customImage, activeTab));
+
+    if (watermark) {
+      ctx.fillStyle = "rgba(0, 0, 0, 0.4)";
+      ctx.fillRect(canvas.width - 130, canvas.height - 35, 120, 25);
+      ctx.fillStyle = "#38bdf8";
+      ctx.font = "bold 9px sans-serif";
+      ctx.fillText("SHELBY HOT SECURE", canvas.width - 70, canvas.height - 23);
+    }
+  }, Array.of(topText, bottomText, activeGradient, customImage, watermark, activeTab));
 
   const handleConnect = async () => {
     playSound(600);
     try {
+      if (isMobile) {
+        const isPetraBrowser = typeof window!== 'undefined' && (window as any).aptos;
+        if (!isPetraBrowser) {
+          const deepLink = "https://petra.app/explore?link=" + encodeURIComponent(window.location.href);
+          window.open(deepLink, "_blank");
+          return;
+        }
+      }
       await connect("Petra");
     } catch (error) {
       console.error(error);
@@ -230,7 +256,7 @@ function DashboardContent() {
 
     const currentNet = String(network.name).toLowerCase();
     if (currentNet.indexOf("testnet") === -1) {
-      alert("Warning: Petra is on " + network.name + ".\n\nPlease open Petra Wallet Settings -> Network and switch to 'testnet' to use free faucet gas APT!");
+      alert("Petra Testnet Guard Activation 🚨\n\nYour wallet is currently connected to: " + network.name + "\n\nPlease open Petra Wallet -> Settings (⚙️) -> Network and switch to 'Testnet'. This prevents spending real mainnet APT and lets you complete testing safely with free tokens.");
       return;
     }
 
@@ -340,16 +366,46 @@ function DashboardContent() {
                   </div>
                 </div>
 
-                <div style={{ background: "#030712", padding: "12px", borderRadius: "8px", border: "1px dashed #38bdf8", marginBottom: "15px", textAlign: "center" }}>
-                  <p style={{ margin: "0 0 8px 0", fontSize: "11px", color: "#38bdf8", fontWeight: "bold" }}>Get Free Testnet Tokens (Faucet)</p>
-                  <a 
-                    href="https://docs.shelby.xyz/tools/wallets/petra-setup#apt-faucet" 
-                    target="_blank" 
-                    rel="noopener noreferrer"
-                    style={{ display: "block", background: "linear-gradient(90deg, #10b981, #059669)", color: "white", padding: "6px 12px", borderRadius: "4px", textDecoration: "none", fontSize: "11px", fontWeight: "bold" }}
+                <div style={{ marginBottom: "12px" }}>
+                  <label style={{ fontSize: "11px", opacity: 0.6, display: "block", marginBottom: "6px" }}>STORAGE DURATION</label>
+                  <select 
+                    value={expiration} 
+                    onChange={(e) => setExpiration(e.target.value)}
+                    style={{ width: "100%", padding: "10px", background: "#030712", border: "1px solid #334155", borderRadius: "6px", color: "white", boxSizing: "border-box", cursor: "pointer", fontSize: "12px" }}
                   >
-                    Go to Faucet 🚰
-                  </a>
+                    <option value="1day">1 Day (0.1 ShelbyUSD Fee)</option>
+                    <option value="1week">1 Week (0.5 ShelbyUSD Fee)</option>
+                    <option value="1month">1 Month (1.5 ShelbyUSD Fee)</option>
+                  </select>
+                </div>
+
+                <div style={{ display: "flex", gap: "10px", alignItems: "center", marginBottom: "12px" }}>
+                  <label style={{ fontSize: "11px", opacity: 0.8, cursor: "pointer", display: "flex", alignItems: "center", gap: "6px" }}>
+                    <input type="checkbox" checked={watermark} onChange={(e) => setWatermark(e.target.checked)} style={{ cursor: "pointer" }} />
+                    Neon Watermark
+                  </label>
+                </div>
+
+                <div style={{ background: "#030712", padding: "12px", borderRadius: "8px", border: "1px dashed #38bdf8", marginBottom: "15px", textAlign: "center" }}>
+                  <p style={{ margin: "0 0 8px 0", fontSize: "11px", color: "#38bdf8", fontWeight: "bold" }}>Fund Testnet Tokens (Faucet)</p>
+                  <div style={{ display: "flex", gap: "6px" }}>
+                    <a 
+                      href="https://docs.shelby.xyz/tools/wallets/petra-setup#apt-faucet" 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      style={{ flex: 1, display: "block", background: "linear-gradient(90deg, #10b981, #059669)", color: "white", padding: "6px", borderRadius: "4px", textDecoration: "none", fontSize: "10px", fontWeight: "bold" }}
+                    >
+                      Get APT Gas 💎
+                    </a>
+                    <a 
+                      href="https://docs.shelby.xyz/tools/wallets/petra-setup#apt-faucet" 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      style={{ flex: 1, display: "block", background: "linear-gradient(90deg, #3b82f6, #1d4ed8)", color: "white", padding: "6px", borderRadius: "4px", textDecoration: "none", fontSize: "10px", fontWeight: "bold" }}
+                    >
+                      ShelbyUSD Faucet 💵
+                    </a>
+                  </div>
                 </div>
 
                 <button onClick={downloadMeme} style={{ width: "100%", padding: "8px", background: "#1f2937", border: "none", borderRadius: "6px", color: "white", cursor: "pointer", fontSize: "12px", fontWeight: "bold" }}>Download PNG</button>
