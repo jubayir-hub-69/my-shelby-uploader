@@ -53,10 +53,6 @@ function DashboardContent() {
   const isMobile = getFirstElement(isMobileState);
   const setIsMobile = getSecondElement(isMobileState);
 
-  const isTestingState = useState(false);
-  const isTesting = getFirstElement(isTestingState);
-  const setIsTesting = getSecondElement(isTestingState);
-
   const shelbySpeedState = useState(0);
   const shelbySpeed = getFirstElement(shelbySpeedState);
   const setShelbySpeed = getSecondElement(shelbySpeedState);
@@ -80,7 +76,7 @@ function DashboardContent() {
     if (typeof window === 'undefined') return;
     try {
       const win = window as any;
-      const AudioCtx = win.AudioContext || win.webkitAudioContext;
+      const AudioCtx = win.AudioContext? win.AudioContext : win.webkitAudioContext;
       if (!AudioCtx) return;
       const ctx = new AudioCtx();
       const osc = ctx.createOscillator();
@@ -135,22 +131,13 @@ function DashboardContent() {
     ctx.textBaseline = "bottom";
     ctx.strokeText(bottomText.toUpperCase(), canvas.width / 2, canvas.height - 20);
     ctx.fillText(bottomText.toUpperCase(), canvas.width / 2, canvas.height - 20);
-  },);
+  }, Array.of(topText, bottomText, activeGradient, customImage, activeTab));
 
   const handleConnect = async () => {
     playSound(600);
     try {
-      if (isMobile) {
-        const isPetraBrowser = typeof window!== 'undefined' && (window as any).aptos;
-        if (!isPetraBrowser) {
-          const deepLink = "https://petra.app/explore?link=" + encodeURIComponent(window.location.href);
-          window.open(deepLink, "_blank");
-          return;
-        }
-      }
       await connect("Petra");
     } catch (error) {
-      console.error(error);
       alert("Petra Wallet connection failed!");
     }
   };
@@ -199,11 +186,11 @@ function DashboardContent() {
 
   const runSpeedTest = async () => {
     playSound(800);
-    setIsTesting(true);
-    setTestComplete(false);
-    setShelbySpeed(0);
-    setS3Speed(0);
-    setIpfsSpeed(0);
+    updateState("isTesting", true);
+    updateState("testComplete", false);
+    updateState("shelbySpeed", 0);
+    updateState("s3Speed", 0);
+    updateState("ipfsSpeed", 0);
 
     let i = 0;
     const interval = setInterval(() => {
@@ -219,6 +206,14 @@ function DashboardContent() {
         playSound(1000);
       }
     }, 10);
+  };
+
+  const updateState = (key: string, val: any) => {
+    if (key === "isTesting") setIsTesting(val);
+    if (key === "testComplete") setTestComplete(val);
+    if (key === "shelbySpeed") setShelbySpeed(val);
+    if (key === "s3Speed") setS3Speed(val);
+    if (key === "ipfsSpeed") setIpfsSpeed(val);
   };
 
   const downloadMeme = () => {
@@ -237,7 +232,7 @@ function DashboardContent() {
 
     const currentNet = String(network.name).toLowerCase();
     if (currentNet.indexOf("testnet") === -1) {
-      alert("Warning: Petra is on " + network.name + ".\n\nPlease open Petra Wallet Settings -> Network and switch to 'testnet' to use free faucet gas APT!");
+      alert("Petra Testnet Guard Activation 🚨\n\nYour wallet is currently connected to: " + network.name + "\n\nPlease open Petra Wallet -> Settings (⚙️) -> Network and switch to 'Testnet'. This prevents spending real mainnet APT and lets you complete testing safely with free tokens.");
       return;
     }
 
@@ -347,6 +342,18 @@ function DashboardContent() {
                   </div>
                 </div>
 
+                <div style={{ background: "#030712", padding: "12px", borderRadius: "8px", border: "1px dashed #38bdf8", marginBottom: "15px", textAlign: "center" }}>
+                  <p style={{ margin: "0 0 8px 0", fontSize: "11px", color: "#38bdf8", fontWeight: "bold" }}>Get Free Testnet Tokens (Faucet)</p>
+                  <a 
+                    href="https://docs.shelby.xyz/tools/wallets/petra-setup#apt-faucet" 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    style={{ display: "block", background: "linear-gradient(90deg, #10b981, #059669)", color: "white", padding: "6px 12px", borderRadius: "4px", textDecoration: "none", fontSize: "11px", fontWeight: "bold" }}
+                  >
+                    Go to Faucet 🚰
+                  </a>
+                </div>
+
                 <button onClick={downloadMeme} style={{ width: "100%", padding: "8px", background: "#1f2937", border: "none", borderRadius: "6px", color: "white", cursor: "pointer", fontSize: "12px", fontWeight: "bold" }}>Download PNG</button>
               </div>
               <button onClick={publishMeme} disabled={uploading} style={{ width: "100%", marginTop: "10px", padding: "12px", background: uploading? "#1e293b" : "#3b82f6", border: "none", borderRadius: "6px", color: "white", cursor: "pointer", fontWeight: "bold" }}>
@@ -435,7 +442,7 @@ function DashboardContent() {
 
 export default function Page() {
   return (
-    <AptosWalletAdapterProvider autoConnect={true} dappConfig={{ network: Network.TESTNET }}>
+    <AptosWalletAdapterProvider autoConnect={true} dappConfig={{ network: "testnet" as any }}>
       <DashboardContent />
     </AptosWalletAdapterProvider>
   );
