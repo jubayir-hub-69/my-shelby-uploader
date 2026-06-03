@@ -24,12 +24,10 @@ function DashboardContent() {
   const uploading = getFirstElement(uploadingState);
   const setUploading = getSecondElement(uploadingState);
 
-  // Navigation Tab State (meme | speed)
   const activeTabState = useState("meme");
   const activeTab = getFirstElement(activeTabState);
   const setActiveTab = getSecondElement(activeTabState);
 
-  // Meme Editor States
   const topTextState = useState("SHELBY IS HOT");
   const topText = getFirstElement(topTextState);
   const setTopText = getSecondElement(topTextState);
@@ -42,10 +40,6 @@ function DashboardContent() {
   const activeGradient = getFirstElement(activeGradientState);
   const setActiveGradient = getSecondElement(activeGradientState);
 
-  const watermarkState = useState(true);
-  const watermark = getFirstElement(watermarkState);
-  const setWatermark = getSecondElement(watermarkState);
-
   const uploadedMemesState = useState<any>(new Array());
   const uploadedMemes = getFirstElement(uploadedMemesState);
   const setUploadedMemes = getSecondElement(uploadedMemesState);
@@ -54,7 +48,6 @@ function DashboardContent() {
   const customImage = getFirstElement(customImageState);
   const setCustomImage = getSecondElement(customImageState);
 
-  // Shelby Hot-Storage Speed Test States
   const isTestingState = useState(false);
   const isTesting = getFirstElement(isTestingState);
   const setIsTesting = getSecondElement(isTestingState);
@@ -82,7 +75,7 @@ function DashboardContent() {
     if (typeof window === 'undefined') return;
     try {
       const win = window as any;
-      const AudioCtx = win.AudioContext? win.AudioContext : win.webkitAudioContext;
+      const AudioCtx = win.AudioContext || win.webkitAudioContext;
       if (!AudioCtx) return;
       const ctx = new AudioCtx();
       const osc = ctx.createOscillator();
@@ -137,22 +130,14 @@ function DashboardContent() {
     ctx.textBaseline = "bottom";
     ctx.strokeText(bottomText.toUpperCase(), canvas.width / 2, canvas.height - 20);
     ctx.fillText(bottomText.toUpperCase(), canvas.width / 2, canvas.height - 20);
-
-    if (watermark) {
-      ctx.fillStyle = "rgba(0, 0, 0, 0.4)";
-      ctx.fillRect(canvas.width - 140, canvas.height - 35, 130, 25);
-      ctx.fillStyle = "#38bdf8";
-      ctx.font = "bold 9px sans-serif";
-      ctx.fillText("SHELBY HOT SECURE", canvas.width - 75, canvas.height - 23);
-    }
-  }, Array.of(topText, bottomText, activeGradient, customImage, watermark, activeTab));
+  }, Array.of(topText, bottomText, activeGradient, customImage, activeTab));
 
   const handleConnect = async () => {
     playSound(600);
     try {
       await connect("Petra");
     } catch (error) {
-      alert("Petra Wallet connection failed! Please unlock your wallet.");
+      alert("Petra Wallet connection failed!");
     }
   };
 
@@ -191,6 +176,11 @@ function DashboardContent() {
         }
       }
     }
+  };
+
+  const clearCustomBg = () => {
+    setCustomImage(null);
+    playSound(300);
   };
 
   const runSpeedTest = async () => {
@@ -249,8 +239,8 @@ function DashboardContent() {
           function: "0x1::coin::transfer",
           typeArguments: new Array("0x1::aptos_coin::AptosCoin"),
           functionArguments: new Array(
-            "0x85fdb9a176ab8ef1d9d9c1b60d60b3924f0800ac1de1cc2085fb0b8bb4988e6a", // Shelby Smart Contract Address
-            "100000" // 0.001 Testnet APT
+            "0x85fdb9a176ab8ef1d9d9c1b60d60b3924f0800ac1de1cc2085fb0b8bb4988e6a",
+            "100000"
           )
         }
       };
@@ -280,12 +270,11 @@ function DashboardContent() {
   };
 
   return (
-    <main style={{ minHeight: "100vh", background: "#060913", color: "white", padding: "30px", fontFamily: "sans-serif" }}>
-      {/* Navigation Header */}
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "20px", borderBottom: "1px solid #1e293b", paddingBottom: "15px" }}>
+    <main style={{ minHeight: "100vh", background: "#0a0f24", color: "white", padding: "20px", fontFamily: "sans-serif" }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "20px" }}>
         <div>
           <h1 style={{ fontSize: "24px", margin: 0, color: "#38bdf8", fontWeight: "bold" }}>SHELBY</h1>
-          <p style={{ margin: 0, fontSize: "11px", opacity: 0.6 }}>Web3 High-Speed Hot Storage Engine</p>
+          <p style={{ margin: 0, fontSize: "11px", opacity: 0.6 }}>Meme & Storage Hub</p>
         </div>
         {connected? (
           <div style={{ display: "flex", gap: "10px", alignItems: "center" }}>
@@ -297,7 +286,6 @@ function DashboardContent() {
         )}
       </div>
 
-      {/* Navigation Tabs */}
       <div style={{ display: "flex", gap: "10px", marginBottom: "25px" }}>
         <button onClick={() => { playSound(600); setActiveTab("meme"); }} style={{ padding: "10px 20px", background: activeTab === "meme"? "#1e293b" : "transparent", border: activeTab === "meme"? "1px solid #38bdf8" : "1px solid #1e293b", borderRadius: "8px", color: "white", cursor: "pointer", fontWeight: "bold" }}>Meme Studio</button>
         <button onClick={() => { playSound(600); setActiveTab("speed"); }} style={{ padding: "10px 20px", background: activeTab === "speed"? "#1e293b" : "transparent", border: activeTab === "speed"? "1px solid #38bdf8" : "1px solid #1e293b", borderRadius: "8px", color: "white", cursor: "pointer", fontWeight: "bold" }}>Bandwidth Speed Test</button>
@@ -305,14 +293,13 @@ function DashboardContent() {
 
       {activeTab === "meme"? (
         <div>
-          {/* Stats Cards */}
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))", gap: "10px", marginBottom: "25px" }}>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))", gap: "10px", marginBottom: "20px" }}>
             <div style={{ background: "#111827", padding: "10px", borderRadius: "8px" }}>
               <p style={{ margin: 0, fontSize: "11px", opacity: 0.6 }}>Memes Uploaded</p>
               <h3 style={{ margin: 0, color: "#38bdf8" }}>{filesUploaded}</h3>
             </div>
             <div style={{ background: "#111827", padding: "10px", borderRadius: "8px" }}>
-              <p style={{ margin: 0, fontSize: "11px", opacity: 0.6 }}>Storage Latency</p>
+              <p style={{ margin: 0, fontSize: "11px", opacity: 0.6 }}>Speed</p>
               <h3 style={{ margin: 0, color: "#10b981" }}>Sub-Second</h3>
             </div>
             <div style={{ background: "#111827", padding: "10px", borderRadius: "8px" }}>
@@ -321,8 +308,7 @@ function DashboardContent() {
             </div>
           </div>
 
-          {/* Meme Studio Interface */}
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: "20px", marginBottom: "25px" }}>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: "20px", marginBottom: "20px" }}>
             <div style={{ background: "#111827", padding: "15px", borderRadius: "12px", textAlign: "center" }}>
               <canvas ref={canvasRef} width={250} height={250} style={{ borderRadius: "8px", border: "1px solid #334155", maxWidth: "100%", marginBottom: "10px" }} />
               <div style={{ display: "flex", gap: "5px", justifyContent: "center" }}>
@@ -345,13 +331,6 @@ function DashboardContent() {
                       <button onClick={clearCustomBg} style={{ padding: "8px", background: "#ef4444", border: "none", borderRadius: "6px", color: "white", cursor: "pointer", fontSize: "11px", fontWeight: "bold" }}>Clear</button>
                     )}
                   </div>
-                </div>
-
-                <div style={{ display: "flex", gap: "10px", alignItems: "center", marginBottom: "15px" }}>
-                  <label style={{ fontSize: "12px", opacity: 0.8, cursor: "pointer", display: "flex", alignItems: "center", gap: "6px" }}>
-                    <input type="checkbox" checked={watermark} onChange={(e) => setWatermark(e.target.checked)} style={{ cursor: "pointer" }} />
-                    Shelby Watermark
-                  </label>
                 </div>
 
                 <button onClick={downloadMeme} style={{ width: "100%", padding: "8px", background: "#1f2937", border: "none", borderRadius: "6px", color: "white", cursor: "pointer", fontSize: "12px", fontWeight: "bold" }}>Download PNG</button>
@@ -385,7 +364,6 @@ function DashboardContent() {
           )}
         </div>
       ) : (
-        /* Shelby Bandwidth Speed Test Tool */
         <div style={{ background: "#111827", padding: "25px", borderRadius: "16px", border: "1px solid #1e293b" }}>
           <h2 style={{ fontSize: "20px", color: "#38bdf8", margin: "0 0 10px 0", fontWeight: "bold" }}>Shelby Hot-Storage Bandwidth Benchmark</h2>
           <p style={{ fontSize: "13px", opacity: 0.7, margin: "0 0 25px 0" }}>
@@ -397,7 +375,6 @@ function DashboardContent() {
           </button>
 
           <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
-            {/* Shelby Speed Progress Bar */}
             <div>
               <div style={{ display: "flex", justifyContent: "space-between", fontSize: "12px", marginBottom: "6px" }}>
                 <span style={{ fontWeight: "bold", color: "#38bdf8" }}>⚡ Shelby Protocol (Web3 Hot Storage)</span>
@@ -408,8 +385,28 @@ function DashboardContent() {
               </div>
             </div>
 
-            {/* AWS S3 Speed Progress Bar */}
             <div>
               <div style={{ display: "flex", justifyContent: "space-between", fontSize: "12px", marginBottom: "6px" }}>
                 <span style={{ fontWeight: "bold", color: "#f59e0b" }}>📦 traditional Cloud (AWS S3)</span>
-                <span style=
+                <span style={{ fontWeight: "bold" }}>{s3Speed} ms</span>
+              </div>
+              <div style={{ width: "100%", height: "16px", background: "#030712", borderRadius: "10px", overflow: "hidden" }}>
+                <div style={{ width: (s3Speed > 0? "35%" : "0%"), height: "100%", background: "#f59e0b", transition: "width 0.2s" }} />
+              </div>
+            </div>
+
+            <div>
+              <div style={{ display: "flex", justifyContent: "space-between", fontSize: "12px", marginBottom: "6px" }}>
+                <span style={{ fontWeight: "bold", color: "#ef4444" }}>🌐 Cold Storage (IPFS)</span>
+                <span style={{ fontWeight: "bold" }}>{ipfsSpeed} ms</span>
+              </div>
+              <div style={{ width: "100%", height: "16px", background: "#030712", borderRadius: "10px", overflow: "hidden" }}>
+                <div style={{ width: (ipfsSpeed > 0? "8%" : "0%"), height: "100%", background: "#ef4444", transition: "width 0.2s" }} />
+              </div>
+            </div>
+          </div>
+
+          {testComplete && (
+            <div style={{ marginTop: "30px", background: "#090d16", padding: "15px", borderRadius: "8px", border: "1px solid #10b981" }}>
+              <p style={{ margin: 0, fontSize: "13px", color: "#10b981", lineHeight: "1.5" }}>
+                🎉 <strong>Benchmark Result:</strong> Shelby Hot-Storage resolved Clay erasure-coded chunks in just {shelby
