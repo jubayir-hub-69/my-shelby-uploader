@@ -3,8 +3,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { AptosWalletAdapterProvider, useWallet } from "@aptos-labs/wallet-adapter-react";
 
-const EMPTY_DEPS: any = new Array();
-
 const getFirstElement = (array: any): any => {
   return array.slice(0, 1).pop();
 };
@@ -80,7 +78,6 @@ function DashboardContent() {
   const testComplete = getFirstElement(testCompleteState);
   const setTestComplete = getSecondElement(testCompleteState);
 
-  // New Custom Toast States
   const showToastState = useState(false);
   const showToast = getFirstElement(showToastState);
   const setShowToast = getSecondElement(showToastState);
@@ -289,8 +286,6 @@ function DashboardContent() {
       
       playSound(1000);
       
-      // Removed the alert popup as requested!
-      // Instead, we trigger the custom toast:
       setShowToast(true);
       setTimeout(() => {
         setShowToast(false);
@@ -307,7 +302,6 @@ function DashboardContent() {
   return (
     <main style={{ minHeight: "100vh", background: "#0a0f24", color: "white", padding: "20px", fontFamily: "sans-serif", position: "relative" }}>
       
-      {/* Real-time Toast Notification (Image 2 style, auto-hide after 5s) */}
       {showToast? (
         <div style={{
           position: "fixed",
@@ -321,10 +315,8 @@ function DashboardContent() {
           alignItems: "center",
           gap: "10px",
           boxShadow: "0 10px 15px -3px rgba(0, 0, 0, 0.3)",
-          zIndex: 9999,
-          animation: "fadeIn 0.2s ease-out"
+          zIndex: 9999
         }}>
-          {/* Green Checkmark SVG Icon */}
           <div style={{
             width: "20px",
             height: "20px",
@@ -411,7 +403,7 @@ function DashboardContent() {
                   <div style={{ color: "#38bdf8", fontWeight: "bold", fontSize: "16px", marginBottom: "15px" }}>Clay Erasure Coding...</div>
                   <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: "8px", width: "120px" }}>
                     {Array.of(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16).map((num) => (
-                      <div key={num} style={{ width: "24px", height: "24px", background: num <= 10? "#38bdf8" : "#f43f5e", borderRadius: "4px", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "9px", fontWeight: "bold", color: "white", animation: "pulse 1s infinite" }}>
+                      <div key={num} style={{ width: "24px", height: "24px", background: num <= 10? "#38bdf8" : "#f43f5e", borderRadius: "4px", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "9px", fontWeight: "bold", color: "white" }}>
                         {num <= 10? "D" : "P"}
                       </div>
                     ))}
