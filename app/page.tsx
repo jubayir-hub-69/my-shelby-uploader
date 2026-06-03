@@ -5,7 +5,6 @@ import { AptosWalletAdapterProvider, useWallet } from "@aptos-labs/wallet-adapte
 
 const EMPTY_DEPS: any = new Array();
 
-// Safe helper functions to extract array values without using any square brackets (bypasses platform filter bugs)
 const getFirstElement = (array: any): any => {
   return array.slice(0, 1).pop();
 };
@@ -25,7 +24,6 @@ function DashboardContent() {
   const uploading = getFirstElement(uploadingState);
   const setUploading = getSecondElement(uploadingState);
 
-  // Meme Editor States
   const topTextState = useState("SHELBY IS HOT");
   const topText = getFirstElement(topTextState);
   const setTopText = getSecondElement(topTextState);
@@ -42,32 +40,37 @@ function DashboardContent() {
   const uploadedMemes = getFirstElement(uploadedMemesState);
   const setUploadedMemes = getSecondElement(uploadedMemesState);
 
+  const uploadedImageState = useState<HTMLImageElement | null>(null);
+  const uploadedImage = getFirstElement(uploadedImageState);
+  const setUploadedImage = getSecondElement(uploadedImageState);
+
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const bgInputRef = useRef<HTMLInputElement>(null);
 
-  // Pure Web Audio API Synthesizer (No external asset files needed, 100% reliable sound effects)
   const playWebSound = (type: string) => {
     if (typeof window === 'undefined') return;
     try {
-      const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
-      if (!AudioCtx) return;
-      const ctx = new AudioCtx();
+      const win = window as any;
+      const SelectedContext = win.AudioContext? win.AudioContext : win.webkitAudioContext;
+      if (!SelectedContext) return;
+      const ctx = new SelectedContext();
       const osc = ctx.createOscillator();
       const gain = ctx.createGain();
       osc.connect(gain);
       gain.connect(ctx.destination);
       
       if (type === "click") {
-        osc.frequency.setValueAtTime(587.33, ctx.currentTime); // D5 note
+        osc.frequency.setValueAtTime(587.33, ctx.currentTime);
         gain.gain.setValueAtTime(0.08, ctx.currentTime);
         gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.08);
         osc.start();
         osc.stop(ctx.currentTime + 0.08);
       } else if (type === "success") {
-        osc.frequency.setValueAtTime(523.25, ctx.currentTime); // C5
-        osc.frequency.setValueAtTime(659.25, ctx.currentTime + 0.1); // E5
-        osc.frequency.setValueAtTime(783.99, ctx.currentTime + 0.2); // G5
-        osc.frequency.setValueAtTime(1046.50, ctx.currentTime + 0.3); // C6
+        osc.frequency.setValueAtTime(523.25, ctx.currentTime);
+        osc.frequency.setValueAtTime(659.25, ctx.currentTime + 0.1);
+        osc.frequency.setValueAtTime(783.99, ctx.currentTime + 0.2);
+        osc.frequency.setValueAtTime(1046.50, ctx.currentTime + 0.3);
         gain.gain.setValueAtTime(0.12, ctx.currentTime);
         gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.45);
         osc.start();
@@ -78,46 +81,46 @@ function DashboardContent() {
     }
   };
 
-  // Redraw Meme Canvas whenever text or gradient changes
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
 
-    // Drawing Gradient Background
     ctx.clearRect(0, 0, canvas.width, canvas.height);
-    const grad = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
-    if (activeGradient.includes("135deg")) {
-      grad.addColorStop(0, "#3b82f6");
-      grad.addColorStop(1, "#8b5cf6");
-    } else if (activeGradient.includes("#f43f5e")) {
-      grad.addColorStop(0, "#f43f5e");
-      grad.addColorStop(1, "#eab308");
-    } else {
-      grad.addColorStop(0, "#10b981");
-      grad.addColorStop(1, "#06b6d4");
-    }
-    ctx.fillStyle = grad;
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-    // Styling Text
+    if (uploadedImage) {
+      ctx.drawImage(uploadedImage, 0, 0, canvas.width, canvas.height);
+    } else {
+      const grad = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
+      if (activeGradient.includes("135deg")) {
+        grad.addColorStop(0, "#3b82f6");
+        grad.addColorStop(1, "#8b5cf6");
+      } else if (activeGradient.includes("#f43f5e")) {
+        grad.addColorStop(0, "#f43f5e");
+        grad.addColorStop(1, "#eab308");
+      } else {
+        grad.addColorStop(0, "#10b981");
+        grad.addColorStop(1, "#06b6d4");
+      }
+      ctx.fillStyle = grad;
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+    }
+
     ctx.fillStyle = "white";
     ctx.strokeStyle = "black";
     ctx.lineWidth = 6;
     ctx.textAlign = "center";
     ctx.font = "bold 32px Impact, sans-serif";
 
-    // Draw Top Text
     ctx.textBaseline = "top";
     ctx.strokeText(topText.toUpperCase(), canvas.width / 2, 30);
     ctx.fillText(topText.toUpperCase(), canvas.width / 2, 30);
 
-    // Draw Bottom Text
     ctx.textBaseline = "bottom";
     ctx.strokeText(bottomText.toUpperCase(), canvas.width / 2, canvas.height - 30);
     ctx.fillText(bottomText.toUpperCase(), canvas.width / 2, canvas.height - 30);
-  },);
+  }, EMPTY_DEPS);
 
   const handleConnect = async () => {
     playWebSound("click");
@@ -153,7 +156,45 @@ function DashboardContent() {
     }
   };
 
-  // Simulated Web3 Upload & On-Chain registration
+  const handleBgUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files) {
+      if (e.target.files.length > 0) {
+        const file = e.target.files.item(0);
+        if (file) {
+          const reader = new FileReader();
+          reader.onload = (event) => {
+            if (event.target) {
+              if (event.target.result) {
+                const img = new Image();
+                img.src = event.target.result as string;
+                img.onload = () => {
+                  setUploadedImage(img);
+                  playWebSound("success");
+                };
+              }
+            }
+          };
+          reader.readAsDataURL(file);
+        }
+      }
+    }
+  };
+
+  const clearCustomBg = () => {
+    setUploadedImage(null);
+    playWebSound("click");
+  };
+
+  const downloadMeme = () => {
+    playWebSound("click");
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const link = document.createElement('a');
+    link.download = 'shelby-meme.png';
+    link.href = canvas.toDataURL('image/png');
+    link.click();
+  };
+
   const publishMemeToShelby = async () => {
     if (!connected) {
       alert("Please connect your Petra Wallet first!");
@@ -166,7 +207,6 @@ function DashboardContent() {
     playWebSound("click");
 
     try {
-      // 2 seconds simulated delay for decentralized sharding & erasure coding replication
       await new Promise((resolve) => setTimeout(resolve, 2000));
       
       const memeUrl = canvas.toDataURL("image/png");
@@ -185,7 +225,7 @@ function DashboardContent() {
       setFilesUploaded(filesUploaded + 1);
       
       playWebSound("success");
-      alert("Successfully uploaded your custom Meme to the Shelby hot storage network!");
+      alert("Successfully uploaded your Meme to the Shelby hot storage network!");
     } catch (e) {
       console.error(e);
       alert("Failed to upload. Try again!");
@@ -194,7 +234,6 @@ function DashboardContent() {
     }
   };
 
-  // Copy simulated gateway link to clipboard
   const copyGatewayLink = (id: number) => {
     playWebSound("click");
     const link = "https://gateway.shelby.xyz/blob/account/" + account?.address + "/meme-" + id;
@@ -202,7 +241,6 @@ function DashboardContent() {
     alert("Gateway URL copied to clipboard!\n\n" + link);
   };
 
-  // Toggle Paywall/Paid Read on a file
   const togglePaywall = (id: number) => {
     playWebSound("click");
     const updated = uploadedMemes.map((m: any) => {
@@ -223,7 +261,6 @@ function DashboardContent() {
       padding: '40px',
       fontFamily: 'sans-serif'
     }}>
-      {/* Header */}
       <div style={{
         display: 'flex',
         justifyContent: 'space-between',
@@ -244,7 +281,6 @@ function DashboardContent() {
             </span>
             <button 
               onClick={handleDisconnect} 
-              onMouseEnter={() => playWebSound("click")}
               style={{
                 background: 'linear-gradient(90deg, #ef4444, #dc2626)',
                 border: 'none',
@@ -262,7 +298,6 @@ function DashboardContent() {
         ) : (
           <button 
             onClick={handleConnect} 
-            onMouseEnter={() => playWebSound("click")}
             style={{
               background: 'linear-gradient(90deg, #3b82f6, #1d4ed8)',
               border: 'none',
@@ -279,7 +314,6 @@ function DashboardContent() {
         )}
       </div>
 
-      {/* Stats Cards */}
       <div style={{
         display: 'grid',
         gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
@@ -311,14 +345,12 @@ function DashboardContent() {
         </div>
       </div>
 
-      {/* Main App Work Area */}
       <div style={{
         display: 'grid',
         gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))',
         gap: '30px',
         marginBottom: '40px'
       }}>
-        {/* Left: Live Meme Canvas Editor */}
         <div style={{ background: '#090d16', padding: '25px', borderRadius: '16px', border: '1px solid #1e293b' }}>
           <h3 style={{ margin: '0 0 20px 0', fontSize: '18px', fontWeight: 'bold', color: '#38bdf8' }}>Meme Live Canvas</h3>
           
@@ -336,7 +368,7 @@ function DashboardContent() {
             />
           </div>
 
-          <div style={{ display: 'flex', gap: '10px', justifyContent: 'center' }}>
+          <div style={{ display: 'flex', gap: '10px', justifyContent: 'center', marginBottom: '15px' }}>
             <button 
               onClick={() => { playWebSound("click"); setActiveGradient("linear-gradient(135deg, #3b82f6, #8b5cf6)"); }}
               style={{ padding: '8px 12px', background: 'linear-gradient(135deg, #3b82f6, #8b5cf6)', border: 'none', borderRadius: '6px', cursor: 'pointer', fontSize: '12px', fontWeight: 'bold', color: 'white' }}
@@ -356,9 +388,25 @@ function DashboardContent() {
               Neon Green
             </button>
           </div>
+
+          <button 
+            onClick={downloadMeme}
+            style={{
+              width: '100%',
+              background: '#1f2937',
+              border: '1px solid #334155',
+              padding: '10px',
+              borderRadius: '8px',
+              color: 'white',
+              cursor: 'pointer',
+              fontWeight: 'bold',
+              fontSize: '13px'
+            }}
+          >
+            Download Meme (.PNG)
+          </button>
         </div>
 
-        {/* Right: Controls & Input Fields */}
         <div style={{ background: '#090d16', padding: '25px', borderRadius: '16px', border: '1px solid #1e293b', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
           <div>
             <h3 style={{ margin: '0 0 20px 0', fontSize: '18px', fontWeight: 'bold', color: '#38bdf8' }}>Configure Meme Asset</h3>
@@ -373,7 +421,7 @@ function DashboardContent() {
               />
             </div>
 
-            <div style={{ marginBottom: '24px' }}>
+            <div style={{ marginBottom: '18px' }}>
               <label style={{ fontSize: '12px', opacity: 0.6, display: 'block', marginBottom: '6px' }}>BOTTOM CAPTION</label>
               <input 
                 type="text" 
@@ -381,6 +429,33 @@ function DashboardContent() {
                 onChange={(e) => setBottomText(e.target.value)}
                 style={{ width: '100%', padding: '12px', background: '#030712', border: '1px solid #334155', borderRadius: '8px', color: 'white', boxSizing: 'border-box' }}
               />
+            </div>
+
+            <div style={{ marginBottom: '20px' }}>
+              <label style={{ fontSize: '12px', opacity: 0.6, display: 'block', marginBottom: '6px' }}>CUSTOM BACKGROUND IMAGE</label>
+              <input 
+                type="file" 
+                ref={bgInputRef}
+                onChange={handleBgUpload}
+                accept="image/*"
+                style={{ display: 'none' }}
+              />
+              <div style={{ display: 'flex', gap: '10px' }}>
+                <button 
+                  onClick={() => bgInputRef.current?.click()}
+                  style={{ flex: 1, padding: '10px', background: '#1e293b', border: '1px solid #334155', borderRadius: '8px', color: 'white', cursor: 'pointer', fontSize: '12px', fontWeight: 'bold' }}
+                >
+                  Upload Image
+                </button>
+                {uploadedImage && (
+                  <button 
+                    onClick={clearCustomBg}
+                    style={{ padding: '10px', background: '#ef4444', border: 'none', borderRadius: '8px', color: 'white', cursor: 'pointer', fontSize: '12px', fontWeight: 'bold' }}
+                  >
+                    Clear
+                  </button>
+                )}
+              </div>
             </div>
 
             <div style={{ background: '#030712', padding: '15px', borderRadius: '8px', border: '1px dashed #1e293b', marginBottom: '20px' }}>
@@ -411,7 +486,6 @@ function DashboardContent() {
         </div>
       </div>
 
-      {/* Live Shelby Storage Vault List */}
       <div style={{ background: '#090d16', padding: '25px', borderRadius: '16px', border: '1px solid #1e293b' }}>
         <h3 style={{ margin: '0 0 20px 0', fontSize: '18px', fontWeight: 'bold', color: '#38bdf8' }}>Live Shelby Meme Vault</h3>
         
@@ -432,46 +506,4 @@ function DashboardContent() {
 
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                   <span style={{ fontSize: '12px', fontWeight: 'bold', color: m.price === 'Free'? '#10b981' : '#f59e0b' }}>
-                    Access: {m.price}
-                  </span>
-                  
-                  <button 
-                    onClick={() => togglePaywall(m.id)}
-                    style={{ background: '#111827', border: '1px solid #334155', borderRadius: '6px', color: 'white', padding: '5px 10px', fontSize: '11px', cursor: 'pointer' }}
-                  >
-                    {m.price === 'Free'? 'Add Paywall' : 'Make Free'}
-                  </button>
-                </div>
-
-                <button 
-                  onClick={() => copyGatewayLink(m.id)}
-                  style={{
-                    width: '100%',
-                    background: '#1f2937',
-                    border: 'none',
-                    padding: '8px',
-                    borderRadius: '6px',
-                    color: 'white',
-                    cursor: 'pointer',
-                    fontSize: '12px',
-                    fontWeight: 'bold'
-                  }}
-                >
-                  Copy Gateway Link
-                </button>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
-    </main>
-  );
-}
-
-export default function Page() {
-  return (
-    <AptosWalletAdapterProvider autoConnect={true}>
-      <DashboardContent />
-    </AptosWalletAdapterProvider>
-  );
-                }
+                   
