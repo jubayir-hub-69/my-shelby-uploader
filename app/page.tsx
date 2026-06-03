@@ -2,7 +2,6 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { AptosWalletAdapterProvider, useWallet } from "@aptos-labs/wallet-adapter-react";
-import { Network } from "@aptos-labs/ts-sdk";
 
 const EMPTY_DEPS: any = new Array();
 
@@ -17,7 +16,7 @@ const getSecondElement = (array: any): any => {
 function DashboardContent() {
   const { connect, disconnect, connected, account, network, signAndSubmitTransaction } = useWallet();
 
-  const filesUploadedState = useState(3);
+  const filesUploadedState = useState(4);
   const filesUploaded = getFirstElement(filesUploadedState);
   const setFilesUploaded = getSecondElement(filesUploadedState);
 
@@ -80,6 +79,11 @@ function DashboardContent() {
   const testCompleteState = useState(false);
   const testComplete = getFirstElement(testCompleteState);
   const setTestComplete = getSecondElement(testCompleteState);
+
+  // New Custom Toast States
+  const showToastState = useState(false);
+  const showToast = getFirstElement(showToastState);
+  const setShowToast = getSecondElement(showToastState);
 
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const customBgInputRef = useRef<HTMLInputElement>(null);
@@ -284,7 +288,14 @@ function DashboardContent() {
       setFilesUploaded(filesUploaded + 1);
       
       playSound(1000);
-      alert("Success! Transaction confirmed on Aptos Testnet.\n\nTx Hash: " + txHash);
+      
+      // Removed the alert popup as requested!
+      // Instead, we trigger the custom toast:
+      setShowToast(true);
+      setTimeout(() => {
+        setShowToast(false);
+      }, 5000);
+
     } catch (error: any) {
       console.error(error);
       alert("Testnet transaction failed or was cancelled!");
@@ -294,7 +305,45 @@ function DashboardContent() {
   };
 
   return (
-    <main style={{ minHeight: "100vh", background: "#0a0f24", color: "white", padding: "20px", fontFamily: "sans-serif" }}>
+    <main style={{ minHeight: "100vh", background: "#0a0f24", color: "white", padding: "20px", fontFamily: "sans-serif", position: "relative" }}>
+      
+      {/* Real-time Toast Notification (Image 2 style, auto-hide after 5s) */}
+      {showToast? (
+        <div style={{
+          position: "fixed",
+          bottom: "24px",
+          right: "24px",
+          background: "rgba(31, 41, 55, 0.95)",
+          border: "1px solid #10b981",
+          borderRadius: "9999px",
+          padding: "10px 24px",
+          display: "inline-flex",
+          alignItems: "center",
+          gap: "10px",
+          boxShadow: "0 10px 15px -3px rgba(0, 0, 0, 0.3)",
+          zIndex: 9999,
+          animation: "fadeIn 0.2s ease-out"
+        }}>
+          {/* Green Checkmark SVG Icon */}
+          <div style={{
+            width: "20px",
+            height: "20px",
+            background: "#10b981",
+            borderRadius: "50%",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center"
+          }}>
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round">
+              <polyline points="20 6 9 17 4 12" />
+            </svg>
+          </div>
+          <span style={{ color: "white", fontWeight: "bold", fontSize: "14px" }}>
+            Transaction successful!
+          </span>
+        </div>
+      ) : null}
+
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "20px" }}>
         <div>
           <h1 style={{ fontSize: "24px", margin: 0, color: "#38bdf8", fontWeight: "bold" }}>SHELBY</h1>
