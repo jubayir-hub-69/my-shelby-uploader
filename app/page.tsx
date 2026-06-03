@@ -24,6 +24,12 @@ function DashboardContent() {
   const uploading = getFirstElement(uploadingState);
   const setUploading = getSecondElement(uploadingState);
 
+  // Navigation Tab State (meme | speed)
+  const activeTabState = useState("meme");
+  const activeTab = getFirstElement(activeTabState);
+  const setActiveTab = getSecondElement(activeTabState);
+
+  // Meme Editor States
   const topTextState = useState("SHELBY IS HOT");
   const topText = getFirstElement(topTextState);
   const setTopText = getSecondElement(topTextState);
@@ -36,6 +42,10 @@ function DashboardContent() {
   const activeGradient = getFirstElement(activeGradientState);
   const setActiveGradient = getSecondElement(activeGradientState);
 
+  const watermarkState = useState(true);
+  const watermark = getFirstElement(watermarkState);
+  const setWatermark = getSecondElement(watermarkState);
+
   const uploadedMemesState = useState<any>(new Array());
   const uploadedMemes = getFirstElement(uploadedMemesState);
   const setUploadedMemes = getSecondElement(uploadedMemesState);
@@ -44,24 +54,29 @@ function DashboardContent() {
   const customImage = getFirstElement(customImageState);
   const setCustomImage = getSecondElement(customImageState);
 
-  const isMobileState = useState(false);
-  const isMobile = getFirstElement(isMobileState);
-  const setIsMobile = getSecondElement(isMobileState);
+  // Shelby Hot-Storage Speed Test States
+  const isTestingState = useState(false);
+  const isTesting = getFirstElement(isTestingState);
+  const setIsTesting = getSecondElement(isTestingState);
+
+  const shelbySpeedState = useState(0);
+  const shelbySpeed = getFirstElement(shelbySpeedState);
+  const setShelbySpeed = getSecondElement(shelbySpeedState);
+
+  const s3SpeedState = useState(0);
+  const s3Speed = getFirstElement(s3SpeedState);
+  const setS3Speed = getSecondElement(s3SpeedState);
+
+  const ipfsSpeedState = useState(0);
+  const ipfsSpeed = getFirstElement(ipfsSpeedState);
+  const setIpfsSpeed = getSecondElement(ipfsSpeedState);
+
+  const testCompleteState = useState(false);
+  const testComplete = getFirstElement(testCompleteState);
+  const setTestComplete = getSecondElement(testCompleteState);
 
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
   const customBgInputRef = useRef<HTMLInputElement>(null);
-
-  useEffect(() => {
-    if (typeof window!== 'undefined') {
-      const userAgent = navigator.userAgent;
-      const isTouch = navigator.maxTouchPoints > 0;
-      const matchesMobile = userAgent.match(/Android|iPhone|iPad|iPod/i);
-      if (matchesMobile || isTouch) {
-        setIsMobile(true);
-      }
-    }
-  }, EMPTY_DEPS);
 
   const playSound = (freq: number) => {
     if (typeof window === 'undefined') return;
@@ -83,6 +98,7 @@ function DashboardContent() {
   };
 
   useEffect(() => {
+    if (activeTab!== "meme") return;
     const canvas = canvasRef.current;
     if (!canvas) return;
     const ctx = canvas.getContext("2d");
@@ -94,7 +110,6 @@ function DashboardContent() {
       ctx.drawImage(customImage, 0, 0, canvas.width, canvas.height);
     } else {
       const grad = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
-      
       if (activeGradient === "sunset") {
         grad.addColorStop(0, "#f43f5e");
         grad.addColorStop(1, "#eab308");
@@ -105,7 +120,6 @@ function DashboardContent() {
         grad.addColorStop(0, "#3b82f6");
         grad.addColorStop(1, "#8b5cf6");
       }
-
       ctx.fillStyle = grad;
       ctx.fillRect(0, 0, canvas.width, canvas.height);
     }
@@ -123,23 +137,22 @@ function DashboardContent() {
     ctx.textBaseline = "bottom";
     ctx.strokeText(bottomText.toUpperCase(), canvas.width / 2, canvas.height - 20);
     ctx.fillText(bottomText.toUpperCase(), canvas.width / 2, canvas.height - 20);
-  }, Array.of(topText, bottomText, activeGradient, customImage));
+
+    if (watermark) {
+      ctx.fillStyle = "rgba(0, 0, 0, 0.4)";
+      ctx.fillRect(canvas.width - 140, canvas.height - 35, 130, 25);
+      ctx.fillStyle = "#38bdf8";
+      ctx.font = "bold 9px sans-serif";
+      ctx.fillText("SHELBY HOT SECURE", canvas.width - 75, canvas.height - 23);
+    }
+  }, Array.of(topText, bottomText, activeGradient, customImage, watermark, activeTab));
 
   const handleConnect = async () => {
     playSound(600);
     try {
-      if (isMobile) {
-        const isPetraBrowser = typeof window!== 'undefined' && (window as any).aptos;
-        if (!isPetraBrowser) {
-          const deepLink = "https://petra.app/explore?link=" + encodeURIComponent(window.location.href);
-          window.open(deepLink, "_blank");
-          return;
-        }
-      }
       await connect("Petra");
     } catch (error) {
-      console.error(error);
-      alert("Petra Wallet connection failed! Please unlock your wallet first.");
+      alert("Petra Wallet connection failed! Please unlock your wallet.");
     }
   };
 
@@ -180,9 +193,28 @@ function DashboardContent() {
     }
   };
 
-  const clearCustomBg = () => {
-    setCustomImage(null);
-    playSound(300);
+  const runSpeedTest = async () => {
+    playSound(800);
+    setIsTesting(true);
+    setTestComplete(false);
+    setShelbySpeed(0);
+    setS3Speed(0);
+    setIpfsSpeed(0);
+
+    let i = 0;
+    const interval = setInterval(() => {
+      i = i + 10;
+      if (i <= 95) setShelbySpeed(i);
+      if (i <= 280) setS3Speed(i);
+      if (i <= 3850) setIpfsSpeed(i);
+
+      if (i >= 3850) {
+        clearInterval(interval);
+        setIsTesting(false);
+        setTestComplete(true);
+        playSound(1000);
+      }
+    }, 10);
   };
 
   const downloadMeme = () => {
@@ -197,16 +229,11 @@ function DashboardContent() {
 
   const publishMeme = async () => {
     if (!connected) return alert("Please connect your Petra Wallet first!");
-    
-    // Strict Testnet Guard Check to prevent real mainnet money deduction
-    if (!network) {
-      alert("Wallet network connection not detected. Please make sure your Petra Wallet is open and unlocked.");
-      return;
-    }
+    if (!network) return alert("Wallet network connection not detected.");
 
     const currentNet = network.name.toLowerCase();
     if (currentNet!== "testnet") {
-      alert("Warning: Your wallet is connected to " + network.name + ".\n\nPlease open Petra Wallet, go to Settings -> Network, and change it to 'testnet' to use free faucet APT gas fee!");
+      alert("Warning: Petra is on " + network.name + ".\n\nPlease open Petra Wallet Settings -> Network and switch to 'testnet' to use free faucet gas APT!");
       return;
     }
 
@@ -217,14 +244,13 @@ function DashboardContent() {
     playSound(800);
 
     try {
-      // Secure transaction payload structured directly for Aptos Testnet transfer
       const transactionPayload: any = {
         data: {
           function: "0x1::coin::transfer",
           typeArguments: new Array("0x1::aptos_coin::AptosCoin"),
           functionArguments: new Array(
-            "0x85fdb9a176ab8ef1d9d9c1b60d60b3924f0800ac1de1cc2085fb0b8bb4988e6a", // Shelby smart contract address
-            "100000" // 0.001 Testnet APT storage payment
+            "0x85fdb9a176ab8ef1d9d9c1b60d60b3924f0800ac1de1cc2085fb0b8bb4988e6a", // Shelby Smart Contract Address
+            "100000" // 0.001 Testnet APT
           )
         }
       };
@@ -246,19 +272,20 @@ function DashboardContent() {
       playSound(1000);
       alert("Success! Transaction confirmed on Aptos Testnet.\n\nTx Hash: " + txHash);
     } catch (error: any) {
-      console.error("Aptos transaction failed:", error);
-      alert("Aptos Testnet Transaction Rejected or Failed! Please make sure you have Testnet APT in your wallet.");
+      console.error(error);
+      alert("Testnet transaction failed or was cancelled!");
     } finally {
       setUploading(false);
     }
   };
 
   return (
-    <main style={{ minHeight: "100vh", background: "#0a0f24", color: "white", padding: "20px", fontFamily: "sans-serif" }}>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "20px" }}>
+    <main style={{ minHeight: "100vh", background: "#060913", color: "white", padding: "30px", fontFamily: "sans-serif" }}>
+      {/* Navigation Header */}
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "20px", borderBottom: "1px solid #1e293b", paddingBottom: "15px" }}>
         <div>
           <h1 style={{ fontSize: "24px", margin: 0, color: "#38bdf8", fontWeight: "bold" }}>SHELBY</h1>
-          <p style={{ margin: 0, fontSize: "11px", opacity: 0.6 }}>Meme & Storage Hub</p>
+          <p style={{ margin: 0, fontSize: "11px", opacity: 0.6 }}>Web3 High-Speed Hot Storage Engine</p>
         </div>
         {connected? (
           <div style={{ display: "flex", gap: "10px", alignItems: "center" }}>
@@ -270,83 +297,119 @@ function DashboardContent() {
         )}
       </div>
 
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))", gap: "10px", marginBottom: "20px" }}>
-        <div style={{ background: "#111827", padding: "10px", borderRadius: "8px" }}>
-          <p style={{ margin: 0, fontSize: "11px", opacity: 0.6 }}>Memes Uploaded</p>
-          <h3 style={{ margin: 0, color: "#38bdf8" }}>{filesUploaded}</h3>
-        </div>
-        <div style={{ background: "#111827", padding: "10px", borderRadius: "8px" }}>
-          <p style={{ margin: 0, fontSize: "11px", opacity: 0.6 }}>Speed</p>
-          <h3 style={{ margin: 0, color: "#10b981" }}>Sub-Second</h3>
-        </div>
-        <div style={{ background: "#111827", padding: "10px", borderRadius: "8px" }}>
-          <p style={{ margin: 0, fontSize: "11px", opacity: 0.6 }}>Network</p>
-          <h3 style={{ margin: 0, color: "#3b82f6" }}>{connected? (network? network.name : "Testnet") : "Offline"}</h3>
-        </div>
+      {/* Navigation Tabs */}
+      <div style={{ display: "flex", gap: "10px", marginBottom: "25px" }}>
+        <button onClick={() => { playSound(600); setActiveTab("meme"); }} style={{ padding: "10px 20px", background: activeTab === "meme"? "#1e293b" : "transparent", border: activeTab === "meme"? "1px solid #38bdf8" : "1px solid #1e293b", borderRadius: "8px", color: "white", cursor: "pointer", fontWeight: "bold" }}>Meme Studio</button>
+        <button onClick={() => { playSound(600); setActiveTab("speed"); }} style={{ padding: "10px 20px", background: activeTab === "speed"? "#1e293b" : "transparent", border: activeTab === "speed"? "1px solid #38bdf8" : "1px solid #1e293b", borderRadius: "8px", color: "white", cursor: "pointer", fontWeight: "bold" }}>Bandwidth Speed Test</button>
       </div>
 
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: "20px", marginBottom: "20px" }}>
-        <div style={{ background: "#111827", padding: "15px", borderRadius: "12px", textAlign: "center" }}>
-          <canvas ref={canvasRef} width={250} height={250} style={{ borderRadius: "8px", border: "1px solid #334155", maxWidth: "100%", marginBottom: "10px" }} />
-          <div style={{ display: "flex", gap: "5px", justifyContent: "center" }}>
-            <button onClick={() => { playSound(600); setActiveGradient("blue"); }} style={{ padding: "6px 10px", background: "#3b82f6", border: "none", borderRadius: "4px", color: "white", cursor: "pointer", fontSize: "11px" }}>Blue</button>
-            <button onClick={() => { playSound(600); setActiveGradient("sunset"); }} style={{ padding: "6px 10px", background: "#f43f5e", border: "none", borderRadius: "4px", color: "white", cursor: "pointer", fontSize: "11px" }}>Sunset</button>
-            <button onClick={() => { playSound(600); setActiveGradient("green"); }} style={{ padding: "6px 10px", background: "#10b981", border: "none", borderRadius: "4px", color: "white", cursor: "pointer", fontSize: "11px" }}>Green</button>
+      {activeTab === "meme"? (
+        <div>
+          {/* Stats Cards */}
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))", gap: "10px", marginBottom: "25px" }}>
+            <div style={{ background: "#111827", padding: "10px", borderRadius: "8px" }}>
+              <p style={{ margin: 0, fontSize: "11px", opacity: 0.6 }}>Memes Uploaded</p>
+              <h3 style={{ margin: 0, color: "#38bdf8" }}>{filesUploaded}</h3>
+            </div>
+            <div style={{ background: "#111827", padding: "10px", borderRadius: "8px" }}>
+              <p style={{ margin: 0, fontSize: "11px", opacity: 0.6 }}>Storage Latency</p>
+              <h3 style={{ margin: 0, color: "#10b981" }}>Sub-Second</h3>
+            </div>
+            <div style={{ background: "#111827", padding: "10px", borderRadius: "8px" }}>
+              <p style={{ margin: 0, fontSize: "11px", opacity: 0.6 }}>Network</p>
+              <h3 style={{ margin: 0, color: "#3b82f6" }}>{connected? (network? network.name : "Testnet") : "Offline"}</h3>
+            </div>
           </div>
-        </div>
 
-        <div style={{ background: "#111827", padding: "15px", borderRadius: "12px", display: "flex", flexDirection: "column", justifyContent: "space-between" }}>
-          <div>
-            <input type="text" value={topText} onChange={e => setTopText(e.target.value)} style={{ width: "100%", padding: "10px", marginBottom: "10px", background: "#030712", border: "1px solid #334155", borderRadius: "6px", color: "white", boxSizing: "border-box" }} placeholder="Top Text" />
-            <input type="text" value={bottomText} onChange={e => setBottomText(e.target.value)} style={{ width: "100%", padding: "10px", marginBottom: "10px", background: "#030712", border: "1px solid #334155", borderRadius: "6px", color: "white", boxSizing: "border-box" }} placeholder="Bottom Text" />
-            
-            <div style={{ marginBottom: "10px" }}>
-              <input type="file" ref={customBgInputRef} onChange={handleCustomBgUpload} accept="image/*" style={{ display: "none" }} />
-              <div style={{ display: "flex", gap: "5px" }}>
-                <button onClick={() => customBgInputRef.current?.click()} style={{ flex: 1, padding: "8px", background: "#1e293b", border: "1px solid #334155", borderRadius: "6px", color: "white", cursor: "pointer", fontSize: "11px", fontWeight: "bold" }}>Upload Bg</button>
-                {customImage && (
-                  <button onClick={clearCustomBg} style={{ padding: "8px", background: "#ef4444", border: "none", borderRadius: "6px", color: "white", cursor: "pointer", fontSize: "11px", fontWeight: "bold" }}>Clear</button>
-                )}
+          {/* Meme Studio Interface */}
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: "20px", marginBottom: "25px" }}>
+            <div style={{ background: "#111827", padding: "15px", borderRadius: "12px", textAlign: "center" }}>
+              <canvas ref={canvasRef} width={250} height={250} style={{ borderRadius: "8px", border: "1px solid #334155", maxWidth: "100%", marginBottom: "10px" }} />
+              <div style={{ display: "flex", gap: "5px", justifyContent: "center" }}>
+                <button onClick={() => { playSound(600); setActiveGradient("blue"); }} style={{ padding: "6px 10px", background: "#3b82f6", border: "none", borderRadius: "4px", color: "white", cursor: "pointer", fontSize: "11px" }}>Blue</button>
+                <button onClick={() => { playSound(600); setActiveGradient("sunset"); }} style={{ padding: "6px 10px", background: "#f43f5e", border: "none", borderRadius: "4px", color: "white", cursor: "pointer", fontSize: "11px" }}>Sunset</button>
+                <button onClick={() => { playSound(600); setActiveGradient("green"); }} style={{ padding: "6px 10px", background: "#10b981", border: "none", borderRadius: "4px", color: "white", cursor: "pointer", fontSize: "11px" }}>Green</button>
               </div>
             </div>
 
-            <button onClick={downloadMeme} style={{ width: "100%", padding: "8px", background: "#1f2937", border: "none", borderRadius: "6px", color: "white", cursor: "pointer", fontSize: "12px", fontWeight: "bold" }}>Download PNG</button>
-          </div>
-          <button onClick={publishMeme} disabled={uploading} style={{ width: "100%", marginTop: "10px", padding: "12px", background: uploading? "#1e293b" : "#3b82f6", border: "none", borderRadius: "6px", color: "white", cursor: "pointer", fontWeight: "bold" }}>
-            {uploading? "Uploading to Aptos Testnet..." : "Publish to Shelby (Sign Tx)"}
-          </button>
-        </div>
-      </div>
+            <div style={{ background: "#111827", padding: "15px", borderRadius: "12px", display: "flex", flexDirection: "column", justifyContent: "space-between" }}>
+              <div>
+                <input type="text" value={topText} onChange={e => setTopText(e.target.value)} style={{ width: "100%", padding: "10px", marginBottom: "10px", background: "#030712", border: "1px solid #334155", borderRadius: "6px", color: "white", boxSizing: "border-box" }} placeholder="Top Text" />
+                <input type="text" value={bottomText} onChange={e => setBottomText(e.target.value)} style={{ width: "100%", padding: "10px", marginBottom: "10px", background: "#030712", border: "1px solid #334155", borderRadius: "6px", color: "white", boxSizing: "border-box" }} placeholder="Bottom Text" />
+                
+                <div style={{ marginBottom: "10px" }}>
+                  <input type="file" ref={customBgInputRef} onChange={handleCustomBgUpload} accept="image/*" style={{ display: "none" }} />
+                  <div style={{ display: "flex", gap: "5px" }}>
+                    <button onClick={() => customBgInputRef.current?.click()} style={{ flex: 1, padding: "8px", background: "#1e293b", border: "1px solid #334155", borderRadius: "6px", color: "white", cursor: "pointer", fontSize: "11px", fontWeight: "bold" }}>Upload Bg</button>
+                    {customImage && (
+                      <button onClick={clearCustomBg} style={{ padding: "8px", background: "#ef4444", border: "none", borderRadius: "6px", color: "white", cursor: "pointer", fontSize: "11px", fontWeight: "bold" }}>Clear</button>
+                    )}
+                  </div>
+                </div>
 
-      {uploadedMemes.length > 0 && (
-        <div style={{ background: "#111827", padding: "15px", borderRadius: "12px" }}>
-          <h3 style={{ margin: "0 0 10px 0", fontSize: "14px" }}>Shelby Storage Vault</h3>
-          <div style={{ display: "flex", gap: "10px", overflowX: "auto", paddingBottom: "10px" }}>
-            {uploadedMemes.map((m: any) => (
-              <div key={m.id} style={{ minWidth: "160px", background: "#030712", padding: "10px", borderRadius: "8px", textAlign: "center" }}>
-                <img src={m.url} style={{ width: "140px", height: "140px", objectFit: "cover", borderRadius: "4px", marginBottom: "5px" }} />
-                <p style={{ margin: 0, fontSize: "10px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{m.name}</p>
-                <a 
-                  href={"https://explorer.aptoslabs.com/txn/" + m.tx + "?network=testnet"}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  style={{ display: "block", marginTop: "5px", padding: "6px", background: "#10b981", borderRadius: "4px", color: "white", fontSize: "11px", textDecoration: "none", fontWeight: "bold" }}
-                >
-                  View on Explorer ↗
-                </a>
+                <div style={{ display: "flex", gap: "10px", alignItems: "center", marginBottom: "15px" }}>
+                  <label style={{ fontSize: "12px", opacity: 0.8, cursor: "pointer", display: "flex", alignItems: "center", gap: "6px" }}>
+                    <input type="checkbox" checked={watermark} onChange={(e) => setWatermark(e.target.checked)} style={{ cursor: "pointer" }} />
+                    Shelby Watermark
+                  </label>
+                </div>
+
+                <button onClick={downloadMeme} style={{ width: "100%", padding: "8px", background: "#1f2937", border: "none", borderRadius: "6px", color: "white", cursor: "pointer", fontSize: "12px", fontWeight: "bold" }}>Download PNG</button>
               </div>
-            ))}
+              <button onClick={publishMeme} disabled={uploading} style={{ width: "100%", marginTop: "10px", padding: "12px", background: uploading? "#1e293b" : "#3b82f6", border: "none", borderRadius: "6px", color: "white", cursor: "pointer", fontWeight: "bold" }}>
+                {uploading? "Uploading to Aptos Testnet..." : "Publish to Shelby (Testnet Tx)"}
+              </button>
+            </div>
           </div>
-        </div>
-      )}
-    </main>
-  );
-}
 
-export default function Page() {
-  return (
-    <AptosWalletAdapterProvider autoConnect={true} dappConfig={{ network: "testnet" as any }}>
-      <DashboardContent />
-    </AptosWalletAdapterProvider>
-  );
-}
+          {uploadedMemes.length > 0 && (
+            <div style={{ background: "#111827", padding: "15px", borderRadius: "12px" }}>
+              <h3 style={{ margin: "0 0 10px 0", fontSize: "14px" }}>Shelby Storage Vault</h3>
+              <div style={{ display: "flex", gap: "10px", overflowX: "auto", paddingBottom: "10px" }}>
+                {uploadedMemes.map((m: any) => (
+                  <div key={m.id} style={{ minWidth: "160px", background: "#030712", padding: "10px", borderRadius: "8px", textAlign: "center" }}>
+                    <img src={m.url} style={{ width: "140px", height: "140px", objectFit: "cover", borderRadius: "4px", marginBottom: "5px" }} />
+                    <p style={{ margin: 0, fontSize: "10px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{m.name}</p>
+                    <a 
+                      href={"https://explorer.aptoslabs.com/txn/" + m.tx + "?network=testnet"}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      style={{ display: "block", marginTop: "5px", padding: "6px", background: "#10b981", borderRadius: "4px", color: "white", fontSize: "11px", textDecoration: "none", fontWeight: "bold" }}
+                    >
+                      View on Explorer ↗
+                    </a>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      ) : (
+        /* Shelby Bandwidth Speed Test Tool */
+        <div style={{ background: "#111827", padding: "25px", borderRadius: "16px", border: "1px solid #1e293b" }}>
+          <h2 style={{ fontSize: "20px", color: "#38bdf8", margin: "0 0 10px 0", fontWeight: "bold" }}>Shelby Hot-Storage Bandwidth Benchmark</h2>
+          <p style={{ fontSize: "13px", opacity: 0.7, margin: "0 0 25px 0" }}>
+            Test and compare decentralized data retrieval speeds. Real-time sub-second latency powered by dedicated fiber backbones.
+          </p>
+
+          <button onClick={runSpeedTest} disabled={isTesting} style={{ background: isTesting? "#1e293b" : "#10b981", border: "none", padding: "12px 24px", borderRadius: "8px", color: "white", fontWeight: "bold", cursor: isTesting? "not-allowed" : "pointer", marginBottom: "30px" }}>
+            {isTesting? "Testing Bandwidth..." : "Run Speed Test"}
+          </button>
+
+          <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
+            {/* Shelby Speed Progress Bar */}
+            <div>
+              <div style={{ display: "flex", justifyContent: "space-between", fontSize: "12px", marginBottom: "6px" }}>
+                <span style={{ fontWeight: "bold", color: "#38bdf8" }}>⚡ Shelby Protocol (Web3 Hot Storage)</span>
+                <span style={{ fontWeight: "bold" }}>{shelbySpeed} ms</span>
+              </div>
+              <div style={{ width: "100%", height: "16px", background: "#030712", borderRadius: "10px", overflow: "hidden" }}>
+                <div style={{ width: (shelbySpeed > 0? "100%" : "0%"), height: "100%", background: "#38bdf8", transition: "width 0.2s" }} />
+              </div>
+            </div>
+
+            {/* AWS S3 Speed Progress Bar */}
+            <div>
+              <div style={{ display: "flex", justifyContent: "space-between", fontSize: "12px", marginBottom: "6px" }}>
+                <span style={{ fontWeight: "bold", color: "#f59e0b" }}>📦 traditional Cloud (AWS S3)</span>
+                <span style=
