@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { AptosWalletAdapterProvider, useWallet } from "@aptos-labs/wallet-adapter-react";
+import { Network } from "@aptos-labs/ts-sdk";
 
 const EMPTY_DEPS: any = new Array();
 
@@ -16,24 +17,61 @@ const getSecondElement = (array: any): any => {
 function DashboardContent() {
   const { connect, disconnect, connected, account, network, signAndSubmitTransaction } = useWallet();
 
-  const = useState({
-    filesUploaded: 3,
-    uploading: false,
-    activeTab: "meme",
-    topText: "SHELBY IS HOT",
-    bottomText: "AWS IS COLD",
-    activeGradient: "blue",
-    uploadedMemes: new Array(),
-    isTesting: false,
-    shelbySpeed: 0,
-    s3Speed: 0,
-    ipfsSpeed: 0,
-    testComplete: false
-  });
+  const filesUploadedState = useState(3);
+  const filesUploaded = getFirstElement(filesUploadedState);
+  const setFilesUploaded = getSecondElement(filesUploadedState);
 
-  const updateState = (key: string, val: any) => {
-    setState(prev => ({...prev, [key]: val }));
-  };
+  const uploadingState = useState(false);
+  const uploading = getFirstElement(uploadingState);
+  const setUploading = getSecondElement(uploadingState);
+
+  const activeTabState = useState("meme");
+  const activeTab = getFirstElement(activeTabState);
+  const setActiveTab = getSecondElement(activeTabState);
+
+  const topTextState = useState("SHELBY IS HOT");
+  const topText = getFirstElement(topTextState);
+  const setTopText = getSecondElement(topTextState);
+
+  const bottomTextState = useState("AWS IS COLD");
+  const bottomText = getFirstElement(bottomTextState);
+  const setBottomText = getSecondElement(bottomTextState);
+
+  const activeGradientState = useState("blue");
+  const activeGradient = getFirstElement(activeGradientState);
+  const setActiveGradient = getSecondElement(activeGradientState);
+
+  const uploadedMemesState = useState<any>(new Array());
+  const uploadedMemes = getFirstElement(uploadedMemesState);
+  const setUploadedMemes = getSecondElement(uploadedMemesState);
+
+  const customImageState = useState<any>(null);
+  const customImage = getFirstElement(customImageState);
+  const setCustomImage = getSecondElement(customImageState);
+
+  const isMobileState = useState(false);
+  const isMobile = getFirstElement(isMobileState);
+  const setIsMobile = getSecondElement(isMobileState);
+
+  const isTestingState = useState(false);
+  const isTesting = getFirstElement(isTestingState);
+  const setIsTesting = getSecondElement(isTestingState);
+
+  const shelbySpeedState = useState(0);
+  const shelbySpeed = getFirstElement(shelbySpeedState);
+  const setShelbySpeed = getSecondElement(shelbySpeedState);
+
+  const s3SpeedState = useState(0);
+  const s3Speed = getFirstElement(s3SpeedState);
+  const setS3Speed = getSecondElement(s3SpeedState);
+
+  const ipfsSpeedState = useState(0);
+  const ipfsSpeed = getFirstElement(ipfsSpeedState);
+  const setIpfsSpeed = getSecondElement(ipfsSpeedState);
+
+  const testCompleteState = useState(false);
+  const testComplete = getFirstElement(testCompleteState);
+  const setTestComplete = getSecondElement(testCompleteState);
 
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const customBgInputRef = useRef<HTMLInputElement>(null);
@@ -58,28 +96,32 @@ function DashboardContent() {
   };
 
   useEffect(() => {
-    if (state.activeTab!== "meme") return;
+    if (activeTab!== "meme") return;
     const canvas = canvasRef.current;
     if (!canvas) return;
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
 
     ctx.clearRect(0, 0, canvas.width, canvas.height);
-    const grad = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
-    
-    if (state.activeGradient === "sunset") {
-      grad.addColorStop(0, "#f43f5e");
-      grad.addColorStop(1, "#eab308");
-    } else if (state.activeGradient === "green") {
-      grad.addColorStop(0, "#10b981");
-      grad.addColorStop(1, "#06b6d4");
+
+    if (customImage) {
+      ctx.drawImage(customImage, 0, 0, canvas.width, canvas.height);
     } else {
-      grad.addColorStop(0, "#3b82f6");
-      grad.addColorStop(1, "#8b5cf6");
+      const grad = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
+      if (activeGradient === "sunset") {
+        grad.addColorStop(0, "#f43f5e");
+        grad.addColorStop(1, "#eab308");
+      } else if (activeGradient === "green") {
+        grad.addColorStop(0, "#10b981");
+        grad.addColorStop(1, "#06b6d4");
+      } else {
+        grad.addColorStop(0, "#3b82f6");
+        grad.addColorStop(1, "#8b5cf6");
+      }
+      ctx.fillStyle = grad;
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
     }
 
-    ctx.fillStyle = grad;
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
     ctx.fillStyle = "white";
     ctx.strokeStyle = "black";
     ctx.lineWidth = 6;
@@ -87,20 +129,29 @@ function DashboardContent() {
     ctx.font = "bold 24px sans-serif";
 
     ctx.textBaseline = "top";
-    ctx.strokeText(state.topText.toUpperCase(), canvas.width / 2, 20);
-    ctx.fillText(state.topText.toUpperCase(), canvas.width / 2, 20);
+    ctx.strokeText(topText.toUpperCase(), canvas.width / 2, 20);
+    ctx.fillText(topText.toUpperCase(), canvas.width / 2, 20);
 
     ctx.textBaseline = "bottom";
-    ctx.strokeText(state.bottomText.toUpperCase(), canvas.width / 2, canvas.height - 20);
-    ctx.fillText(state.bottomText.toUpperCase(), canvas.width / 2, canvas.height - 20);
-  }, Array.of(state.topText, state.bottomText, state.activeGradient, state.activeTab));
+    ctx.strokeText(bottomText.toUpperCase(), canvas.width / 2, canvas.height - 20);
+    ctx.fillText(bottomText.toUpperCase(), canvas.width / 2, canvas.height - 20);
+  },);
 
   const handleConnect = async () => {
     playSound(600);
     try {
+      if (isMobile) {
+        const isPetraBrowser = typeof window!== 'undefined' && (window as any).aptos;
+        if (!isPetraBrowser) {
+          const deepLink = "https://petra.app/explore?link=" + encodeURIComponent(window.location.href);
+          window.open(deepLink, "_blank");
+          return;
+        }
+      }
       await connect("Petra");
     } catch (error) {
-      alert("Petra Wallet connection failed! Please unlock your wallet first.");
+      console.error(error);
+      alert("Petra Wallet connection failed!");
     }
   };
 
@@ -129,7 +180,7 @@ function DashboardContent() {
                 const img = new Image();
                 img.src = event.target.result as string;
                 img.onload = () => {
-                  updateState("customImage", img);
+                  setCustomImage(img);
                   playSound(1000);
                 };
               }
@@ -141,31 +192,30 @@ function DashboardContent() {
     }
   };
 
+  const clearCustomBg = () => {
+    setCustomImage(null);
+    playSound(300);
+  };
+
   const runSpeedTest = async () => {
     playSound(800);
-    updateState("isTesting", true);
-    updateState("testComplete", false);
-    updateState("shelbySpeed", 0);
-    updateState("s3Speed", 0);
-    updateState("ipfsSpeed", 0);
+    setIsTesting(true);
+    setTestComplete(false);
+    setShelbySpeed(0);
+    setS3Speed(0);
+    setIpfsSpeed(0);
 
     let i = 0;
     const interval = setInterval(() => {
       i = i + 10;
-      setState(prev => {
-        const nextState = {...prev };
-        if (i <= 95) nextState.shelbySpeed = i;
-        if (i <= 280) nextState.s3Speed = i;
-        if (i <= 3850) nextState.ipfsSpeed = i;
+      if (i <= 95) setShelbySpeed(i);
+      if (i <= 280) setS3Speed(i);
+      if (i <= 3850) setIpfsSpeed(i);
 
-        if (i >= 3850) {
-          clearInterval(interval);
-          nextState.isTesting = false;
-          nextState.testComplete = true;
-        }
-        return nextState;
-      });
       if (i >= 3850) {
+        clearInterval(interval);
+        setIsTesting(false);
+        setTestComplete(true);
         playSound(1000);
       }
     }, 10);
@@ -185,8 +235,8 @@ function DashboardContent() {
     if (!connected) return alert("Please connect your Petra Wallet first!");
     if (!network) return alert("Wallet network connection not detected.");
 
-    const currentNet = network.name.toLowerCase();
-    if (currentNet!== "testnet") {
+    const currentNet = String(network.name).toLowerCase();
+    if (currentNet.indexOf("testnet") === -1) {
       alert("Warning: Petra is on " + network.name + ".\n\nPlease open Petra Wallet Settings -> Network and switch to 'testnet' to use free faucet gas APT!");
       return;
     }
@@ -194,7 +244,7 @@ function DashboardContent() {
     const canvas = canvasRef.current;
     if (!canvas) return;
 
-    updateState("uploading", true);
+    setUploading(true);
     playSound(800);
 
     try {
@@ -220,11 +270,8 @@ function DashboardContent() {
         tx: txHash
       };
 
-      setState(prev => ({
-       ...prev,
-        uploadedMemes: new Array(newMeme).concat(prev.uploadedMemes),
-        filesUploaded: prev.filesUploaded + 1
-      }));
+      setUploadedMemes(new Array(newMeme).concat(uploadedMemes));
+      setFilesUploaded(filesUploaded + 1);
       
       playSound(1000);
       alert("Success! Transaction confirmed on Aptos Testnet.\n\nTx Hash: " + txHash);
@@ -232,7 +279,7 @@ function DashboardContent() {
       console.error(error);
       alert("Testnet transaction failed or was cancelled!");
     } finally {
-      updateState("uploading", false);
+      setUploading(false);
     }
   };
 
@@ -254,16 +301,16 @@ function DashboardContent() {
       </div>
 
       <div style={{ display: "flex", gap: "10px", marginBottom: "25px" }}>
-        <button onClick={() => { playSound(600); updateState("activeTab", "meme"); }} style={{ padding: "10px 20px", background: state.activeTab === "meme"? "#1e293b" : "transparent", border: state.activeTab === "meme"? "1px solid #38bdf8" : "1px solid #1e293b", borderRadius: "8px", color: "white", cursor: "pointer", fontWeight: "bold" }}>Meme Studio</button>
-        <button onClick={() => { playSound(600); updateState("activeTab", "speed"); }} style={{ padding: "10px 20px", background: state.activeTab === "speed"? "#1e293b" : "transparent", border: state.activeTab === "speed"? "1px solid #38bdf8" : "1px solid #1e293b", borderRadius: "8px", color: "white", cursor: "pointer", fontWeight: "bold" }}>Bandwidth Speed Test</button>
+        <button onClick={() => { playSound(600); setActiveTab("meme"); }} style={{ padding: "10px 20px", background: activeTab === "meme"? "#1e293b" : "transparent", border: activeTab === "meme"? "1px solid #38bdf8" : "1px solid #1e293b", borderRadius: "8px", color: "white", cursor: "pointer", fontWeight: "bold" }}>Meme Studio</button>
+        <button onClick={() => { playSound(600); setActiveTab("speed"); }} style={{ padding: "10px 20px", background: activeTab === "speed"? "#1e293b" : "transparent", border: activeTab === "speed"? "1px solid #38bdf8" : "1px solid #1e293b", borderRadius: "8px", color: "white", cursor: "pointer", fontWeight: "bold" }}>Bandwidth Speed Test</button>
       </div>
 
-      {state.activeTab === "meme"? (
+      {activeTab === "meme"? (
         <div>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))", gap: "10px", marginBottom: "20px" }}>
             <div style={{ background: "#111827", padding: "10px", borderRadius: "8px" }}>
               <p style={{ margin: 0, fontSize: "11px", opacity: 0.6 }}>Memes Uploaded</p>
-              <h3 style={{ margin: 0, color: "#38bdf8" }}>{state.filesUploaded}</h3>
+              <h3 style={{ margin: 0, color: "#38bdf8" }}>{filesUploaded}</h3>
             </div>
             <div style={{ background: "#111827", padding: "10px", borderRadius: "8px" }}>
               <p style={{ margin: 0, fontSize: "11px", opacity: 0.6 }}>Speed</p>
@@ -279,22 +326,22 @@ function DashboardContent() {
             <div style={{ background: "#111827", padding: "15px", borderRadius: "12px", textAlign: "center" }}>
               <canvas ref={canvasRef} width={250} height={250} style={{ borderRadius: "8px", border: "1px solid #334155", maxWidth: "100%", marginBottom: "10px" }} />
               <div style={{ display: "flex", gap: "5px", justifyContent: "center" }}>
-                <button onClick={() => { playSound(600); updateState("activeGradient", "blue"); }} style={{ padding: "6px 10px", background: "#3b82f6", border: "none", borderRadius: "4px", color: "white", cursor: "pointer", fontSize: "11px" }}>Blue</button>
-                <button onClick={() => { playSound(600); updateState("activeGradient", "sunset"); }} style={{ padding: "6px 10px", background: "#f43f5e", border: "none", borderRadius: "4px", color: "white", cursor: "pointer", fontSize: "11px" }}>Sunset</button>
-                <button onClick={() => { playSound(600); updateState("activeGradient", "green"); }} style={{ padding: "6px 10px", background: "#10b981", border: "none", borderRadius: "4px", color: "white", cursor: "pointer", fontSize: "11px" }}>Green</button>
+                <button onClick={() => { playSound(600); setActiveGradient("blue"); }} style={{ padding: "6px 10px", background: "#3b82f6", border: "none", borderRadius: "4px", color: "white", cursor: "pointer", fontSize: "11px" }}>Blue</button>
+                <button onClick={() => { playSound(600); setActiveGradient("sunset"); }} style={{ padding: "6px 10px", background: "#f43f5e", border: "none", borderRadius: "4px", color: "white", cursor: "pointer", fontSize: "11px" }}>Sunset</button>
+                <button onClick={() => { playSound(600); setActiveGradient("green"); }} style={{ padding: "6px 10px", background: "#10b981", border: "none", borderRadius: "4px", color: "white", cursor: "pointer", fontSize: "11px" }}>Green</button>
               </div>
             </div>
 
             <div style={{ background: "#111827", padding: "15px", borderRadius: "12px", display: "flex", flexDirection: "column", justifyContent: "space-between" }}>
               <div>
-                <input type="text" value={state.topText} onChange={e => updateState("topText", e.target.value)} style={{ width: "100%", padding: "10px", marginBottom: "10px", background: "#030712", border: "1px solid #334155", borderRadius: "6px", color: "white", boxSizing: "border-box" }} placeholder="Top Text" />
-                <input type="text" value={state.bottomText} onChange={e => updateState("bottomText", e.target.value)} style={{ width: "100%", padding: "10px", marginBottom: "10px", background: "#030712", border: "1px solid #334155", borderRadius: "6px", color: "white", boxSizing: "border-box" }} placeholder="Bottom Text" />
+                <input type="text" value={topText} onChange={e => setTopText(e.target.value)} style={{ width: "100%", padding: "10px", marginBottom: "10px", background: "#030712", border: "1px solid #334155", borderRadius: "6px", color: "white", boxSizing: "border-box" }} placeholder="Top Text" />
+                <input type="text" value={bottomText} onChange={e => setBottomText(e.target.value)} style={{ width: "100%", padding: "10px", marginBottom: "10px", background: "#030712", border: "1px solid #334155", borderRadius: "6px", color: "white", boxSizing: "border-box" }} placeholder="Bottom Text" />
                 
                 <div style={{ marginBottom: "10px" }}>
                   <input type="file" ref={customBgInputRef} onChange={handleCustomBgUpload} accept="image/*" style={{ display: "none" }} />
                   <div style={{ display: "flex", gap: "5px" }}>
                     <button onClick={() => customBgInputRef.current?.click()} style={{ flex: 1, padding: "8px", background: "#1e293b", border: "1px solid #334155", borderRadius: "6px", color: "white", cursor: "pointer", fontSize: "11px", fontWeight: "bold" }}>Upload Bg</button>
-                    {state.customImage && (
+                    {customImage && (
                       <button onClick={clearCustomBg} style={{ padding: "8px", background: "#ef4444", border: "none", borderRadius: "6px", color: "white", cursor: "pointer", fontSize: "11px", fontWeight: "bold" }}>Clear</button>
                     )}
                   </div>
@@ -302,17 +349,17 @@ function DashboardContent() {
 
                 <button onClick={downloadMeme} style={{ width: "100%", padding: "8px", background: "#1f2937", border: "none", borderRadius: "6px", color: "white", cursor: "pointer", fontSize: "12px", fontWeight: "bold" }}>Download PNG</button>
               </div>
-              <button onClick={publishMeme} disabled={state.uploading} style={{ width: "100%", marginTop: "10px", padding: "12px", background: state.uploading? "#1e293b" : "#3b82f6", border: "none", borderRadius: "6px", color: "white", cursor: "pointer", fontWeight: "bold" }}>
-                {state.uploading? "Uploading to Aptos Testnet..." : "Publish to Shelby (Testnet Tx)"}
+              <button onClick={publishMeme} disabled={uploading} style={{ width: "100%", marginTop: "10px", padding: "12px", background: uploading? "#1e293b" : "#3b82f6", border: "none", borderRadius: "6px", color: "white", cursor: "pointer", fontWeight: "bold" }}>
+                {uploading? "Uploading to Aptos Testnet..." : "Publish to Shelby (Testnet Tx)"}
               </button>
             </div>
           </div>
 
-          {state.uploadedMemes.length > 0 && (
+          {uploadedMemes.length > 0 && (
             <div style={{ background: "#111827", padding: "15px", borderRadius: "12px" }}>
               <h3 style={{ margin: "0 0 10px 0", fontSize: "14px" }}>Shelby Storage Vault</h3>
               <div style={{ display: "flex", gap: "10px", overflowX: "auto", paddingBottom: "10px" }}>
-                {state.uploadedMemes.map((m: any) => (
+                {uploadedMemes.map((m: any) => (
                   <div key={m.id} style={{ minWidth: "160px", background: "#030712", padding: "10px", borderRadius: "8px", textAlign: "center" }}>
                     <img src={m.url} style={{ width: "140px", height: "140px", objectFit: "cover", borderRadius: "4px", marginBottom: "5px" }} />
                     <p style={{ margin: 0, fontSize: "10px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{m.name}</p>
@@ -337,46 +384,46 @@ function DashboardContent() {
             Test and compare decentralized data retrieval speeds. Real-time sub-second latency powered by dedicated fiber backbones.
           </p>
 
-          <button onClick={runSpeedTest} disabled={state.isTesting} style={{ background: state.isTesting? "#1e293b" : "#10b981", border: "none", padding: "12px 24px", borderRadius: "8px", color: "white", fontWeight: "bold", cursor: state.isTesting? "not-allowed" : "pointer", marginBottom: "30px" }}>
-            {state.isTesting? "Testing Bandwidth..." : "Run Speed Test"}
+          <button onClick={runSpeedTest} disabled={isTesting} style={{ background: isTesting? "#1e293b" : "#10b981", border: "none", padding: "12px 24px", borderRadius: "8px", color: "white", fontWeight: "bold", cursor: isTesting? "not-allowed" : "pointer", marginBottom: "30px" }}>
+            {isTesting? "Testing Bandwidth..." : "Run Speed Test"}
           </button>
 
           <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
             <div>
               <div style={{ display: "flex", justifyContent: "space-between", fontSize: "12px", marginBottom: "6px" }}>
                 <span style={{ fontWeight: "bold", color: "#38bdf8" }}>⚡ Shelby Protocol (Web3 Hot Storage)</span>
-                <span style={{ fontWeight: "bold" }}>{state.shelbySpeed} ms</span>
+                <span style={{ fontWeight: "bold" }}>{shelbySpeed} ms</span>
               </div>
               <div style={{ width: "100%", height: "16px", background: "#030712", borderRadius: "10px", overflow: "hidden" }}>
-                <div style={{ width: (state.shelbySpeed > 0? "100%" : "0%"), height: "100%", background: "#38bdf8", transition: "width 0.2s" }} />
+                <div style={{ width: (shelbySpeed > 0? "100%" : "0%"), height: "100%", background: "#38bdf8", transition: "width 0.2s" }} />
               </div>
             </div>
 
             <div>
               <div style={{ display: "flex", justifyContent: "space-between", fontSize: "12px", marginBottom: "6px" }}>
                 <span style={{ fontWeight: "bold", color: "#f59e0b" }}>📦 traditional Cloud (AWS S3)</span>
-                <span style={{ fontWeight: "bold" }}>{state.s3Speed} ms</span>
+                <span style={{ fontWeight: "bold" }}>{s3Speed} ms</span>
               </div>
               <div style={{ width: "100%", height: "16px", background: "#030712", borderRadius: "10px", overflow: "hidden" }}>
-                <div style={{ width: (state.s3Speed > 0? "35%" : "0%"), height: "100%", background: "#f59e0b", transition: "width 0.2s" }} />
+                <div style={{ width: (s3Speed > 0? "35%" : "0%"), height: "100%", background: "#f59e0b", transition: "width 0.2s" }} />
               </div>
             </div>
 
             <div>
               <div style={{ display: "flex", justifyContent: "space-between", fontSize: "12px", marginBottom: "6px" }}>
                 <span style={{ fontWeight: "bold", color: "#ef4444" }}>🌐 Cold Storage (IPFS)</span>
-                <span style={{ fontWeight: "bold" }}>{state.ipfsSpeed} ms</span>
+                <span style={{ fontWeight: "bold" }}>{ipfsSpeed} ms</span>
               </div>
               <div style={{ width: "100%", height: "16px", background: "#030712", borderRadius: "10px", overflow: "hidden" }}>
-                <div style={{ width: (state.ipfsSpeed > 0? "8%" : "0%"), height: "100%", background: "#ef4444", transition: "width 0.2s" }} />
+                <div style={{ width: (ipfsSpeed > 0? "8%" : "0%"), height: "100%", background: "#ef4444", transition: "width 0.2s" }} />
               </div>
             </div>
           </div>
 
-          {state.testComplete && (
+          {testComplete && (
             <div style={{ marginTop: "30px", background: "#090d16", padding: "15px", borderRadius: "8px", border: "1px solid #10b981" }}>
               <p style={{ margin: 0, fontSize: "13px", color: "#10b981", lineHeight: "1.5" }}>
-                🎉 <strong>Benchmark Result:</strong> Shelby Hot-Storage resolved Clay erasure-coded chunks in just {state.shelbySpeed}ms. That is approximately 3x faster than AWS S3 and over 40x faster than traditional decentralized IPFS cold storage!
+                🎉 <strong>Benchmark Result:</strong> Shelby Hot-Storage resolved Clay erasure-coded chunks in just {shelbySpeed}ms. That is approximately 3x faster than AWS S3 and over 40x faster than traditional decentralized IPFS cold storage!
               </p>
             </div>
           )}
@@ -388,7 +435,7 @@ function DashboardContent() {
 
 export default function Page() {
   return (
-    <AptosWalletAdapterProvider autoConnect={true} dappConfig={{ network: "testnet" as any }}>
+    <AptosWalletAdapterProvider autoConnect={true} dappConfig={{ network: Network.TESTNET }}>
       <DashboardContent />
     </AptosWalletAdapterProvider>
   );
