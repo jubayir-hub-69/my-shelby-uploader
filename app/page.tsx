@@ -13,6 +13,7 @@ interface UploadedMeme {
 export default function DashboardContent() {
   const { connect, disconnect, connected, account, network, signAndSubmitTransaction } = useWallet();
 
+  // Standard States
   const [filesUploaded, setFilesUploaded] = useState<number>(5);
   const [uploading, setUploading] = useState<boolean>(false);
   const [activeTab, setActiveTab] = useState<string>("meme");
@@ -25,15 +26,21 @@ export default function DashboardContent() {
   const [customImage, setCustomImage] = useState<HTMLImageElement | null>(null);
   const [showToast, setShowToast] = useState<boolean>(false);
 
+  // Speed Test States
   const [isTesting, setIsTesting] = useState<boolean>(false);
   const [testComplete, setTestComplete] = useState<boolean>(false);
   const [shelbySpeed, setShelbySpeed] = useState<number>(0);
   const [s3Speed, setS3Speed] = useState<number>(0);
   const [ipfsSpeed, setIpfsSpeed] = useState<number>(0);
 
+  // Blockchain Modal Progress States
+  const [showProgressModal, setShowProgressModal] = useState<boolean>(false);
+  const [txStep, setTxStep] = useState<number>(1); // 1: Initializing, 2: Confirming, 3: Success
+
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const customBgInputRef = useRef<HTMLInputElement>(null);
 
+  // Load from LocalStorage
   useEffect(() => {
     if (typeof window !== 'undefined') {
       const savedMemes = localStorage.getItem('shelby_memes');
@@ -66,6 +73,7 @@ export default function DashboardContent() {
     }
   };
 
+  // Canvas Drawing Logic
   useEffect(() => {
     if (activeTab !== "meme") return;
     const canvas = canvasRef.current;
@@ -211,6 +219,12 @@ export default function DashboardContent() {
     window.open(`https://twitter.com/intent/tweet?text=${tweetText}`, "_blank");
   };
 
+  const getFeeText = () => {
+    if (expiration === "1week") return "0.5 ShelbyUSD";
+    if (expiration === "1month") return "1.5 ShelbyUSD";
+    return "0.1 ShelbyUSD";
+  };
+
   const publishMeme = async () => {
     if (!connected) return alert("Please connect your Petra Wallet first!");
     if (!network) return alert("Wallet network connection not detected.");
@@ -225,9 +239,15 @@ export default function DashboardContent() {
     if (!canvas) return;
 
     setUploading(true);
+    setShowProgressModal(true);
+    setTxStep(1);
     playSound(800);
 
     try {
+      // Step 1 Simulation Wait
+      await new Promise(resolve => setTimeout(resolve, 1500));
+      setTxStep(2);
+
       const transactionPayload = {
         data: {
           function: "0x1::coin::transfer" as const,
@@ -242,6 +262,7 @@ export default function DashboardContent() {
       const response = await signAndSubmitTransaction(transactionPayload);
       const txHash = response.hash;
 
+      setTxStep(3);
       const randomId = Math.floor(Math.random() * 10000);
       const newMeme: UploadedMeme = {
         id: randomId,
@@ -263,6 +284,7 @@ export default function DashboardContent() {
     } catch (error) {
       console.error(error);
       alert("Testnet transaction failed or was cancelled!");
+      setShowProgressModal(false);
     } finally {
       setUploading(false);
     }
@@ -271,6 +293,38 @@ export default function DashboardContent() {
   return (
     <main style={{ minHeight: "100vh", background: "#0a0f24", color: "white", padding: "20px", fontFamily: "sans-serif", position: "relative" }}>
       
+      {/* Blockchain Progress Modal */}
+      {showProgressModal && (
+        <div style={{ position: "fixed", top: 0, left: 0, width: "100vw", height: "100vh", background: "rgba(3, 7, 18, 0.85)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 99999 }}>
+          <div style={{ background: "#111827", border: "1px solid #334155", borderRadius: "12px", padding: "25px", maxWidth: "400px", width: "90%", textAlign: "center" }}>
+            <h3 style={{ margin: "0 0 10px 0", color: "#38bdf8" }}>Blockchain Hub Interaction</h3>
+            <p style={{ fontSize: "12px", opacity: 0.6, margin: "0 0 20px 0" }}>Processing network request for Shelby Hub.</p>
+            
+            <div style={{ display: "flex", flexDirection: "column", gap: "15px", textAlign: "left", marginBottom: "25px" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: "10px", opacity: txStep >= 1 ? 1 : 0.4 }}>
+                <div style={{ width: "8px", height: "8px", borderRadius: "50%", background: txStep === 1 ? "#38bdf8" : "#10b981" }} />
+                <span style={{ fontSize: "13px", fontWeight: txStep === 1 ? "bold" : "normal" }}>Initializing Pipeline ({getFeeText()})</span>
+              </div>
+              <div style={{ display: "flex", alignItems: "center", gap: "10px", opacity: txStep >= 2 ? 1 : 0.4 }}>
+                <div style={{ width: "8px", height: "8px", borderRadius: "50%", background: txStep === 2 ? "#eab308" : txStep > 2 ? "#10b981" : "#334155" }} />
+                <span style={{ fontSize: "13px", fontWeight: txStep === 2 ? "bold" : "normal" }}>Confirming on Aptos Blockchain</span>
+              </div>
+              <div style={{ display: "flex", alignItems: "center", gap: "10px", opacity: txStep >= 3 ? 1 : 0.4 }}>
+                <div style={{ width: "8px", height: "8px", borderRadius: "50%", background: txStep === 3 ? "#10b981" : "#334155" }} />
+                <span style={{ fontSize: "13px", fontWeight: txStep === 3 ? "bold" : "normal" }}>Block Verified & Saved Success!</span>
+              </div>
+            </div>
+
+            {txStep === 3 ? (
+              <button onClick={() => setShowProgressModal(false)} style={{ background: "#10b981", color: "white", border: "none", padding: "10px 20px", borderRadius: "6px", fontWeight: "bold", cursor: "pointer", width: "100%" }}>Close Window</button>
+            ) : (
+              <div style={{ fontSize: "12px", opacity: 0.5 }}>Please check your Petra Wallet extension...</div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Success Toast Notification */}
       {showToast && (
         <div style={{ position: "fixed", bottom: "24px", right: "24px", background: "rgba(31, 41, 55, 0.95)", border: "1px solid #10b981", borderRadius: "9999px", padding: "10px 24px", display: "inline-flex", alignItems: "center", gap: "10px", boxShadow: "0 10px 15px -3px rgba(0, 0, 0, 0.3)", zIndex: 9999 }}>
           <div style={{ width: "20px", height: "20px", background: "#10b981", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center" }}>
@@ -372,7 +426,7 @@ export default function DashboardContent() {
                 <button onClick={downloadMeme} style={{ width: "100%", padding: "8px", background: "#1f2937", border: "none", borderRadius: "6px", color: "white", cursor: "pointer", fontSize: "12px", fontWeight: "bold" }}>Download PNG</button>
               </div>
               <button onClick={publishMeme} disabled={uploading} style={{ width: "100%", marginTop: "10px", padding: "12px", background: uploading ? "#1e293b" : "#3b82f6", border: "none", borderRadius: "6px", color: "white", cursor: "pointer", fontWeight: "bold" }}>
-                {uploading ? "Uploading to Aptos Testnet..." : "Publish to Shelby (Testnet Tx)"}
+                {uploading ? "Processing Pipeline..." : "Publish to Shelby (Testnet Tx)"}
               </button>
             </div>
           </div>
