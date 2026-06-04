@@ -40,6 +40,10 @@ export default function DashboardContent() {
   const [bottomTextY, setBottomTextY] = useState<number>(420);
   const [textFontSize, setTextFontSize] = useState<number>(24);
 
+  // 🌟 New Features: Text and Stroke Colors
+  const [textColor, setTextColor] = useState<string>("#ffffff");
+  const [strokeColor, setStrokeColor] = useState<string>("#000000");
+
   // Notification and Logs States
   const [activityLogs, setActivityLogs] = useState<ActivityLog[]>([]);
   const [showLogCenter, setShowLogCenter] = useState<boolean>(false);
@@ -80,7 +84,7 @@ export default function DashboardContent() {
       }
       const savedTheme = localStorage.getItem('shelby_theme');
       if (savedTheme === 'light') setIsDarkMode(false);
-      addLog('info', 'Shelby Engine v2.1 Initialization Successful.');
+      addLog('info', 'Shelby Engine v2.5 Faucet Suite Integrated.');
     }
   }, []);
 
@@ -119,7 +123,7 @@ export default function DashboardContent() {
     }
   };
 
-  // High Resolution Canvas Render loop
+  // High Resolution Canvas Render engine
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -145,7 +149,7 @@ export default function DashboardContent() {
     }
 
     // Text Font Configuration
-    ctx.strokeStyle = "black";
+    ctx.strokeStyle = strokeColor;
     ctx.lineWidth = Math.max(4, textFontSize / 5);
     ctx.textAlign = "center";
     ctx.font = `bold ${textFontSize}px sans-serif`;
@@ -153,21 +157,21 @@ export default function DashboardContent() {
     const renderTopText = topText.trim() !== "" ? topText.toUpperCase() : "SHELBY IS HOT";
     const renderBottomText = bottomText.trim() !== "" ? bottomText.toUpperCase() : "AWS IS COLD";
 
-    // Top text rendering with placeholder opacity handling
+    // Top text rendering with custom colors
     if (topText.trim() === "") {
       ctx.fillStyle = isDarkMode ? "rgba(255, 255, 255, 0.3)" : "rgba(0, 0, 0, 0.25)";
     } else {
-      ctx.fillStyle = "white";
+      ctx.fillStyle = textColor;
     }
     ctx.textBaseline = "top";
     ctx.strokeText(renderTopText, canvas.width / 2, topTextY);
     ctx.fillText(renderTopText, canvas.width / 2, topTextY);
 
-    // Bottom text rendering with placeholder opacity handling
+    // Bottom text rendering with custom colors
     if (bottomText.trim() === "") {
       ctx.fillStyle = isDarkMode ? "rgba(255, 255, 255, 0.3)" : "rgba(0, 0, 0, 0.25)";
     } else {
-      ctx.fillStyle = "white";
+      ctx.fillStyle = textColor;
     }
     ctx.textBaseline = "bottom";
     ctx.strokeText(renderBottomText, canvas.width / 2, bottomTextY);
@@ -182,7 +186,7 @@ export default function DashboardContent() {
       ctx.textBaseline = "middle";
       ctx.fillText("SHELBY HOT SECURE", canvas.width - 75, canvas.height - 23);
     }
-  }, [topText, bottomText, activeGradient, customImage, watermark, isDarkMode, topTextY, bottomTextY, textFontSize]);
+  }, [topText, bottomText, activeGradient, customImage, watermark, isDarkMode, topTextY, bottomTextY, textFontSize, textColor, strokeColor]);
 
   const handleConnect = async () => {
     try {
@@ -402,16 +406,22 @@ export default function DashboardContent() {
         </div>
       </div>
 
-      {/* Dynamic Wallet Profile Status Dashboard Component */}
+      {/* 🌟 Dynamic Wallet Profile Status & Faucet Dashboard Component */}
       {connected && account && (
-        <div style={{ background: `linear-gradient(135deg, ${isDarkMode ? '#1e1b4b' : '#e0e7ff'}, ${isDarkMode ? '#111827' : '#ffffff'})`, border: `1px solid ${themeStyles.inputBorder}`, padding: "15px 20px", borderRadius: "12px", marginBottom: "20px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+        <div style={{ background: `linear-gradient(135deg, ${isDarkMode ? '#1e1b4b' : '#e0e7ff'}, ${isDarkMode ? '#111827' : '#ffffff'})`, border: `1px solid ${themeStyles.inputBorder}`, padding: "15px 20px", borderRadius: "12px", marginBottom: "20px", display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "15px" }}>
           <div>
             <span style={{ fontSize: "11px", textTransform: "uppercase", fontWeight: "bold", color: "#818cf8", display: "block" }}>SECURED NODE PATH</span>
             <span style={{ fontSize: "14px", fontFamily: "monospace", color: themeStyles.textMain }}>{account.address.toString()}</span>
           </div>
-          <div style={{ textAlign: "right" }}>
-            <span style={{ fontSize: "11px", fontWeight: "bold", color: themeStyles.textMuted, display: "block" }}>CHAIN ECOSYSTEM</span>
-            <span style={{ fontSize: "14px", fontWeight: "bold", color: "#10b981" }}>● Aptos {network?.name || "Testnet"} Active</span>
+          <div style={{ display: "flex", alignItems: "center", gap: "15px" }}>
+            {/* 💧 Restored Aptos Faucet Button */}
+            <a href="https://aptos.dev/network/faucet" target="_blank" rel="noopener noreferrer" style={{ background: "linear-gradient(45deg, #0284c7, #0369a1)", color: "white", textDecoration: "none", fontSize: "12px", fontWeight: "bold", padding: "8px 16px", borderRadius: "6px", display: "inline-block", boxShadow: "0 0 10px rgba(3, 105, 161, 0.4)", transition: "opacity 0.2s" }}>
+              💧 Get Free Aptos APT
+            </a>
+            <div style={{ textAlign: "right" }}>
+              <span style={{ fontSize: "11px", fontWeight: "bold", color: themeStyles.textMuted, display: "block" }}>CHAIN ECOSYSTEM</span>
+              <span style={{ fontSize: "14px", fontWeight: "bold", color: "#10b981" }}>● Aptos {network?.name || "Testnet"} Active</span>
+            </div>
           </div>
         </div>
       )}
@@ -468,6 +478,24 @@ export default function DashboardContent() {
                     <span>{textFontSize}px</span>
                   </div>
                   <input type="range" min="16" max="48" value={textFontSize} onChange={e => setTextFontSize(Number(e.target.value))} style={{ width: "100%", accentColor: "#10b981" }} />
+                </div>
+
+                {/* 🌟 Dynamic Text & Stroke Color Picker Option */}
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px", marginBottom: "15px" }}>
+                  <div>
+                    <label style={{ fontSize: "11px", color: themeStyles.textMuted, display: "block", marginBottom: "4px" }}>TEXT COLOR</label>
+                    <div style={{ display: "flex", gap: "6px", alignItems: "center", background: themeStyles.inputBg, padding: "6px", borderRadius: "6px", border: `1px solid ${themeStyles.inputBorder}` }}>
+                      <input type="color" value={textColor} onChange={e => setTextColor(e.target.value)} style={{ border: "none", width: "30px", height: "25px", cursor: "pointer", background: "none" }} />
+                      <span style={{ fontSize: "11px", fontFamily: "monospace" }}>{textColor.toUpperCase()}</span>
+                    </div>
+                  </div>
+                  <div>
+                    <label style={{ fontSize: "11px", color: themeStyles.textMuted, display: "block", marginBottom: "4px" }}>STROKE BORDER</label>
+                    <div style={{ display: "flex", gap: "6px", alignItems: "center", background: themeStyles.inputBg, padding: "6px", borderRadius: "6px", border: `1px solid ${themeStyles.inputBorder}` }}>
+                      <input type="color" value={strokeColor} onChange={e => setStrokeColor(e.target.value)} style={{ border: "none", width: "30px", height: "25px", cursor: "pointer", background: "none" }} />
+                      <span style={{ fontSize: "11px", fontFamily: "monospace" }}>{strokeColor.toUpperCase()}</span>
+                    </div>
+                  </div>
                 </div>
 
                 <div style={{ marginBottom: "15px" }}>
