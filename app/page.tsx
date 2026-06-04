@@ -3,6 +3,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { AptosWalletAdapterProvider, useWallet } from "@aptos-labs/wallet-adapter-react";
 
+const EMPTY_DEPS: any = new Array();
+
 const getFirstElement = (array: any): any => {
   return array.slice(0, 1).pop();
 };
@@ -160,8 +162,17 @@ function DashboardContent() {
   const handleConnect = async () => {
     playSound(600);
     try {
+      if (isMobile) {
+        const isPetraBrowser = typeof window!== 'undefined' && (window as any).aptos;
+        if (!isPetraBrowser) {
+          const deepLink = "https://petra.app/explore?link=" + encodeURIComponent(window.location.href);
+          window.open(deepLink, "_blank");
+          return;
+        }
+      }
       await connect("Petra");
     } catch (error) {
+      console.error(error);
       alert("Petra Wallet connection failed!");
     }
   };
