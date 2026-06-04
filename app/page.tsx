@@ -36,6 +36,9 @@ export default function DashboardContent() {
   const [customImage, setCustomImage] = useState<HTMLImageElement | null>(null);
   const [showToast, setShowToast] = useState<boolean>(false);
 
+  // New Feature State: Light/Dark Theme Controller
+  const [isDarkMode, setIsDarkMode] = useState<boolean>(true);
+
   // Activity Log and Notification Center States
   const [activityLogs, setActivityLogs] = useState<ActivityLog[]>([]);
   const [showLogCenter, setShowLogCenter] = useState<boolean>(false);
@@ -72,6 +75,13 @@ export default function DashboardContent() {
         setUploadedMemes(parsed);
         setFilesUploaded(5 + parsed.length);
       }
+      
+      // Load saved theme preference if available
+      const savedTheme = localStorage.getItem('shelby_theme');
+      if (savedTheme === 'light') {
+        setIsDarkMode(false);
+      }
+      
       addLog('info', 'Shelby Secure Vault decentralized storage pipeline initialized.');
     }
   }, []);
@@ -106,6 +116,28 @@ export default function DashboardContent() {
     } catch (e) {
       console.warn("Audio Context suppressed by browser policies.");
     }
+  };
+
+  const toggleTheme = () => {
+    playSound(700);
+    const nextTheme = !isDarkMode;
+    setIsDarkMode(nextTheme);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('shelby_theme', nextTheme ? 'dark' : 'light');
+    }
+    addLog('info', `System interface configuration switched to ${nextTheme ? 'Dark' : 'Light'} Mode.`);
+  };
+
+  // Feature implementation: Remove or hide individual card item from vault pipeline
+  const removeMemeFromVault = (id: number) => {
+    playSound(300);
+    const updatedList = uploadedMemes.filter(item => item.id !== id);
+    setUploadedMemes(updatedList);
+    setFilesUploaded(5 + updatedList.length);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('shelby_memes', JSON.stringify(updatedList));
+    }
+    addLog('info', `Meme structure reference ID [${id}] flushed and purged from local storage pipeline.`);
   };
 
   const copyToClipboard = (text: string) => {
@@ -355,19 +387,30 @@ export default function DashboardContent() {
 
   const neonGlowStyle = {
     transition: "all 0.3s ease",
-    boxShadow: "0 0 12px rgba(56, 189, 248, 0.4)",
+    boxShadow: isDarkMode ? "0 0 12px rgba(56, 189, 248, 0.4)" : "0 4px 10px rgba(59, 130, 246, 0.2)",
     cursor: "pointer"
   };
 
+  // Dynamic Theme Interface Color Objects
+  const themeStyles = {
+    mainBg: isDarkMode ? "#0a0f24" : "#f8fafc",
+    cardBg: isDarkMode ? "#111827" : "#ffffff",
+    textMain: isDarkMode ? "#ffffff" : "#0f172a",
+    textMuted: isDarkMode ? "#64748b" : "#475569",
+    inputBg: isDarkMode ? "#030712" : "#f1f5f9",
+    inputBorder: isDarkMode ? "#334155" : "#cbd5e1",
+    tabActive: isDarkMode ? "#1e293b" : "#e2e8f0"
+  };
+
   return (
-    <main style={{ minHeight: "100vh", background: "#0a0f24", color: "white", padding: "20px", fontFamily: "sans-serif", position: "relative" }}>
+    <main style={{ minHeight: "100vh", background: themeStyles.mainBg, color: themeStyles.textMain, padding: "20px", fontFamily: "sans-serif", position: "relative", transition: "background 0.4s ease, color 0.4s ease" }}>
       
       {/* Blockchain Async Step-Progress Modal Overlay */}
       {showProgressModal && (
         <div style={{ position: "fixed", top: 0, left: 0, width: "100vw", height: "100vh", background: "rgba(3, 7, 18, 0.85)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 99999 }}>
-          <div style={{ background: "#111827", border: "1px solid #334155", borderRadius: "12px", padding: "25px", maxWidth: "400px", width: "90%", textAlign: "center" }}>
+          <div style={{ background: themeStyles.cardBg, border: `1px solid ${themeStyles.inputBorder}`, borderRadius: "12px", padding: "25px", maxWidth: "400px", width: "90%", textAlign: "center" }}>
             <h3 style={{ margin: "0 0 10px 0", color: "#38bdf8" }}>Blockchain Hub Interaction</h3>
-            <p style={{ fontSize: "12px", opacity: 0.6, margin: "0 0 20px 0" }}>Processing network request for Shelby Hub.</p>
+            <p style={{ fontSize: "12px", opacity: 0.6, margin: "0 0 20px 0", color: themeStyles.textMuted }}>Processing network request for Shelby Hub.</p>
             
             <div style={{ display: "flex", flexDirection: "column", gap: "15px", textAlign: "left", marginBottom: "25px" }}>
               <div style={{ display: "flex", alignItems: "center", gap: "10px", opacity: txStep >= 1 ? 1 : 0.4 }}>
@@ -387,7 +430,7 @@ export default function DashboardContent() {
             {txStep === 3 ? (
               <button onClick={() => setShowProgressModal(false)} style={{ background: "#10b981", color: "white", border: "none", padding: "10px 20px", borderRadius: "6px", fontWeight: "bold", cursor: "pointer", width: "100%" }}>Close Window</button>
             ) : (
-              <div style={{ fontSize: "12px", opacity: 0.5 }}>Please check your Petra Wallet extension...</div>
+              <div style={{ fontSize: "12px", opacity: 0.5, color: themeStyles.textMuted }}>Please check your Petra Wallet extension...</div>
             )}
           </div>
         </div>
@@ -395,8 +438,8 @@ export default function DashboardContent() {
 
       {/* Embedded Terminal Action Logs Side drawer Container */}
       {showLogCenter && (
-        <div style={{ position: "fixed", top: 0, right: 0, width: "320px", height: "100vh", background: "#0f172a", borderLeft: "1px solid #1e293b", padding: "20px", boxSizing: "border-box", zIndex: 9998, boxShadow: "-5px 0 25px rgba(0,0,0,0.5)" }}>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "20px", borderBottom: "1px solid #334155", paddingBottom: "10px" }}>
+        <div style={{ position: "fixed", top: 0, right: 0, width: "320px", height: "100vh", background: isDarkMode ? "#0f172a" : "#f1f5f9", borderLeft: `1px solid ${themeStyles.inputBorder}`, padding: "20px", boxSizing: "border-box", zIndex: 9998, boxShadow: "-5px 0 25px rgba(0,0,0,0.2)", transition: "background 0.4s ease" }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "20px", borderBottom: `1px solid ${themeStyles.inputBorder}`, paddingBottom: "10px" }}>
             <h3 style={{ margin: 0, fontSize: "14px", color: "#38bdf8", fontWeight: "bold" }}>System Live Pipeline Logs</h3>
             <button onClick={() => { playSound(300); setShowLogCenter(false); }} style={{ background: "transparent", border: "none", color: "#64748b", cursor: "pointer", fontSize: "16px" }}>✕</button>
           </div>
@@ -405,12 +448,12 @@ export default function DashboardContent() {
               <p style={{ fontSize: "11px", opacity: 0.4 }}>No logs compiled in this current lifecycle session.</p>
             ) : (
               activityLogs.map((log) => (
-                <div key={log.id} style={{ fontSize: "11px", background: "#030712", padding: "8px", borderRadius: "6px", borderLeft: `3px solid ${log.type === 'success' ? '#10b981' : log.type === 'warning' ? '#ef4444' : '#38bdf8'}` }}>
-                  <div style={{ display: "flex", justifyContent: "space-between", opacity: 0.5, marginBottom: "4px" }}>
+                <div key={log.id} style={{ fontSize: "11px", background: isDarkMode ? "#030712" : "#ffffff", padding: "8px", borderRadius: "6px", borderLeft: `3px solid ${log.type === 'success' ? '#10b981' : log.type === 'warning' ? '#ef4444' : '#38bdf8'}`, borderTop: isDarkMode ? "none" : `1px solid ${themeStyles.inputBorder}`, borderRight: isDarkMode ? "none" : `1px solid ${themeStyles.inputBorder}`, borderBottom: isDarkMode ? "none" : `1px solid ${themeStyles.inputBorder}` }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", opacity: 0.5, marginBottom: "4px", color: themeStyles.textMuted }}>
                     <span>{log.type.toUpperCase()}</span>
                     <span>{log.timestamp}</span>
                   </div>
-                  <div style={{ color: "#e2e8f0" }}>{log.message}</div>
+                  <div style={{ color: themeStyles.textMain }}>{log.message}</div>
                 </div>
               ))
             )}
@@ -434,13 +477,22 @@ export default function DashboardContent() {
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "20px" }}>
         <div>
           <h1 style={{ fontSize: "24px", margin: 0, color: "#38bdf8", fontWeight: "bold" }}>SHELBY</h1>
-          <p style={{ margin: 0, fontSize: "11px", opacity: 0.6 }}>Meme & Storage Hub</p>
+          <p style={{ margin: 0, fontSize: "11px", opacity: 0.6, color: themeStyles.textMuted }}>Meme & Storage Hub</p>
         </div>
         <div style={{ display: "flex", gap: "10px", alignItems: "center" }}>
+          
+          {/* Feature Implementation: Dark/Light Mode Config Button Toggle */}
+          <button 
+            onClick={toggleTheme}
+            style={{ background: themeStyles.cardBg, border: `1px solid ${themeStyles.inputBorder}`, padding: "8px 14px", borderRadius: "6px", color: themeStyles.textMain, cursor: "pointer", fontWeight: "bold", fontSize: "12px", display: "flex", alignItems: "center", gap: "5px" }}
+          >
+            {isDarkMode ? "☀️ Light Mode" : "🌙 Dark Mode"}
+          </button>
+
           {/* Logs Notification Button Trigger */}
           <button 
             onClick={() => { playSound(600); setShowLogCenter(!showLogCenter); }} 
-            style={{ position: "relative", background: "#111827", border: "1px solid #334155", padding: "8px 12px", borderRadius: "6px", color: "white", cursor: "pointer", display: "flex", alignItems: "center" }}
+            style={{ position: "relative", background: themeStyles.cardBg, border: `1px solid ${themeStyles.inputBorder}`, padding: "8px 12px", borderRadius: "6px", color: themeStyles.textMain, cursor: "pointer", display: "flex", alignItems: "center" }}
             title="Activity Logs"
           >
             🔔
@@ -451,7 +503,7 @@ export default function DashboardContent() {
 
           {connected ? (
             <div style={{ display: "flex", gap: "10px", alignItems: "center" }}>
-              <span style={{ fontSize: "12px", color: "#10b981", background: "#111827", padding: "6px 12px", borderRadius: "6px" }}>{getAddress()}</span>
+              <span style={{ fontSize: "12px", color: "#10b981", background: themeStyles.cardBg, border: `1px solid ${themeStyles.inputBorder}`, padding: "6px 12px", borderRadius: "6px" }}>{getAddress()}</span>
               <button onClick={handleDisconnect} style={{ background: "#ef4444", border: "none", padding: "8px 12px", borderRadius: "6px", color: "white", cursor: "pointer", fontWeight: "bold" }}>Disconnect</button>
             </div>
           ) : (
@@ -462,14 +514,14 @@ export default function DashboardContent() {
 
       {/* Main Core Section Navigation Area */}
       <div style={{ display: "flex", gap: "10px", marginBottom: "25px" }}>
-        <button onClick={() => { playSound(600); setActiveTab("meme"); }} style={{ padding: "10px 20px", background: activeTab === "meme" ? "#1e293b" : "transparent", border: activeTab === "meme" ? "1px solid #38bdf8" : "1px solid #1e293b", borderRadius: "8px", color: "white", cursor: "pointer", fontWeight: "bold" }}>Meme Studio</button>
-        <button onClick={() => { playSound(600); setActiveTab("speed"); }} style={{ padding: "10px 20px", background: activeTab === "speed" ? "#1e293b" : "transparent", border: activeTab === "speed" ? "1px solid #38bdf8" : "1px solid #1e293b", borderRadius: "8px", color: "white", cursor: "pointer", fontWeight: "bold" }}>Bandwidth Speed Test</button>
+        <button onClick={() => { playSound(600); setActiveTab("meme"); }} style={{ padding: "10px 20px", background: activeTab === "meme" ? themeStyles.tabActive : "transparent", border: activeTab === "meme" ? "1px solid #38bdf8" : `1px solid ${themeStyles.inputBorder}`, color: themeStyles.textMain, cursor: "pointer", fontWeight: "bold", borderRadius: "8px" }}>Meme Studio</button>
+        <button onClick={() => { playSound(600); setActiveTab("speed"); }} style={{ padding: "10px 20px", background: activeTab === "speed" ? themeStyles.tabActive : "transparent", border: activeTab === "speed" ? "1px solid #38bdf8" : `1px solid ${themeStyles.inputBorder}`, color: themeStyles.textMain, cursor: "pointer", fontWeight: "bold", borderRadius: "8px" }}>Bandwidth Speed Test</button>
         <a 
           href="https://docs.shelby.xyz/tools/wallets/petra-setup#apt-faucet" 
           target="_blank" 
           rel="noopener noreferrer"
           onClick={() => playSound(600)}
-          style={{ display: "inline-flex", alignItems: "center", padding: "10px 20px", background: "transparent", border: "1px solid #1e293b", borderRadius: "8px", color: "white", fontWeight: "bold", textDecoration: "none", fontSize: "13.333px" }}
+          style={{ display: "inline-flex", alignItems: "center", padding: "10px 20px", background: "transparent", border: `1px solid ${themeStyles.inputBorder}`, borderRadius: "8px", color: themeStyles.textMain, fontWeight: "bold", textDecoration: "none", fontSize: "13.333px" }}
         >
           Faucet 🚰
         </a>
@@ -480,16 +532,16 @@ export default function DashboardContent() {
         <div>
           {/* Real-time Dynamic Metrics Panels */}
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))", gap: "10px", marginBottom: "20px" }}>
-            <div style={{ background: "#111827", padding: "10px", borderRadius: "8px" }}>
-              <p style={{ margin: 0, fontSize: "11px", opacity: 0.6 }}>Memes Uploaded</p>
+            <div style={{ background: themeStyles.cardBg, border: `1px solid ${themeStyles.inputBorder}`, padding: "10px", borderRadius: "8px" }}>
+              <p style={{ margin: 0, fontSize: "11px", opacity: 0.6, color: themeStyles.textMuted }}>Memes Uploaded</p>
               <h3 style={{ margin: 0, color: "#38bdf8" }}>{filesUploaded}</h3>
             </div>
-            <div style={{ background: "#111827", padding: "10px", borderRadius: "8px" }}>
-              <p style={{ margin: 0, fontSize: "11px", opacity: 0.6 }}>Latency State</p>
+            <div style={{ background: themeStyles.cardBg, border: `1px solid ${themeStyles.inputBorder}`, padding: "10px", borderRadius: "8px" }}>
+              <p style={{ margin: 0, fontSize: "11px", opacity: 0.6, color: themeStyles.textMuted }}>Latency State</p>
               <h3 style={{ margin: 0, color: "#10b981" }}>Sub-Second</h3>
             </div>
-            <div style={{ background: "#111827", padding: "10px", borderRadius: "8px" }}>
-              <p style={{ margin: 0, fontSize: "11px", opacity: 0.6 }}>Live Sync Network</p>
+            <div style={{ background: themeStyles.cardBg, border: `1px solid ${themeStyles.inputBorder}`, padding: "10px", borderRadius: "8px" }}>
+              <p style={{ margin: 0, fontSize: "11px", opacity: 0.6, color: themeStyles.textMuted }}>Live Sync Network</p>
               <h3 style={{ margin: 0, color: "#3b82f6" }}>{connected ? (network ? network.name : "Testnet") : "Offline"}</h3>
             </div>
           </div>
@@ -498,8 +550,8 @@ export default function DashboardContent() {
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: "20px", marginBottom: "20px" }}>
             
             {/* Left Frame Viewport: Image Canvas Preview */}
-            <div style={{ background: "#111827", padding: "15px", borderRadius: "12px", textAlign: "center" }}>
-              <canvas ref={canvasRef} width={250} height={250} style={{ borderRadius: "8px", border: "1px solid #334155", maxWidth: "100%", marginBottom: "10px" }} />
+            <div style={{ background: themeStyles.cardBg, border: `1px solid ${themeStyles.inputBorder}`, padding: "15px", borderRadius: "12px", textAlign: "center" }}>
+              <canvas ref={canvasRef} width={250} height={250} style={{ borderRadius: "8px", border: `1px solid ${themeStyles.inputBorder}`, maxWidth: "100%", marginBottom: "10px" }} />
               <div style={{ display: "flex", gap: "5px", justifyContent: "center" }}>
                 <button onClick={() => { playSound(600); setActiveGradient("blue"); }} style={{ padding: "6px 10px", background: "#3b82f6", border: "none", borderRadius: "4px", color: "white", cursor: "pointer", fontSize: "11px" }}>Blue</button>
                 <button onClick={() => { playSound(600); setActiveGradient("sunset"); }} style={{ padding: "6px 10px", background: "#f43f5e", border: "none", borderRadius: "4px", color: "white", cursor: "pointer", fontSize: "11px" }}>Sunset</button>
@@ -508,15 +560,15 @@ export default function DashboardContent() {
             </div>
 
             {/* Right Frame Viewport: Control Panel Inputs */}
-            <div style={{ background: "#111827", padding: "15px", borderRadius: "12px", display: "flex", flexDirection: "column", justifyContent: "space-between" }}>
+            <div style={{ background: themeStyles.cardBg, border: `1px solid ${themeStyles.inputBorder}`, padding: "15px", borderRadius: "12px", display: "flex", flexDirection: "column", justifyContent: "space-between" }}>
               <div>
-                <input type="text" value={topText} onChange={e => setTopText(e.target.value)} style={{ width: "100%", padding: "10px", marginBottom: "10px", background: "#030712", border: "1px solid #334155", borderRadius: "6px", color: "white", boxSizing: "border-box" }} placeholder="Top Text" />
-                <input type="text" value={bottomText} onChange={e => setBottomText(e.target.value)} style={{ width: "100%", padding: "10px", marginBottom: "10px", background: "#030712", border: "1px solid #334155", borderRadius: "6px", color: "white", boxSizing: "border-box" }} placeholder="Bottom Text" />
+                <input type="text" value={topText} onChange={e => setTopText(e.target.value)} style={{ width: "100%", padding: "10px", marginBottom: "10px", background: themeStyles.inputBg, border: `1px solid ${themeStyles.inputBorder}`, borderRadius: "6px", color: themeStyles.textMain, boxSizing: "border-box" }} placeholder="Top Text" />
+                <input type="text" value={bottomText} onChange={e => setBottomText(e.target.value)} style={{ width: "100%", padding: "10px", marginBottom: "10px", background: themeStyles.inputBg, border: `1px solid ${themeStyles.inputBorder}`, borderRadius: "6px", color: themeStyles.textMain, boxSizing: "border-box" }} placeholder="Bottom Text" />
                 
                 <div style={{ marginBottom: "10px" }}>
                   <input type="file" ref={customBgInputRef} onChange={handleCustomBgUpload} accept="image/*" style={{ display: "none" }} />
                   <div style={{ display: "flex", gap: "5px" }}>
-                    <button onClick={() => customBgInputRef.current?.click()} style={{ flex: 1, padding: "8px", background: "#1e293b", border: "1px solid #334155", borderRadius: "6px", color: "white", cursor: "pointer", fontSize: "11px", fontWeight: "bold" }}>Upload Bg</button>
+                    <button onClick={() => customBgInputRef.current?.click()} style={{ flex: 1, padding: "8px", background: themeStyles.inputBg, border: `1px solid ${themeStyles.inputBorder}`, borderRadius: "6px", color: themeStyles.textMain, cursor: "pointer", fontSize: "11px", fontWeight: "bold" }}>Upload Bg</button>
                     {customImage && (
                       <button onClick={clearCustomBg} style={{ padding: "8px", background: "#ef4444", border: "none", borderRadius: "6px", color: "white", cursor: "pointer", fontSize: "11px", fontWeight: "bold" }}>Clear</button>
                     )}
@@ -524,8 +576,8 @@ export default function DashboardContent() {
                 </div>
 
                 <div style={{ marginBottom: "12px" }}>
-                  <label style={{ fontSize: "11px", opacity: 0.6, display: "block", marginBottom: "6px" }}>STORAGE DURATION</label>
-                  <select value={expiration} onChange={(e) => setExpiration(e.target.value)} style={{ width: "100%", padding: "10px", background: "#030712", border: "1px solid #334155", borderRadius: "6px", color: "white", boxSizing: "border-box", cursor: "pointer", fontSize: "12px" }}>
+                  <label style={{ fontSize: "11px", opacity: 0.6, display: "block", marginBottom: "6px", color: themeStyles.textMuted }}>STORAGE DURATION</label>
+                  <select value={expiration} onChange={(e) => setExpiration(e.target.value)} style={{ width: "100%", padding: "10px", background: themeStyles.inputBg, border: `1px solid ${themeStyles.inputBorder}`, borderRadius: "6px", color: themeStyles.textMain, boxSizing: "border-box", cursor: "pointer", fontSize: "12px" }}>
                     <option value="1day">1 Day (0.1 ShelbyUSD Fee)</option>
                     <option value="1week">1 Week (0.5 ShelbyUSD Fee)</option>
                     <option value="1month">1 Month (1.5 ShelbyUSD Fee)</option>
@@ -533,13 +585,13 @@ export default function DashboardContent() {
                 </div>
 
                 <div style={{ display: "flex", gap: "10px", alignItems: "center", marginBottom: "12px" }}>
-                  <label style={{ fontSize: "11px", opacity: 0.8, cursor: "pointer", display: "flex", alignItems: "center", gap: "6px" }}>
+                  <label style={{ fontSize: "11px", opacity: 0.8, cursor: "pointer", display: "flex", alignItems: "center", gap: "6px", color: themeStyles.textMain }}>
                     <input type="checkbox" checked={watermark} onChange={(e) => setWatermark(e.target.checked)} style={{ cursor: "pointer" }} />
                     Neon Watermark
                   </label>
                 </div>
 
-                <button onClick={downloadMeme} style={{ width: "100%", padding: "8px", background: "#1f2937", border: "none", borderRadius: "6px", color: "white", cursor: "pointer", fontSize: "12px", fontWeight: "bold" }}>Download PNG</button>
+                <button onClick={downloadMeme} style={{ width: "100%", padding: "8px", background: isDarkMode ? "#1f2937" : "#e2e8f0", border: isDarkMode ? "none" : `1px solid ${themeStyles.inputBorder}`, borderRadius: "6px", color: themeStyles.textMain, cursor: "pointer", fontSize: "12px", fontWeight: "bold" }}>Download PNG</button>
               </div>
               <button onClick={publishMeme} disabled={uploading} style={{ ...neonGlowStyle, width: "100%", marginTop: "10px", padding: "12px", background: uploading ? "#1e293b" : "#3b82f6", border: "none", borderRadius: "6px", color: "white", fontWeight: "bold" }}>
                 {uploading ? "Processing Pipeline..." : "Publish to Shelby (Testnet Tx)"}
@@ -549,25 +601,35 @@ export default function DashboardContent() {
 
           {/* Historic Ledger Storage Vault Component Grid */}
           {uploadedMemes.length > 0 && (
-            <div style={{ background: "#111827", padding: "15px", borderRadius: "12px", marginTop: "20px" }}>
+            <div style={{ background: themeStyles.cardBg, border: `1px solid ${themeStyles.inputBorder}`, padding: "15px", borderRadius: "12px", marginTop: "20px" }}>
               <h3 style={{ margin: "0 0 15px 0", fontSize: "14px", color: "#38bdf8" }}>Shelby Storage Vault</h3>
               <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(140px, 1fr))", gap: "15px" }}>
                 {uploadedMemes.map((meme) => (
-                  <div key={meme.id} style={{ background: "#0a0f24", padding: "8px", borderRadius: "8px", border: "1px solid #1e293b", textAlign: "center" }}>
+                  <div key={meme.id} style={{ background: themeStyles.inputBg, padding: "8px", borderRadius: "8px", border: `1px solid ${themeStyles.inputBorder}`, textAlign: "center", position: "relative", transition: "all 0.3s ease" }}>
+                    
+                    {/* Feature implementation: Cross Button To Close or Purge card references */}
+                    <button 
+                      onClick={() => removeMemeFromVault(meme.id)}
+                      style={{ position: "absolute", top: "5px", right: "5px", width: "18px", height: "18px", background: "rgba(239, 68, 68, 0.15)", color: "#ef4444", border: "none", borderRadius: "50%", cursor: "pointer", fontSize: "10px", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: "bold", zIndex: 10 }}
+                      title="Remove Card View"
+                    >
+                      ✕
+                    </button>
+
                     <img src={meme.url} alt={meme.name} style={{ width: "100%", height: "auto", borderRadius: "4px", marginBottom: "8px" }} />
-                    <p style={{ margin: "0 0 6px 0", fontSize: "10px", opacity: 0.6, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{meme.name}</p>
+                    <p style={{ margin: "0 0 6px 0", fontSize: "10px", opacity: 0.6, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", color: themeStyles.textMain }}>{meme.name}</p>
                     <div style={{ display: "flex", flexDirection: "column", gap: "5px" }}>
                       <a 
                         href={getExplorerUrl(meme.tx, meme.networkName)} 
                         target="_blank" 
                         rel="noopener noreferrer" 
-                        style={{ display: "block", background: "#1e293b", color: "#38bdf8", textDecoration: "none", fontSize: "10px", padding: "4px 0", borderRadius: "4px", fontWeight: "bold" }}
+                        style={{ display: "block", background: isDarkMode ? "#1e293b" : "#e2e8f0", color: "#38bdf8", textDecoration: "none", fontSize: "10px", padding: "4px 0", borderRadius: "4px", fontWeight: "bold", border: isDarkMode ? "none" : `1px solid ${themeStyles.inputBorder}` }}
                       >
                         View Tx 🔗
                       </a>
                       <button 
                         onClick={() => copyToClipboard(meme.tx)}
-                        style={{ background: "#334155", border: "none", color: "white", fontSize: "10px", padding: "4px 0", borderRadius: "4px", fontWeight: "bold", cursor: "pointer" }}
+                        style={{ background: isDarkMode ? "#334155" : "#ffffff", border: `1px solid ${themeStyles.inputBorder}`, color: themeStyles.textMain, fontSize: "10px", padding: "4px 0", borderRadius: "4px", fontWeight: "bold", cursor: "pointer" }}
                       >
                         Copy Hash 📋
                       </button>
@@ -586,9 +648,9 @@ export default function DashboardContent() {
         </div>
       ) : (
         /* Speed Test Performance Module Frame Layout */
-        <div style={{ background: "#111827", padding: "30px", borderRadius: "12px" }}>
+        <div style={{ background: themeStyles.cardBg, border: `1px solid ${themeStyles.inputBorder}`, padding: "30px", borderRadius: "12px" }}>
           <h3 style={{ margin: "0 0 10px 0", textAlign: "center" }}>Bandwidth Speed Test</h3>
-          <p style={{ opacity: 0.6, fontSize: "14px", marginBottom: "25px", textAlign: "center" }}>Compare Shelby Eco-Network performance with traditional Web2 and Web3 providers.</p>
+          <p style={{ opacity: 0.6, fontSize: "14px", marginBottom: "25px", textAlign: "center", color: themeStyles.textMuted }}>Compare Shelby Eco-Network performance with traditional Web2 and Web3 providers.</p>
           
           <div style={{ display: "flex", flexDirection: "column", gap: "15px", maxWidth: "500px", margin: "0 auto 25px auto" }}>
             <div>
@@ -596,27 +658,27 @@ export default function DashboardContent() {
                 <span style={{ fontWeight: "bold", color: "#38bdf8" }}>⚡ SHELBY NETWORK (Sub-Second)</span>
                 <span style={{ fontWeight: "bold", color: "#38bdf8" }}>{shelbySpeed > 0 ? `${shelbySpeed}ms` : "0ms"}</span>
               </div>
-              <div style={{ width: "100%", background: "#1e293b", height: "10px", borderRadius: "5px", overflow: "hidden" }}>
+              <div style={{ width: "100%", background: isDarkMode ? "#1e293b" : "#e2e8f0", height: "10px", borderRadius: "5px", overflow: "hidden" }}>
                 <div style={{ width: `${isTesting || testComplete ? "100%" : "0%"}`, background: "#38bdf8", height: "10px", transition: "width 1s ease" }} />
               </div>
             </div>
 
             <div>
               <div style={{ display: "flex", justifyContent: "space-between", fontSize: "12px", marginBottom: "5px" }}>
-                <span style={{ opacity: 0.7 }}>🟨 AWS S3 Standard Storage</span>
-                <span style={{ opacity: 0.7 }}>{s3Speed > 0 ? `${s3Speed}ms` : "0ms"}</span>
+                <span style={{ opacity: 0.7, color: themeStyles.textMain }}>🟨 AWS S3 Standard Storage</span>
+                <span style={{ opacity: 0.7, color: themeStyles.textMain }}>{s3Speed > 0 ? `${s3Speed}ms` : "0ms"}</span>
               </div>
-              <div style={{ width: "100%", background: "#1e293b", height: "10px", borderRadius: "5px", overflow: "hidden" }}>
+              <div style={{ width: "100%", background: isDarkMode ? "#1e293b" : "#e2e8f0", height: "10px", borderRadius: "5px", overflow: "hidden" }}>
                 <div style={{ width: `${isTesting || testComplete ? "45%" : "0%"}`, background: "#eab308", height: "10px", transition: "width 1.5s ease" }} />
               </div>
             </div>
 
             <div>
               <div style={{ display: "flex", justifyContent: "space-between", fontSize: "12px", marginBottom: "5px" }}>
-                <span style={{ opacity: 0.7 }}>🟥 IPFS Gateway (Public)</span>
-                <span style={{ opacity: 0.7 }}>{ipfsSpeed > 0 ? `${ipfsSpeed}ms` : "0ms"}</span>
+                <span style={{ opacity: 0.7, color: themeStyles.textMain }}>🟥 IPFS Gateway (Public)</span>
+                <span style={{ opacity: 0.7, color: themeStyles.textMain }}>{ipfsSpeed > 0 ? `${ipfsSpeed}ms` : "0ms"}</span>
               </div>
-              <div style={{ width: "100%", background: "#1e293b", height: "10px", borderRadius: "5px", overflow: "hidden" }}>
+              <div style={{ width: "100%", background: isDarkMode ? "#1e293b" : "#e2e8f0", height: "10px", borderRadius: "5px", overflow: "hidden" }}>
                 <div style={{ width: `${isTesting || testComplete ? "15%" : "0%"}`, background: "#f43f5e", height: "10px", transition: "width 2.5s ease" }} />
               </div>
             </div>
@@ -638,9 +700,9 @@ export default function DashboardContent() {
       )}
 
       {/* Production Standardized Global Footer Module */}
-      <footer style={{ marginTop: "40px", borderTop: "1px solid #1e293b", paddingTop: "20px", textAlign: "center", opacity: 0.35 }}>
-        <p style={{ fontSize: "12px", margin: "0 0 5px 0" }}>© 2026 Shelby Hub. Powered by Aptos High-Performance Blockchain Node Infrastructure.</p>
-        <p style={{ fontSize: "10px", margin: 0 }}>Building the future of sub-second secure decentralized memory caches and block data pipelines.</p>
+      <footer style={{ marginTop: "40px", borderTop: `1px solid ${themeStyles.inputBorder}`, paddingTop: "20px", textAlign: "center", opacity: 0.5, transition: "border-top 0.4s ease" }}>
+        <p style={{ fontSize: "12px", margin: "0 0 5px 0", color: themeStyles.textMain }}>© 2026 Shelby Hub. Powered by Aptos High-Performance Blockchain Node Infrastructure.</p>
+        <p style={{ fontSize: "10px", margin: 0, color: themeStyles.textMuted }}>Building the future of sub-second secure decentralized memory caches and block data pipelines.</p>
       </footer>
     </main>
   );
