@@ -35,7 +35,7 @@ export default function DashboardContent() {
   const [showToast, setShowToast] = useState<boolean>(false);
   const [isDarkMode, setIsDarkMode] = useState<boolean>(true);
 
-  // 🌟 New Features States: Text Positioning Sliders
+  // Text Positioning Sliders States
   const [topTextY, setTopTextY] = useState<number>(30);
   const [bottomTextY, setBottomTextY] = useState<number>(420);
   const [textFontSize, setTextFontSize] = useState<number>(24);
@@ -80,7 +80,7 @@ export default function DashboardContent() {
       }
       const savedTheme = localStorage.getItem('shelby_theme');
       if (savedTheme === 'light') setIsDarkMode(false);
-      addLog('info', 'Shelby Engine v2.0 Initialization Successful.');
+      addLog('info', 'Shelby Engine v2.1 Initialization Successful.');
     }
   }, []);
 
@@ -119,7 +119,7 @@ export default function DashboardContent() {
     }
   };
 
-  // High Resolution Render System 
+  // High Resolution Canvas Render loop
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -153,7 +153,7 @@ export default function DashboardContent() {
     const renderTopText = topText.trim() !== "" ? topText.toUpperCase() : "SHELBY IS HOT";
     const renderBottomText = bottomText.trim() !== "" ? bottomText.toUpperCase() : "AWS IS COLD";
 
-    // Top text placeholder logic
+    // Top text rendering with placeholder opacity handling
     if (topText.trim() === "") {
       ctx.fillStyle = isDarkMode ? "rgba(255, 255, 255, 0.3)" : "rgba(0, 0, 0, 0.25)";
     } else {
@@ -163,7 +163,7 @@ export default function DashboardContent() {
     ctx.strokeText(renderTopText, canvas.width / 2, topTextY);
     ctx.fillText(renderTopText, canvas.width / 2, topTextY);
 
-    // Bottom text placeholder logic
+    // Bottom text rendering with placeholder opacity handling
     if (bottomText.trim() === "") {
       ctx.fillStyle = isDarkMode ? "rgba(255, 255, 255, 0.3)" : "rgba(0, 0, 0, 0.25)";
     } else {
@@ -192,12 +192,35 @@ export default function DashboardContent() {
     }
   };
 
+  const handleCustomBgUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files.length > 0) {
+      const file = e.target.files.item(0);
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = (event) => {
+          if (event.target?.result) {
+            const img = new Image();
+            img.src = event.target.result as string;
+            img.onload = () => {
+              setCustomImage(img);
+              addLog('info', 'Custom background buffer loaded successfully.');
+            };
+          }
+        };
+        reader.readAsDataURL(file);
+      }
+    }
+  };
+
+  const clearCustomBg = () => {
+    setCustomImage(null);
+    addLog('info', 'Canvas background state reset to default gradient.');
+  };
+
   const downloadMeme = () => {
     const canvas = canvasRef.current;
     if (!canvas) return;
     
-    // 🌟 Feature 1: High Definition Export Fix
-    // আমরা একটি ব্যাকআপ হিডেন ক্যানভাস তৈরি করছি যা ২ গুণ বড় রেজোলিউশনে ইমেজ সেভ করবে
     const exportCanvas = document.createElement("canvas");
     exportCanvas.width = canvas.width * 2;
     exportCanvas.height = canvas.height * 2;
@@ -351,6 +374,13 @@ export default function DashboardContent() {
         </div>
       )}
 
+      {/* Toast Notification */}
+      {showToast && (
+        <div style={{ position: "fixed", bottom: "24px", right: "24px", background: "rgba(31, 41, 55, 0.95)", border: "1px solid #10b981", borderRadius: "9999px", padding: "10px 24px", display: "inline-flex", alignItems: "center", gap: "10px", zIndex: 9999 }}>
+          <span style={{ color: "white", fontWeight: "bold", fontSize: "14px" }}>Transaction successful!</span>
+        </div>
+      )}
+
       {/* Navigation and Actions Row Container */}
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "20px" }}>
         <div>
@@ -372,12 +402,12 @@ export default function DashboardContent() {
         </div>
       </div>
 
-      {/* 🌟 Feature 3: Dynamic Wallet Profile Status Dashboard Component */}
+      {/* Dynamic Wallet Profile Status Dashboard Component */}
       {connected && account && (
         <div style={{ background: `linear-gradient(135deg, ${isDarkMode ? '#1e1b4b' : '#e0e7ff'}, ${isDarkMode ? '#111827' : '#ffffff'})`, border: `1px solid ${themeStyles.inputBorder}`, padding: "15px 20px", borderRadius: "12px", marginBottom: "20px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
           <div>
-            <span style={{ fontSize: "11px", uppercase: true, fontWeight: "bold", color: "#818cf8", display: "block" }}>SECURED NODE PATH</span>
-            <span style={{ fontSize: "14px", fontWeight: "mono", color: themeStyles.textMain }}>{account.address.toString()}</span>
+            <span style={{ fontSize: "11px", textTransform: "uppercase", fontWeight: "bold", color: "#818cf8", display: "block" }}>SECURED NODE PATH</span>
+            <span style={{ fontSize: "14px", fontFamily: "monospace", color: themeStyles.textMain }}>{account.address.toString()}</span>
           </div>
           <div style={{ textAlign: "right" }}>
             <span style={{ fontSize: "11px", fontWeight: "bold", color: themeStyles.textMuted, display: "block" }}>CHAIN ECOSYSTEM</span>
@@ -411,32 +441,32 @@ export default function DashboardContent() {
               <div>
                 <input type="text" value={topText} onChange={e => setTopText(e.target.value)} style={{ width: "100%", padding: "12px", marginBottom: "15px", background: themeStyles.inputBg, border: `1px solid ${themeStyles.inputBorder}`, borderRadius: "8px", color: themeStyles.textMain, boxSizing: "border-box" }} placeholder="Top Text (SHELBY IS HOT)" />
                 
-                {/* 🌟 Feature 2: Top Text Y Sliders Control */}
+                {/* Top Text Y Sliders Control */}
                 <div style={{ marginBottom: "15px" }}>
-                  <label style={{ fontSize: "11px", color: themeStyles.textMuted, display: "flex", justifyContent: "space-between" }}>
+                  <div style={{ fontSize: "11px", color: themeStyles.textMuted, display: "flex", justifyContent: "space-between" }}>
                     <span>TOP CAPTION POSITION</span>
                     <span>{topTextY}px</span>
-                  </label>
+                  </div>
                   <input type="range" min="10" max="150" value={topTextY} onChange={e => setTopTextY(Number(e.target.value))} style={{ width: "100%", accentColor: "#3b82f6" }} />
                 </div>
 
                 <input type="text" value={bottomText} onChange={e => setBottomText(e.target.value)} style={{ width: "100%", padding: "12px", marginBottom: "15px", background: themeStyles.inputBg, border: `1px solid ${themeStyles.inputBorder}`, borderRadius: "8px", color: themeStyles.textMain, boxSizing: "border-box" }} placeholder="Bottom Text (AWS IS COLD)" />
                 
-                {/* 🌟 Feature 2: Bottom Text Y Sliders Control */}
+                {/* Bottom Text Y Sliders Control */}
                 <div style={{ marginBottom: "15px" }}>
-                  <label style={{ fontSize: "11px", color: themeStyles.textMuted, display: "flex", justifyContent: "space-between" }}>
+                  <div style={{ fontSize: "11px", color: themeStyles.textMuted, display: "flex", justifyContent: "space-between" }}>
                     <span>BOTTOM CAPTION POSITION</span>
                     <span>{bottomTextY}px</span>
-                  </label>
+                  </div>
                   <input type="range" min="300" max="440" value={bottomTextY} onChange={e => setBottomTextY(Number(e.target.value))} style={{ width: "100%", accentColor: "#3b82f6" }} />
                 </div>
 
-                {/* 🌟 Feature 2: Font Size Controller Slider */}
+                {/* Font Size Controller Slider */}
                 <div style={{ marginBottom: "15px" }}>
-                  <label style={{ fontSize: "11px", color: themeStyles.textMuted, display: "flex", justifyContent: "space-between" }}>
+                  <div style={{ fontSize: "11px", color: themeStyles.textMuted, display: "flex", justifyContent: "space-between" }}>
                     <span>CAPTION FONT SIZE</span>
                     <span>{textFontSize}px</span>
-                  </label>
+                  </div>
                   <input type="range" min="16" max="48" value={textFontSize} onChange={e => setTextFontSize(Number(e.target.value))} style={{ width: "100%", accentColor: "#10b981" }} />
                 </div>
 
@@ -487,7 +517,7 @@ export default function DashboardContent() {
                     <button onClick={() => removeMemeFromVault(meme.id)} style={{ position: "absolute", top: "5px", right: "5px", width: "18px", height: "18px", background: "rgba(239, 68, 68, 0.2)", border: "none", color: "#ef4444", borderRadius: "50%", cursor: "pointer", fontSize: "10px" }}>✕</button>
                     <img src={meme.url} alt="Vault Card Item" style={{ width: "100%", borderRadius: "4px", marginBottom: "6px" }} />
                     <p style={{ fontSize: "10px", margin: "0 0 6px 0", textOverflow: "ellipsis", overflow: "hidden", whiteSpace: "nowrap" }}>{meme.name}</p>
-                    <a href={`https://explorer.aptoslabs.com/txn/${meme.tx}?network=testnet`} target="_blank" rel="noreferrer" style={{ display: "block", background: "#1e293b", color: "#38bdf8", textAlign: "center", fontSize: "10px", padding: "4px 0", borderRadius: "4px", textDecoration: "none", fontWeight: "bold" }}>View Node Ledger</a>
+                    <a href={`https://explorer.aptoslabs.com/txn/${meme.tx}?network=testnet`} target="_blank" rel="noopener noreferrer" style={{ display: "block", background: "#1e293b", color: "#38bdf8", textAlign: "center", fontSize: "10px", padding: "4px 0", borderRadius: "4px", textDecoration: "none", fontWeight: "bold" }}>View Node Ledger</a>
                   </div>
                 ))}
               </div>
