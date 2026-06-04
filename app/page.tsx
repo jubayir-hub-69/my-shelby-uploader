@@ -13,7 +13,7 @@ interface UploadedMeme {
 export default function DashboardContent() {
   const { connect, disconnect, connected, account, network, signAndSubmitTransaction } = useWallet();
 
-  // Standard States
+  // Core States
   const [filesUploaded, setFilesUploaded] = useState<number>(5);
   const [uploading, setUploading] = useState<boolean>(false);
   const [activeTab, setActiveTab] = useState<string>("meme");
@@ -26,6 +26,10 @@ export default function DashboardContent() {
   const [customImage, setCustomImage] = useState<HTMLImageElement | null>(null);
   const [showToast, setShowToast] = useState<boolean>(false);
 
+  // Blockchain Progress Modal States
+  const [showProgressModal, setShowProgressModal] = useState<boolean>(false);
+  const [txStep, setTxStep] = useState<number>(1); // 1: Initializing, 2: Confirming, 3: Success
+
   // Speed Test States
   const [isTesting, setIsTesting] = useState<boolean>(false);
   const [testComplete, setTestComplete] = useState<boolean>(false);
@@ -33,14 +37,10 @@ export default function DashboardContent() {
   const [s3Speed, setS3Speed] = useState<number>(0);
   const [ipfsSpeed, setIpfsSpeed] = useState<number>(0);
 
-  // Blockchain Modal Progress States
-  const [showProgressModal, setShowProgressModal] = useState<boolean>(false);
-  const [txStep, setTxStep] = useState<number>(1); // 1: Initializing, 2: Confirming, 3: Success
-
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const customBgInputRef = useRef<HTMLInputElement>(null);
 
-  // Load from LocalStorage
+  // Load Memes from LocalStorage
   useEffect(() => {
     if (typeof window !== 'undefined') {
       const savedMemes = localStorage.getItem('shelby_memes');
@@ -52,6 +52,7 @@ export default function DashboardContent() {
     }
   }, []);
 
+  // Professional Sound System
   const playSound = (freq: number) => {
     if (typeof window === 'undefined') return;
     try {
@@ -69,11 +70,18 @@ export default function DashboardContent() {
       osc.start();
       osc.stop(ctx.currentTime + 0.15);
     } catch (e) {
-      console.error("Audio error:", e);
+      console.error("Audio context error:", e);
     }
   };
 
-  // Canvas Drawing Logic
+  // Copy to Clipboard Utility
+  const copyToClipboard = (text: string) => {
+    navigator.clipboard.writeText(text);
+    alert("Transaction Hash copied to clipboard!");
+    playSound(400);
+  };
+
+  // Canvas Rendering Loop
   useEffect(() => {
     if (activeTab !== "meme") return;
     const canvas = canvasRef.current;
@@ -244,7 +252,6 @@ export default function DashboardContent() {
     playSound(800);
 
     try {
-      // Step 1 Simulation Wait
       await new Promise(resolve => setTimeout(resolve, 1500));
       setTxStep(2);
 
@@ -288,6 +295,13 @@ export default function DashboardContent() {
     } finally {
       setUploading(false);
     }
+  };
+
+  // Reusable Glow Styles
+  const neonGlowStyle = {
+    transition: "all 0.3s ease",
+    boxShadow: "0 0 12px rgba(56, 189, 248, 0.4)",
+    cursor: "pointer"
   };
 
   return (
@@ -336,6 +350,7 @@ export default function DashboardContent() {
         </div>
       )}
 
+      {/* Header Block */}
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "20px" }}>
         <div>
           <h1 style={{ fontSize: "24px", margin: 0, color: "#38bdf8", fontWeight: "bold" }}>SHELBY</h1>
@@ -347,10 +362,11 @@ export default function DashboardContent() {
             <button onClick={handleDisconnect} style={{ background: "#ef4444", border: "none", padding: "8px 12px", borderRadius: "6px", color: "white", cursor: "pointer", fontWeight: "bold" }}>Disconnect</button>
           </div>
         ) : (
-          <button onClick={handleConnect} style={{ background: "#3b82f6", border: "none", padding: "8px 16px", borderRadius: "6px", color: "white", cursor: "pointer", fontWeight: "bold" }}>Connect Wallet</button>
+          <button onClick={handleConnect} style={{ ...neonGlowStyle, background: "#3b82f6", border: "none", padding: "8px 16px", borderRadius: "6px", color: "white", fontWeight: "bold" }}>Connect Wallet</button>
         )}
       </div>
 
+      {/* Navigation Tabs */}
       <div style={{ display: "flex", gap: "10px", marginBottom: "25px" }}>
         <button onClick={() => { playSound(600); setActiveTab("meme"); }} style={{ padding: "10px 20px", background: activeTab === "meme" ? "#1e293b" : "transparent", border: activeTab === "meme" ? "1px solid #38bdf8" : "1px solid #1e293b", borderRadius: "8px", color: "white", cursor: "pointer", fontWeight: "bold" }}>Meme Studio</button>
         <button onClick={() => { playSound(600); setActiveTab("speed"); }} style={{ padding: "10px 20px", background: activeTab === "speed" ? "#1e293b" : "transparent", border: activeTab === "speed" ? "1px solid #38bdf8" : "1px solid #1e293b", borderRadius: "8px", color: "white", cursor: "pointer", fontWeight: "bold" }}>Bandwidth Speed Test</button>
@@ -365,8 +381,10 @@ export default function DashboardContent() {
         </a>
       </div>
 
+      {/* Tab Switch Logic */}
       {activeTab === "meme" ? (
         <div>
+          {/* Quick Metrics */}
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))", gap: "10px", marginBottom: "20px" }}>
             <div style={{ background: "#111827", padding: "10px", borderRadius: "8px" }}>
               <p style={{ margin: 0, fontSize: "11px", opacity: 0.6 }}>Memes Uploaded</p>
@@ -382,7 +400,9 @@ export default function DashboardContent() {
             </div>
           </div>
 
+          {/* Studio Workspace */}
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: "20px", marginBottom: "20px" }}>
+            {/* Left Panel: Preview */}
             <div style={{ background: "#111827", padding: "15px", borderRadius: "12px", textAlign: "center" }}>
               <canvas ref={canvasRef} width={250} height={250} style={{ borderRadius: "8px", border: "1px solid #334155", maxWidth: "100%", marginBottom: "10px" }} />
               <div style={{ display: "flex", gap: "5px", justifyContent: "center" }}>
@@ -392,6 +412,7 @@ export default function DashboardContent() {
               </div>
             </div>
 
+            {/* Right Panel: Controls */}
             <div style={{ background: "#111827", padding: "15px", borderRadius: "12px", display: "flex", flexDirection: "column", justifyContent: "space-between" }}>
               <div>
                 <input type="text" value={topText} onChange={e => setTopText(e.target.value)} style={{ width: "100%", padding: "10px", marginBottom: "10px", background: "#030712", border: "1px solid #334155", borderRadius: "6px", color: "white", boxSizing: "border-box" }} placeholder="Top Text" />
@@ -425,16 +446,17 @@ export default function DashboardContent() {
 
                 <button onClick={downloadMeme} style={{ width: "100%", padding: "8px", background: "#1f2937", border: "none", borderRadius: "6px", color: "white", cursor: "pointer", fontSize: "12px", fontWeight: "bold" }}>Download PNG</button>
               </div>
-              <button onClick={publishMeme} disabled={uploading} style={{ width: "100%", marginTop: "10px", padding: "12px", background: uploading ? "#1e293b" : "#3b82f6", border: "none", borderRadius: "6px", color: "white", cursor: "pointer", fontWeight: "bold" }}>
+              <button onClick={publishMeme} disabled={uploading} style={{ ...neonGlowStyle, width: "100%", marginTop: "10px", padding: "12px", background: uploading ? "#1e293b" : "#3b82f6", border: "none", borderRadius: "6px", color: "white", fontWeight: "bold" }}>
                 {uploading ? "Processing Pipeline..." : "Publish to Shelby (Testnet Tx)"}
               </button>
             </div>
           </div>
 
+          {/* Historical Vault Grid */}
           {uploadedMemes.length > 0 && (
             <div style={{ background: "#111827", padding: "15px", borderRadius: "12px", marginTop: "20px" }}>
               <h3 style={{ margin: "0 0 15px 0", fontSize: "14px", color: "#38bdf8" }}>Shelby Storage Vault</h3>
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(130px, 1fr))", gap: "15px" }}>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(140px, 1fr))", gap: "15px" }}>
                 {uploadedMemes.map((meme) => (
                   <div key={meme.id} style={{ background: "#0a0f24", padding: "8px", borderRadius: "8px", border: "1px solid #1e293b", textAlign: "center" }}>
                     <img src={meme.url} alt={meme.name} style={{ width: "100%", height: "auto", borderRadius: "4px", marginBottom: "8px" }} />
@@ -449,6 +471,12 @@ export default function DashboardContent() {
                         View Tx 🔗
                       </a>
                       <button 
+                        onClick={() => copyToClipboard(meme.tx)}
+                        style={{ background: "#334155", border: "none", color: "white", fontSize: "10px", padding: "4px 0", borderRadius: "4px", fontWeight: "bold", cursor: "pointer" }}
+                      >
+                        Copy Hash 📋
+                      </button>
+                      <button 
                         onClick={() => shareOnTwitter(meme.tx)}
                         style={{ background: "#1d9bf0", border: "none", color: "white", fontSize: "10px", padding: "4px 0", borderRadius: "4px", fontWeight: "bold", cursor: "pointer" }}
                       >
@@ -462,6 +490,7 @@ export default function DashboardContent() {
           )}
         </div>
       ) : (
+        /* Benchmark Interface */
         <div style={{ background: "#111827", padding: "30px", borderRadius: "12px" }}>
           <h3 style={{ margin: "0 0 10px 0", textAlign: "center" }}>Bandwidth Speed Test</h3>
           <p style={{ opacity: 0.6, fontSize: "14px", marginBottom: "25px", textAlign: "center" }}>Compare Shelby Eco-Network performance with traditional Web2 and Web3 providers.</p>
@@ -502,7 +531,7 @@ export default function DashboardContent() {
             <button 
               onClick={runSpeedTest} 
               disabled={isTesting}
-              style={{ background: isTesting ? "#1e293b" : "#10b981", border: "none", padding: "12px 30px", borderRadius: "6px", color: "white", fontWeight: "bold", cursor: "pointer", fontSize: "14px" }}
+              style={{ ...neonGlowStyle, background: isTesting ? "#1e293b" : "#10b981", border: "none", padding: "12px 30px", borderRadius: "6px", color: "white", fontWeight: "bold", fontSize: "14px" }}
             >
               {isTesting ? "Testing Bandwidth..." : "Run Benchmark Test"}
             </button>
@@ -512,6 +541,12 @@ export default function DashboardContent() {
           </div>
         </div>
       )}
+
+      {/* Professional Footer */}
+      <footer style={{ marginTop: "40px", borderTop: "1px solid #1e293b", paddingTop: "20px", textAlign: "center", opacity: 0.4 }}>
+        <p style={{ fontSize: "12px", margin: "0 0 5px 0" }}>© 2026 Shelby Hub. Powered by Aptos Blockchain.</p>
+        <p style={{ fontSize: "10px", margin: 0 }}>Building the future of high-speed decentralized storage pipelines.</p>
+      </footer>
     </main>
   );
 }
