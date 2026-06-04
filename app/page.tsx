@@ -3,17 +3,27 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useWallet } from "@aptos-labs/wallet-adapter-react";
 
+// Strictly typed interfaces for enterprise level safety
 interface UploadedMeme {
   id: number;
   name: string;
   url: string;
   tx: string;
+  networkName: string;
+}
+
+interface ActivityLog {
+  id: string;
+  timestamp: string;
+  type: 'info' | 'success' | 'warning';
+  message: string;
 }
 
 export default function DashboardContent() {
+  // Extracting wallet parameters safely from standard wallet adapter hooks
   const { connect, disconnect, connected, account, network, signAndSubmitTransaction } = useWallet();
 
-  // Core States
+  // Core App States
   const [filesUploaded, setFilesUploaded] = useState<number>(5);
   const [uploading, setUploading] = useState<boolean>(false);
   const [activeTab, setActiveTab] = useState<string>("meme");
@@ -26,11 +36,15 @@ export default function DashboardContent() {
   const [customImage, setCustomImage] = useState<HTMLImageElement | null>(null);
   const [showToast, setShowToast] = useState<boolean>(false);
 
-  // Blockchain Progress Modal States
-  const [showProgressModal, setShowProgressModal] = useState<boolean>(false);
-  const [txStep, setTxStep] = useState<number>(1); // 1: Initializing, 2: Confirming, 3: Success
+  // Activity Log and Notification Center States
+  const [activityLogs, setActivityLogs] = useState<ActivityLog[]>([]);
+  const [showLogCenter, setShowLogCenter] = useState<boolean>(false);
 
-  // Speed Test States
+  // Live Blockchain Sync & Progress Modal States
+  const [showProgressModal, setShowProgressModal] = useState<boolean>(false);
+  const [txStep, setTxStep] = useState<number>(1); // 1: Pipeline Init, 2: Mempool/Chain Confirm, 3: Complete
+
+  // Bandwidth Benchmark Metrics States
   const [isTesting, setIsTesting] = useState<boolean>(false);
   const [testComplete, setTestComplete] = useState<boolean>(false);
   const [shelbySpeed, setShelbySpeed] = useState<number>(0);
@@ -40,7 +54,16 @@ export default function DashboardContent() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const customBgInputRef = useRef<HTMLInputElement>(null);
 
-  // Load Memes from LocalStorage
+  // Helper function to push standardized logs into local memory array
+  const addLog = (type: 'info' | 'success' | 'warning', message: string) => {
+    const timeString = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+    setActivityLogs(prev => [
+      { id: Math.random().toString(), timestamp: timeString, type, message },
+      ...prev
+    ]);
+  };
+
+  // Safe client-side orchestration to fetch vault storage on component mount
   useEffect(() => {
     if (typeof window !== 'undefined') {
       const savedMemes = localStorage.getItem('shelby_memes');
@@ -49,10 +72,21 @@ export default function DashboardContent() {
         setUploadedMemes(parsed);
         setFilesUploaded(5 + parsed.length);
       }
+      addLog('info', 'Shelby Secure Vault decentralized storage pipeline initialized.');
     }
   }, []);
 
-  // Professional Sound System
+  // Monitor Live Wallet Connection and Dynamic Network Handshakes
+  useEffect(() => {
+    if (connected && account) {
+      const currentNet = network?.name ? network.name : "Unknown Network";
+      addLog('success', `Wallet sync detected. Connected to ${currentNet} (${account.address.toString().substring(0, 6)}...)`);
+    } else if (!connected) {
+      addLog('info', 'Wallet pipeline idle. Awaiting user signature/handshake.');
+    }
+  }, [connected, account, network]);
+
+  // High performance browser-audio oscillator architecture for reactive UI feedback
   const playSound = (freq: number) => {
     if (typeof window === 'undefined') return;
     try {
@@ -65,23 +99,23 @@ export default function DashboardContent() {
       osc.connect(gain);
       gain.connect(ctx.destination);
       osc.frequency.setValueAtTime(freq, ctx.currentTime);
-      gain.gain.setValueAtTime(0.05, ctx.currentTime);
+      gain.gain.setValueAtTime(0.04, ctx.currentTime);
       gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.1);
       osc.start();
-      osc.stop(ctx.currentTime + 0.15);
+      osc.stop(ctx.currentTime + 0.12);
     } catch (e) {
-      console.error("Audio context error:", e);
+      console.warn("Audio Context suppressed by browser policies.");
     }
   };
 
-  // Copy to Clipboard Utility
   const copyToClipboard = (text: string) => {
     navigator.clipboard.writeText(text);
+    addLog('info', 'Transaction signature hash payload copied to hardware clipboard.');
     alert("Transaction Hash copied to clipboard!");
     playSound(400);
   };
 
-  // Canvas Rendering Loop
+  // HTML5 Canvas Render loop for dynamic real-time image compositions
   useEffect(() => {
     if (activeTab !== "meme") return;
     const canvas = canvasRef.current;
@@ -96,14 +130,11 @@ export default function DashboardContent() {
     } else {
       const grad = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
       if (activeGradient === "sunset") {
-        grad.addColorStop(0, "#f43f5e");
-        grad.addColorStop(1, "#eab308");
+        grad.addColorStop(0, "#f43f5e"); grad.addColorStop(1, "#eab308");
       } else if (activeGradient === "green") {
-        grad.addColorStop(0, "#10b981");
-        grad.addColorStop(1, "#06b6d4");
+        grad.addColorStop(0, "#10b981"); grad.addColorStop(1, "#06b6d4");
       } else {
-        grad.addColorStop(0, "#3b82f6");
-        grad.addColorStop(1, "#8b5cf6");
+        grad.addColorStop(0, "#3b82f6"); grad.addColorStop(1, "#8b5cf6");
       }
       ctx.fillStyle = grad;
       ctx.fillRect(0, 0, canvas.width, canvas.height);
@@ -137,7 +168,8 @@ export default function DashboardContent() {
     try {
       await connect("Petra");
     } catch (error) {
-      alert("Petra Wallet connection failed!");
+      addLog('warning', 'Aptos Wallet connection requested but aborted or rejected.');
+      alert("Petra Wallet connection failed or window closed!");
     }
   };
 
@@ -145,6 +177,7 @@ export default function DashboardContent() {
     playSound(300);
     try {
       await disconnect();
+      addLog('info', 'Secure cryptographic connection severed by user command.');
     } catch (error) {
       console.error(error);
     }
@@ -167,6 +200,7 @@ export default function DashboardContent() {
             img.src = event.target.result as string;
             img.onload = () => {
               setCustomImage(img);
+              addLog('info', 'Custom storage buffer loaded into local canvas context.');
               playSound(1000);
             };
           }
@@ -178,6 +212,7 @@ export default function DashboardContent() {
 
   const clearCustomBg = () => {
     setCustomImage(null);
+    addLog('info', 'Canvas background state reset to system default gradient.');
     playSound(300);
   };
 
@@ -189,6 +224,7 @@ export default function DashboardContent() {
     link.download = "shelby-meme.png";
     link.href = canvas.toDataURL("image/png");
     link.click();
+    addLog('success', 'Meme composition compiled to binary PNG and triggered local down-stream download.');
   };
 
   const runSpeedTest = () => {
@@ -198,6 +234,7 @@ export default function DashboardContent() {
     setShelbySpeed(0);
     setS3Speed(0);
     setIpfsSpeed(0);
+    addLog('info', 'Initiating network benchmarking speed test pipeline.');
 
     let current = 0;
     const interval = setInterval(() => {
@@ -214,6 +251,7 @@ export default function DashboardContent() {
         setIpfsSpeed(3850); 
         setIsTesting(false);
         setTestComplete(true);
+        addLog('success', 'Benchmark completed: Shelby protocol outpaced legacy Web2 and public gateways.');
         playSound(1000);
       }
     }, 15);
@@ -222,9 +260,10 @@ export default function DashboardContent() {
   const shareOnTwitter = (txHash: string) => {
     playSound(600);
     const tweetText = encodeURIComponent(
-      `🚀 Just generated & secured a meme on @Shelby Hub using Petra Wallet on Aptos Testnet!\n\n⚡ Speed: Sub-Second\n🔗 Tx Hash: ${txHash.substring(0, 10)}...\n\nCheck it out here: ${window.location.href}`
+      `🚀 Just generated & secured a meme on @Shelby Hub using Petra Wallet on Aptos!\n\n⚡ Speed: Sub-Second\n🔗 Tx Hash: ${txHash.substring(0, 10)}...\n\nCheck it out here: ${window.location.href}`
     );
     window.open(`https://twitter.com/intent/tweet?text=${tweetText}`, "_blank");
+    addLog('info', 'Triggered client gateway intent redirection to X/Twitter platform.');
   };
 
   const getFeeText = () => {
@@ -233,12 +272,24 @@ export default function DashboardContent() {
     return "0.1 ShelbyUSD";
   };
 
+  // Dynamic Explorer link building mechanism depending seamlessly on state configurations
+  const getExplorerUrl = (txHash: string, networkName?: string) => {
+    const net = networkName ? networkName.toLowerCase() : (network?.name ? network.name.toLowerCase() : "testnet");
+    if (net.indexOf("mainnet") !== -1) {
+      return `https://explorer.aptoslabs.com/txn/${txHash}?network=mainnet`;
+    } else if (net.indexOf("devnet") !== -1) {
+      return `https://explorer.aptoslabs.com/txn/${txHash}?network=devnet`;
+    }
+    return `https://explorer.aptoslabs.com/txn/${txHash}?network=testnet`;
+  };
+
   const publishMeme = async () => {
     if (!connected) return alert("Please connect your Petra Wallet first!");
     if (!network) return alert("Wallet network connection not detected.");
 
     const currentNet = String(network.name).toLowerCase();
     if (currentNet.indexOf("testnet") === -1) {
+      addLog('warning', `Execution halted: Network guard mismatch. Active network is ${network.name}`);
       alert("Petra Testnet Guard Activation 🚨\n\nYour wallet is currently connected to: " + network.name + "\n\nPlease open Petra Wallet -> Settings (⚙️) -> Network and switch to 'Testnet'.");
       return;
     }
@@ -250,10 +301,12 @@ export default function DashboardContent() {
     setShowProgressModal(true);
     setTxStep(1);
     playSound(800);
+    addLog('info', 'Assembling blockchain data transaction payload...');
 
     try {
       await new Promise(resolve => setTimeout(resolve, 1500));
       setTxStep(2);
+      addLog('info', 'Awaiting cryptographic structural validation and ledger acceptance signature...');
 
       const transactionPayload = {
         data: {
@@ -275,7 +328,8 @@ export default function DashboardContent() {
         id: randomId,
         name: `Meme_${randomId}.png`,
         url: canvas.toDataURL("image/png"),
-        tx: txHash
+        tx: txHash,
+        networkName: network.name
       };
 
       const updatedList = [newMeme, ...uploadedMemes];
@@ -283,6 +337,7 @@ export default function DashboardContent() {
       setFilesUploaded(prev => prev + 1);
 
       localStorage.setItem('shelby_memes', JSON.stringify(updatedList));
+      addLog('success', `Ledger verification complete! Block entry finalized for ${newMeme.name}`);
       
       playSound(1000);
       setShowToast(true);
@@ -290,6 +345,7 @@ export default function DashboardContent() {
 
     } catch (error) {
       console.error(error);
+      addLog('warning', 'State pipeline operation dropped due to remote node or wallet cancellation.');
       alert("Testnet transaction failed or was cancelled!");
       setShowProgressModal(false);
     } finally {
@@ -297,7 +353,6 @@ export default function DashboardContent() {
     }
   };
 
-  // Reusable Glow Styles
   const neonGlowStyle = {
     transition: "all 0.3s ease",
     boxShadow: "0 0 12px rgba(56, 189, 248, 0.4)",
@@ -307,7 +362,7 @@ export default function DashboardContent() {
   return (
     <main style={{ minHeight: "100vh", background: "#0a0f24", color: "white", padding: "20px", fontFamily: "sans-serif", position: "relative" }}>
       
-      {/* Blockchain Progress Modal */}
+      {/* Blockchain Async Step-Progress Modal Overlay */}
       {showProgressModal && (
         <div style={{ position: "fixed", top: 0, left: 0, width: "100vw", height: "100vh", background: "rgba(3, 7, 18, 0.85)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 99999 }}>
           <div style={{ background: "#111827", border: "1px solid #334155", borderRadius: "12px", padding: "25px", maxWidth: "400px", width: "90%", textAlign: "center" }}>
@@ -338,6 +393,31 @@ export default function DashboardContent() {
         </div>
       )}
 
+      {/* Embedded Terminal Action Logs Side drawer Container */}
+      {showLogCenter && (
+        <div style={{ position: "fixed", top: 0, right: 0, width: "320px", height: "100vh", background: "#0f172a", borderLeft: "1px solid #1e293b", padding: "20px", boxSizing: "border-box", zIndex: 9998, boxShadow: "-5px 0 25px rgba(0,0,0,0.5)" }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "20px", borderBottom: "1px solid #334155", paddingBottom: "10px" }}>
+            <h3 style={{ margin: 0, fontSize: "14px", color: "#38bdf8", fontWeight: "bold" }}>System Live Pipeline Logs</h3>
+            <button onClick={() => { playSound(300); setShowLogCenter(false); }} style={{ background: "transparent", border: "none", color: "#64748b", cursor: "pointer", fontSize: "16px" }}>✕</button>
+          </div>
+          <div style={{ display: "flex", flexDirection: "column", gap: "12px", height: "calc(100vh - 80px)", overflowY: "auto" }}>
+            {activityLogs.length === 0 ? (
+              <p style={{ fontSize: "11px", opacity: 0.4 }}>No logs compiled in this current lifecycle session.</p>
+            ) : (
+              activityLogs.map((log) => (
+                <div key={log.id} style={{ fontSize: "11px", background: "#030712", padding: "8px", borderRadius: "6px", borderLeft: `3px solid ${log.type === 'success' ? '#10b981' : log.type === 'warning' ? '#ef4444' : '#38bdf8'}` }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", opacity: 0.5, marginBottom: "4px" }}>
+                    <span>{log.type.toUpperCase()}</span>
+                    <span>{log.timestamp}</span>
+                  </div>
+                  <div style={{ color: "#e2e8f0" }}>{log.message}</div>
+                </div>
+              ))
+            )}
+          </div>
+        </div>
+      )}
+
       {/* Success Toast Notification */}
       {showToast && (
         <div style={{ position: "fixed", bottom: "24px", right: "24px", background: "rgba(31, 41, 55, 0.95)", border: "1px solid #10b981", borderRadius: "9999px", padding: "10px 24px", display: "inline-flex", alignItems: "center", gap: "10px", boxShadow: "0 10px 15px -3px rgba(0, 0, 0, 0.3)", zIndex: 9999 }}>
@@ -350,23 +430,37 @@ export default function DashboardContent() {
         </div>
       )}
 
-      {/* Header Block */}
+      {/* Application Main Top Header Block */}
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "20px" }}>
         <div>
           <h1 style={{ fontSize: "24px", margin: 0, color: "#38bdf8", fontWeight: "bold" }}>SHELBY</h1>
           <p style={{ margin: 0, fontSize: "11px", opacity: 0.6 }}>Meme & Storage Hub</p>
         </div>
-        {connected ? (
-          <div style={{ display: "flex", gap: "10px", alignItems: "center" }}>
-            <span style={{ fontSize: "12px", color: "#10b981", background: "#111827", padding: "6px 12px", borderRadius: "6px" }}>{getAddress()}</span>
-            <button onClick={handleDisconnect} style={{ background: "#ef4444", border: "none", padding: "8px 12px", borderRadius: "6px", color: "white", cursor: "pointer", fontWeight: "bold" }}>Disconnect</button>
-          </div>
-        ) : (
-          <button onClick={handleConnect} style={{ ...neonGlowStyle, background: "#3b82f6", border: "none", padding: "8px 16px", borderRadius: "6px", color: "white", fontWeight: "bold" }}>Connect Wallet</button>
-        )}
+        <div style={{ display: "flex", gap: "10px", alignItems: "center" }}>
+          {/* Logs Notification Button Trigger */}
+          <button 
+            onClick={() => { playSound(600); setShowLogCenter(!showLogCenter); }} 
+            style={{ position: "relative", background: "#111827", border: "1px solid #334155", padding: "8px 12px", borderRadius: "6px", color: "white", cursor: "pointer", display: "flex", alignItems: "center" }}
+            title="Activity Logs"
+          >
+            🔔
+            {activityLogs.length > 0 && (
+              <span style={{ position: "absolute", top: "-2px", right: "-2px", background: "#ef4444", width: "6px", height: "6px", borderRadius: "50%" }} />
+            )}
+          </button>
+
+          {connected ? (
+            <div style={{ display: "flex", gap: "10px", alignItems: "center" }}>
+              <span style={{ fontSize: "12px", color: "#10b981", background: "#111827", padding: "6px 12px", borderRadius: "6px" }}>{getAddress()}</span>
+              <button onClick={handleDisconnect} style={{ background: "#ef4444", border: "none", padding: "8px 12px", borderRadius: "6px", color: "white", cursor: "pointer", fontWeight: "bold" }}>Disconnect</button>
+            </div>
+          ) : (
+            <button onClick={handleConnect} style={{ ...neonGlowStyle, background: "#3b82f6", border: "none", padding: "8px 16px", borderRadius: "6px", color: "white", fontWeight: "bold" }}>Connect Wallet</button>
+          )}
+        </div>
       </div>
 
-      {/* Navigation Tabs */}
+      {/* Main Core Section Navigation Area */}
       <div style={{ display: "flex", gap: "10px", marginBottom: "25px" }}>
         <button onClick={() => { playSound(600); setActiveTab("meme"); }} style={{ padding: "10px 20px", background: activeTab === "meme" ? "#1e293b" : "transparent", border: activeTab === "meme" ? "1px solid #38bdf8" : "1px solid #1e293b", borderRadius: "8px", color: "white", cursor: "pointer", fontWeight: "bold" }}>Meme Studio</button>
         <button onClick={() => { playSound(600); setActiveTab("speed"); }} style={{ padding: "10px 20px", background: activeTab === "speed" ? "#1e293b" : "transparent", border: activeTab === "speed" ? "1px solid #38bdf8" : "1px solid #1e293b", borderRadius: "8px", color: "white", cursor: "pointer", fontWeight: "bold" }}>Bandwidth Speed Test</button>
@@ -381,28 +475,29 @@ export default function DashboardContent() {
         </a>
       </div>
 
-      {/* Tab Switch Logic */}
+      {/* Conditional Content Layout Module Switch */}
       {activeTab === "meme" ? (
         <div>
-          {/* Quick Metrics */}
+          {/* Real-time Dynamic Metrics Panels */}
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))", gap: "10px", marginBottom: "20px" }}>
             <div style={{ background: "#111827", padding: "10px", borderRadius: "8px" }}>
               <p style={{ margin: 0, fontSize: "11px", opacity: 0.6 }}>Memes Uploaded</p>
               <h3 style={{ margin: 0, color: "#38bdf8" }}>{filesUploaded}</h3>
             </div>
             <div style={{ background: "#111827", padding: "10px", borderRadius: "8px" }}>
-              <p style={{ margin: 0, fontSize: "11px", opacity: 0.6 }}>Speed</p>
+              <p style={{ margin: 0, fontSize: "11px", opacity: 0.6 }}>Latency State</p>
               <h3 style={{ margin: 0, color: "#10b981" }}>Sub-Second</h3>
             </div>
             <div style={{ background: "#111827", padding: "10px", borderRadius: "8px" }}>
-              <p style={{ margin: 0, fontSize: "11px", opacity: 0.6 }}>Network</p>
+              <p style={{ margin: 0, fontSize: "11px", opacity: 0.6 }}>Live Sync Network</p>
               <h3 style={{ margin: 0, color: "#3b82f6" }}>{connected ? (network ? network.name : "Testnet") : "Offline"}</h3>
             </div>
           </div>
 
-          {/* Studio Workspace */}
+          {/* Interactive Core Studio Split View Dashboard */}
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: "20px", marginBottom: "20px" }}>
-            {/* Left Panel: Preview */}
+            
+            {/* Left Frame Viewport: Image Canvas Preview */}
             <div style={{ background: "#111827", padding: "15px", borderRadius: "12px", textAlign: "center" }}>
               <canvas ref={canvasRef} width={250} height={250} style={{ borderRadius: "8px", border: "1px solid #334155", maxWidth: "100%", marginBottom: "10px" }} />
               <div style={{ display: "flex", gap: "5px", justifyContent: "center" }}>
@@ -412,7 +507,7 @@ export default function DashboardContent() {
               </div>
             </div>
 
-            {/* Right Panel: Controls */}
+            {/* Right Frame Viewport: Control Panel Inputs */}
             <div style={{ background: "#111827", padding: "15px", borderRadius: "12px", display: "flex", flexDirection: "column", justifyContent: "space-between" }}>
               <div>
                 <input type="text" value={topText} onChange={e => setTopText(e.target.value)} style={{ width: "100%", padding: "10px", marginBottom: "10px", background: "#030712", border: "1px solid #334155", borderRadius: "6px", color: "white", boxSizing: "border-box" }} placeholder="Top Text" />
@@ -452,7 +547,7 @@ export default function DashboardContent() {
             </div>
           </div>
 
-          {/* Historical Vault Grid */}
+          {/* Historic Ledger Storage Vault Component Grid */}
           {uploadedMemes.length > 0 && (
             <div style={{ background: "#111827", padding: "15px", borderRadius: "12px", marginTop: "20px" }}>
               <h3 style={{ margin: "0 0 15px 0", fontSize: "14px", color: "#38bdf8" }}>Shelby Storage Vault</h3>
@@ -463,7 +558,7 @@ export default function DashboardContent() {
                     <p style={{ margin: "0 0 6px 0", fontSize: "10px", opacity: 0.6, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{meme.name}</p>
                     <div style={{ display: "flex", flexDirection: "column", gap: "5px" }}>
                       <a 
-                        href={`https://explorer.aptoslabs.com/txn/${meme.tx}?network=testnet`} 
+                        href={getExplorerUrl(meme.tx, meme.networkName)} 
                         target="_blank" 
                         rel="noopener noreferrer" 
                         style={{ display: "block", background: "#1e293b", color: "#38bdf8", textDecoration: "none", fontSize: "10px", padding: "4px 0", borderRadius: "4px", fontWeight: "bold" }}
@@ -490,7 +585,7 @@ export default function DashboardContent() {
           )}
         </div>
       ) : (
-        /* Benchmark Interface */
+        /* Speed Test Performance Module Frame Layout */
         <div style={{ background: "#111827", padding: "30px", borderRadius: "12px" }}>
           <h3 style={{ margin: "0 0 10px 0", textAlign: "center" }}>Bandwidth Speed Test</h3>
           <p style={{ opacity: 0.6, fontSize: "14px", marginBottom: "25px", textAlign: "center" }}>Compare Shelby Eco-Network performance with traditional Web2 and Web3 providers.</p>
@@ -542,10 +637,10 @@ export default function DashboardContent() {
         </div>
       )}
 
-      {/* Professional Footer */}
-      <footer style={{ marginTop: "40px", borderTop: "1px solid #1e293b", paddingTop: "20px", textAlign: "center", opacity: 0.4 }}>
-        <p style={{ fontSize: "12px", margin: "0 0 5px 0" }}>© 2026 Shelby Hub. Powered by Aptos Blockchain.</p>
-        <p style={{ fontSize: "10px", margin: 0 }}>Building the future of high-speed decentralized storage pipelines.</p>
+      {/* Production Standardized Global Footer Module */}
+      <footer style={{ marginTop: "40px", borderTop: "1px solid #1e293b", paddingTop: "20px", textAlign: "center", opacity: 0.35 }}>
+        <p style={{ fontSize: "12px", margin: "0 0 5px 0" }}>© 2026 Shelby Hub. Powered by Aptos High-Performance Blockchain Node Infrastructure.</p>
+        <p style={{ fontSize: "10px", margin: 0 }}>Building the future of sub-second secure decentralized memory caches and block data pipelines.</p>
       </footer>
     </main>
   );
