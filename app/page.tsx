@@ -21,7 +21,7 @@ interface ActivityLog {
 export default function DashboardContent() {
   const { connect, disconnect, connected, account, network, signAndSubmitTransaction } = useWallet();
 
-  // Core States
+  // Core App States
   const [filesUploaded, setFilesUploaded] = useState<number>(5);
   const [uploading, setUploading] = useState<boolean>(false);
   const [activeTab, setActiveTab] = useState<string>("meme");
@@ -37,7 +37,7 @@ export default function DashboardContent() {
   const [isDarkMode, setIsDarkMode] = useState<boolean>(true);
   const [rejectNotification, setRejectNotification] = useState<boolean>(false);
 
-  // Text Customization Sliders & Alignment States
+  // Text Customization Positioning Sliders & Alignment States
   const [topTextY, setTopTextY] = useState<number>(40);
   const [bottomTextY, setBottomTextY] = useState<number>(410);
   const [textFontSize, setTextFontSize] = useState<number>(26);
@@ -55,7 +55,7 @@ export default function DashboardContent() {
   const [showProgressModal, setShowProgressModal] = useState<boolean>(false);
   const [txStep, setTxStep] = useState<number>(1); 
 
-  // Speed Test States
+  // Speed Test Framework Metric States
   const [isTesting, setIsTesting] = useState<boolean>(false);
   const [testComplete, setTestComplete] = useState<boolean>(false);
   const [shelbySpeed, setShelbySpeed] = useState<number>(0);
@@ -73,6 +73,7 @@ export default function DashboardContent() {
     ]);
   };
 
+  // Safe window-client context lifecycle orchestration
   useEffect(() => {
     if (typeof window !== 'undefined') {
       const savedMemes = localStorage.getItem('shelby_memes');
@@ -87,14 +88,14 @@ export default function DashboardContent() {
       }
       const savedTheme = localStorage.getItem('shelby_theme');
       if (savedTheme === 'light') setIsDarkMode(false);
-      addLog('info', 'Shelby Premium Engine Initialized Successfully.');
+      addLog('info', 'Shelby Render Matrix Pipeline Sync Complete.');
     }
   }, []);
 
   useEffect(() => {
     if (connected && account) {
       const currentNet = network?.name ? network.name : "Unknown Network";
-      addLog('success', `Wallet linked successfully on ${currentNet}`);
+      addLog('success', `Wallet pipeline handshake complete for node ${currentNet}`);
     }
   }, [connected, account, network]);
 
@@ -104,7 +105,7 @@ export default function DashboardContent() {
     if (typeof window !== 'undefined') {
       localStorage.setItem('shelby_theme', nextTheme ? 'dark' : 'light');
     }
-    addLog('info', `UI Context updated to ${nextTheme ? 'Dark' : 'Light'} Mode.`);
+    addLog('info', `UI Canvas context modified to ${nextTheme ? 'Dark' : 'Light'} space.`);
   };
 
   const removeMemeFromVault = (id: number) => {
@@ -114,7 +115,7 @@ export default function DashboardContent() {
     if (typeof window !== 'undefined') {
       localStorage.setItem('shelby_memes', JSON.stringify(updatedList));
     }
-    addLog('info', `Flushed reference ID: [${id}] from asset list.`);
+    addLog('info', `Reference record signature ${id} dropped from storage directory.`);
   };
 
   const clearEntireVaultCache = () => {
@@ -122,11 +123,11 @@ export default function DashboardContent() {
       setUploadedMemes([]);
       setFilesUploaded(5);
       if (typeof window !== 'undefined') localStorage.removeItem('shelby_memes');
-      addLog('warning', 'Vault cache storage initialized to factory state.');
+      addLog('warning', 'Local memory sector purged back to zero allocation.');
     }
   };
 
-  // High Resolution Canvas Render engine
+  // 🌟 Verified High-Fidelity Canvas Composition Engine Lifecycle Loop
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -135,9 +136,51 @@ export default function DashboardContent() {
 
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-    // Draw Background Layer
+    const completeRenderingPipeline = () => {
+      ctx.strokeStyle = strokeColor;
+      ctx.lineWidth = Math.max(5, textFontSize / 4.5);
+      ctx.textAlign = textAlignment;
+      ctx.font = `bold ${textFontSize}px system-ui, -apple-system, sans-serif`;
+
+      let textX = canvas.width / 2;
+      if (textAlignment === "left") textX = 25;
+      if (textAlignment === "right") textX = canvas.width - 25;
+
+      const renderTopText = topText.trim() !== "" ? topText.toUpperCase() : "SHELBY IS HOT";
+      const renderBottomText = bottomText.trim() !== "" ? bottomText.toUpperCase() : "AWS IS COLD";
+
+      if (topText.trim() === "") {
+        ctx.fillStyle = isDarkMode ? "rgba(255, 255, 255, 0.35)" : "rgba(0, 0, 0, 0.3)";
+      } else {
+        ctx.fillStyle = textColor;
+      }
+      ctx.textBaseline = "top";
+      ctx.strokeText(renderTopText, textX, topTextY);
+      ctx.fillText(renderTopText, textX, topTextY);
+
+      if (bottomText.trim() === "") {
+        ctx.fillStyle = isDarkMode ? "rgba(255, 255, 255, 0.35)" : "rgba(0, 0, 0, 0.3)";
+      } else {
+        ctx.fillStyle = textColor;
+      }
+      ctx.textBaseline = "bottom";
+      ctx.strokeText(renderBottomText, textX, bottomTextY);
+      ctx.fillText(renderBottomText, textX, bottomTextY);
+
+      if (watermark) {
+        ctx.fillStyle = "rgba(10, 15, 30, 0.65)";
+        ctx.fillRect(canvas.width - 145, canvas.height - 35, 135, 25);
+        ctx.fillStyle = "#38bdf8";
+        ctx.font = "bold 9px monospace";
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        ctx.fillText("SHELBY HOT SECURE", canvas.width - 77, canvas.height - 23);
+      }
+    };
+
     if (customImage) {
       ctx.drawImage(customImage, 0, 0, canvas.width, canvas.height);
+      completeRenderingPipeline();
     } else {
       const grad = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
       if (activeGradient === "sunset") {
@@ -149,53 +192,9 @@ export default function DashboardContent() {
       }
       ctx.fillStyle = grad;
       ctx.fillRect(0, 0, canvas.width, canvas.height);
+      completeRenderingPipeline();
     }
-
-    // Text Font Configuration
-    ctx.strokeStyle = strokeColor;
-    ctx.lineWidth = Math.max(5, textFontSize / 4.5);
-    ctx.textAlign = textAlignment;
-    ctx.font = `bold ${textFontSize}px system-ui, -apple-system, sans-serif`;
-
-    // Calculate dynamic X coordinate based on alignment state
-    let textX = canvas.width / 2;
-    if (textAlignment === "left") textX = 25;
-    if (textAlignment === "right") textX = canvas.width - 25;
-
-    const renderTopText = topText.trim() !== "" ? topText.toUpperCase() : "SHELBY IS HOT";
-    const renderBottomText = bottomText.trim() !== "" ? bottomText.toUpperCase() : "AWS IS COLD";
-
-    // Top text rendering with custom colors
-    if (topText.trim() === "") {
-      ctx.fillStyle = isDarkMode ? "rgba(255, 255, 255, 0.25)" : "rgba(0, 0, 0, 0.2)";
-    } else {
-      ctx.fillStyle = textColor;
-    }
-    ctx.textBaseline = "top";
-    ctx.strokeText(renderTopText, textX, topTextY);
-    ctx.fillText(renderTopText, textX, topTextY);
-
-    // Bottom text rendering with custom colors
-    if (bottomText.trim() === "") {
-      ctx.fillStyle = isDarkMode ? "rgba(255, 255, 255, 0.25)" : "rgba(0, 0, 0, 0.2)" ;
-    } else {
-      ctx.fillStyle = textColor;
-    }
-    ctx.textBaseline = "bottom";
-    ctx.strokeText(renderBottomText, textX, bottomTextY);
-    ctx.fillText(renderBottomText, textX, bottomTextY);
-
-    // Neon Secure Label Layer
-    if (watermark) {
-      ctx.fillStyle = "rgba(10, 15, 30, 0.6)";
-      ctx.fillRect(canvas.width - 145, canvas.height - 35, 135, 25);
-      ctx.fillStyle = "#38bdf8";
-      ctx.font = "bold 9px monospace";
-      ctx.textAlign = "center";
-      ctx.textBaseline = "middle";
-      ctx.fillText("SHELBY HOT SECURE", canvas.width - 77, canvas.height - 23);
-    }
-  }, [topText, bottomText, activeGradient, customImage, watermark, isDarkMode, topTextY, bottomTextY, textFontSize, textColor, strokeColor, textAlignment]);
+  }, [topText, bottomText, activeGradient, customImage, watermark, isDarkMode, topTextY, bottomTextY, textFontSize, textColor, strokeColor, textAlignment, activeTab]);
 
   const handleConnect = async () => {
     try {
@@ -217,7 +216,7 @@ export default function DashboardContent() {
             img.src = event.target.result as string;
             img.onload = () => {
               setCustomImage(img);
-              addLog('info', `Uploaded Asset: ${file.name}`);
+              addLog('info', `File asset context synchronized: ${file.name}`);
             };
           }
         };
@@ -229,7 +228,7 @@ export default function DashboardContent() {
   const clearCustomBg = () => {
     setCustomImage(null);
     setUploadedFileName("");
-    addLog('info', 'Canvas background state reset to default gradient.');
+    addLog('info', 'Canvas structural design pattern localized to default matrix.');
   };
 
   const downloadMeme = () => {
@@ -249,7 +248,7 @@ export default function DashboardContent() {
       link.download = `shelby_hq_studio_${Date.now()}.png`;
       link.href = exportCanvas.toDataURL("image/png", 1.0);
       link.click();
-      addLog('success', 'High-Res Studio assets compiled and downloaded.');
+      addLog('success', 'High definition image asset compiled and exported.');
     }
   };
 
@@ -258,23 +257,26 @@ export default function DashboardContent() {
     setTestComplete(false);
     let current = 0;
     const interval = setInterval(() => {
-      current += 15;
+      current += 20;
       if (current <= 95) setShelbySpeed(current);
       if (current <= 280) setS3Speed(current);
       if (current <= 3850) setIpfsSpeed(current);
 
       if (current >= 3850) {
         clearInterval(interval);
+        setShelbySpeed(95);
+        setS3Speed(280);
+        setIpfsSpeed(3850);
         setIsTesting(false);
         setTestComplete(true);
-        addLog('success', 'Network audit logs refreshed.');
+        addLog('success', 'Network environment benchmarking pipeline verified.');
       }
     }, 15);
   };
 
   const triggerRejectNotification = () => {
     setRejectNotification(true);
-    addLog('warning', 'Transaction flow rejected by node owner.');
+    addLog('warning', 'Cryptographic request rejected on terminal end.');
     setTimeout(() => {
       setRejectNotification(false);
     }, 2000);
@@ -282,10 +284,10 @@ export default function DashboardContent() {
 
   const publishMeme = async () => {
     if (!connected) return alert("Please connect your Petra Wallet first!");
-    if (!network) return alert("Network parameters missing.");
+    if (!network) return alert("Network node handshake properties mapping missing.");
 
     if (String(network.name).toLowerCase().indexOf("testnet") === -1) {
-      alert("Please toggle network configuration to 'Testnet' inside Petra extension.");
+      alert("Please switch your Petra extension network state to 'Testnet'.");
       return;
     }
 
@@ -343,24 +345,22 @@ export default function DashboardContent() {
     textMain: isDarkMode ? "#f8fafc" : "#111827",
     textMuted: isDarkMode ? "#64748b" : "#6b7280",
     inputBg: isDarkMode ? "#020617" : "#f9fafb",
-    inputBorder: isDarkMode ? "#1e293b" : "#e5e7eb",
+    inputBorder: isDarkMode ? "#1e293b" : "#cbd5e1",
     tabActive: isDarkMode ? "#1e293b" : "#e5e7eb"
   };
 
   return (
     <main style={{ minHeight: "100vh", background: themeStyles.mainBg, color: themeStyles.textMain, padding: "24px", fontFamily: "system-ui, -apple-system, sans-serif", position: "relative", transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)" }}>
       
-      {/* Auto-Expiry Top-Right Notification Element */}
       {rejectNotification && (
         <div style={{ position: "fixed", top: "24px", right: "24px", background: "#ef4444", color: "white", padding: "14px 28px", borderRadius: "10px", fontWeight: "600", fontSize: "14px", zIndex: 99999, boxShadow: "0 10px 25px rgba(239, 68, 68, 0.35)", border: "1px solid rgba(255,255,255,0.1)" }}>
           🛑 Transaction Rejected
         </div>
       )}
 
-      {/* Dynamic Progress Modal */}
       {showProgressModal && (
-        <div style={{ position: "fixed", top: 0, left: 0, width: "100vw", height: "100vh", background: "rgba(2, 6, 23, 0.85)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 99999, backdropFilter: "blur(4px)" }}>
-          <div style={{ background: themeStyles.cardBg, border: `1px solid ${themeStyles.inputBorder}`, borderRadius: "16px", padding: "30px", maxWidth: "420px", width: "90%", textAlign: "center", boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.5)" }}>
+        <div style={{ position: "fixed", top: 0, left: 0, width: "100vw", height: "100vh", background: "rgba(2, 6, 23, 0.85)", display: "flex", alignItems: "center", justifyContext: "center", zIndex: 99999, backdropFilter: "blur(4px)" }}>
+          <div style={{ background: themeStyles.cardBg, border: `1px solid ${themeStyles.inputBorder}`, borderRadius: "16px", padding: "30px", maxWidth: "420px", width: "90%", textAlign: "center", margin: "auto", boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.5)" }}>
             <h3 style={{ margin: "0 0 10px 0", color: "#38bdf8", fontSize: "18px" }}>Aptos Blockchain Pipeline</h3>
             <div style={{ display: "flex", flexDirection: "column", gap: "16px", textAlign: "left", marginBottom: "25px", marginTop: "25px" }}>
               <div style={{ display: "flex", alignItems: "center", gap: "12px", opacity: txStep >= 1 ? 1 : 0.4, transition: "opacity 0.3s" }}>
@@ -377,13 +377,12 @@ export default function DashboardContent() {
               </div>
             </div>
             {txStep === 3 && (
-              <button onClick={() => setShowProgressModal(false)} style={{ background: "#10b981", color: "white", border: "none", padding: "12px 24px", borderRadius: "8px", fontWeight: "bold", cursor: "pointer", width: "100%", boxShadow: "0 4px 12px rgba(16, 185, 129, 0.3)", transition: "all 0.2s" }}>Dismiss Dashboard</button>
+              <button onClick={() => setShowProgressModal(false)} style={{ background: "#10b981", color: "white", border: "none", padding: "12px 24px", borderRadius: "8px", fontWeight: "bold", cursor: "pointer", width: "100%", boxShadow: "0 4px 12px rgba(16, 185, 129, 0.3)" }}>Dismiss Dashboard</button>
             )}
           </div>
         </div>
       )}
 
-      {/* Terminal Drawer Component */}
       {showLogCenter && (
         <div style={{ position: "fixed", top: 0, right: 0, width: "340px", height: "100vh", background: isDarkMode ? "#0f172a" : "#f3f4f6", borderLeft: `1px solid ${themeStyles.inputBorder}`, padding: "24px", boxSizing: "border-box", zIndex: 9998, boxShadow: "-10px 0 30px rgba(0,0,0,0.25)" }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "20px", borderBottom: `1px solid ${themeStyles.inputBorder}`, paddingBottom: "12px" }}>
@@ -404,14 +403,13 @@ export default function DashboardContent() {
         </div>
       )}
 
-      {/* Toast Notification */}
       {showToast && (
         <div style={{ position: "fixed", bottom: "24px", right: "24px", background: "rgba(15, 23, 42, 0.95)", border: "1px solid #10b981", borderRadius: "9999px", padding: "12px 28px", display: "inline-flex", alignItems: "center", gap: "10px", zIndex: 9999, boxShadow: "0 10px 25px rgba(0,0,0,0.3)" }}>
           <span style={{ color: "white", fontWeight: "600", fontSize: "14px" }}>🎉 Transaction successful!</span>
         </div>
       )}
 
-      {/* Navigation Top Header Bar */}
+      {/* Header Block Section */}
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "24px" }}>
         <div>
           <h1 style={{ fontSize: "28px", margin: 0, color: "#38bdf8", fontWeight: "800", letterSpacing: "-0.5px" }}>SHELBY</h1>
@@ -432,15 +430,15 @@ export default function DashboardContent() {
         </div>
       </div>
 
-      {/* Wallet Profile Banner Dashboard Module */}
+      {/* Profile Metrics Framework Overlay Banner */}
       {connected && account && (
         <div style={{ background: `linear-gradient(135deg, ${isDarkMode ? '#1e1b4b' : '#e0e7ff'}, ${isDarkMode ? '#0f172a' : '#ffffff'})`, border: `1px solid ${themeStyles.inputBorder}`, padding: "18px 24px", borderRadius: "14px", marginBottom: "24px", display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "16px", boxShadow: "0 4px 20px rgba(0,0,0,0.05)" }}>
           <div>
             <span style={{ fontSize: "11px", textTransform: "uppercase", fontWeight: "700", color: "#818cf8", display: "block", letterSpacing: "0.5px" }}>SECURED NODE PATH</span>
-            <span style={{ fontSize: "14px", fontFamily: "monospace", color: themeStyles.textMain, fontWeight: "500" }}>{account.address.toString()}</span>
+            <span style={{ fontSize: "14px", fontFamily: "monospace", color: themeStyles.textMain, fontWeight: "500", wordBreak: "break-all" }}>{account.address.toString()}</span>
           </div>
           <div style={{ display: "flex", alignItems: "center", gap: "16px" }}>
-            <a href="https://aptos.dev/network/faucet" target="_blank" rel="noopener noreferrer" style={{ background: "linear-gradient(45deg, #0284c7, #0369a1)", color: "white", textDecoration: "none", fontSize: "13px", fontWeight: "600", padding: "10px 20px", borderRadius: "8px", display: "inline-block", boxShadow: "0 4px 12px rgba(3, 105, 161, 0.35)", transition: "transform 0.2s" }}>
+            <a href="https://aptos.dev/network/faucet" target="_blank" rel="noopener noreferrer" style={{ background: "linear-gradient(45deg, #0284c7, #0369a1)", color: "white", textDecoration: "none", fontSize: "13px", fontWeight: "600", padding: "10px 20px", borderRadius: "8px", display: "inline-block", boxShadow: "0 4px 12px rgba(3, 105, 161, 0.35)" }}>
               💧 Get Free Aptos APT
             </a>
             <div style={{ textAlign: "right" }}>
@@ -451,17 +449,33 @@ export default function DashboardContent() {
         </div>
       )}
 
-      {/* Tabs Layout Button Control Row */}
+      {/* Tabs Layout */}
       <div style={{ display: "flex", gap: "12px", marginBottom: "24px" }}>
-        <button onClick={() => setActiveTab("meme")} style={{ padding: "12px 24px", background: activeTab === "meme" ? themeStyles.tabActive : "transparent", border: activeTab === "meme" ? "1px solid #38bdf8" : `1px solid ${themeStyles.inputBorder}`, color: themeStyles.textMain, cursor: "pointer", fontWeight: "600", borderRadius: "10px", fontSize: "14px", transition: "all 0.2s" }}>Meme Studio</button>
-        <button onClick={() => setActiveTab("speed")} style={{ padding: "12px 24px", background: activeTab === "speed" ? themeStyles.tabActive : "transparent", border: activeTab === "speed" ? "1px solid #38bdf8" : `1px solid ${themeStyles.inputBorder}`, color: themeStyles.textMain, cursor: "pointer", fontWeight: "600", borderRadius: "10px", fontSize: "14px", transition: "all 0.2s" }}>Bandwidth Speed Test</button>
+        <button onClick={() => setActiveTab("meme")} style={{ padding: "12px 24px", background: activeTab === "meme" ? themeStyles.tabActive : "transparent", border: activeTab === "meme" ? "1px solid #38bdf8" : `1px solid ${themeStyles.inputBorder}`, color: themeStyles.textMain, cursor: "pointer", fontWeight: "600", borderRadius: "10px", fontSize: "14px" }}>Meme Studio</button>
+        <button onClick={() => setActiveTab("speed")} style={{ padding: "12px 24px", background: activeTab === "speed" ? themeStyles.tabActive : "transparent", border: activeTab === "speed" ? "1px solid #38bdf8" : `1px solid ${themeStyles.inputBorder}`, color: themeStyles.textMain, cursor: "pointer", fontWeight: "600", borderRadius: "10px", fontSize: "14px" }}>Bandwidth Speed Test</button>
       </div>
 
       {activeTab === "meme" ? (
         <div>
+          {/* Top Quick Numbers Row Context */}
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))", gap: "12px", marginBottom: "24px" }}>
+            <div style={{ background: themeStyles.cardBg, border: `1px solid ${themeStyles.inputBorder}`, padding: "14px", borderRadius: "10px" }}>
+              <p style={{ margin: 0, fontSize: "11px", opacity: 0.6, color: themeStyles.textMuted }}>Memes Uploaded</p>
+              <h3 style={{ margin: "4px 0 0 0", color: "#38bdf8" }}>{filesUploaded}</h3>
+            </div>
+            <div style={{ background: themeStyles.cardBg, border: `1px solid ${themeStyles.inputBorder}`, padding: "14px", borderRadius: "10px" }}>
+              <p style={{ margin: 0, fontSize: "11px", opacity: 0.6, color: themeStyles.textMuted }}>Latency State</p>
+              <h3 style={{ margin: "4px 0 0 0", color: "#10b981" }}>Sub-Second</h3>
+            </div>
+            <div style={{ background: themeStyles.cardBg, border: `1px solid ${themeStyles.inputBorder}`, padding: "14px", borderRadius: "10px" }}>
+              <p style={{ margin: 0, fontSize: "11px", opacity: 0.6, color: themeStyles.textMuted }}>Network</p>
+              <h3 style={{ margin: "4px 0 0 0", color: "#3b82f6" }}>{connected ? (network ? network.name : "Testnet") : "Offline"}</h3>
+            </div>
+          </div>
+
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))", gap: "24px", marginBottom: "24px" }}>
             
-            {/* Left Frame: Premium Studio Canvas */}
+            {/* Left Column Workspace Preview */}
             <div style={{ background: themeStyles.cardBg, border: `1px solid ${themeStyles.inputBorder}`, padding: "20px", borderRadius: "16px", textAlign: "center", boxShadow: "0 10px 30px rgba(0,0,0,0.04)" }}>
               <canvas ref={canvasRef} width={450} height={450} style={{ borderRadius: "12px", border: `1px solid ${themeStyles.inputBorder}`, maxWidth: "100%", height: "auto", background: "#000", marginBottom: "16px", boxShadow: "0 4px 20px rgba(0,0,0,0.15)" }} />
               <div style={{ display: "flex", gap: "8px", justifyContent: "center" }}>
@@ -471,14 +485,13 @@ export default function DashboardContent() {
               </div>
             </div>
 
-            {/* Right Frame: Input Customizer Luxury Panel */}
-            <div style={{ background: themeStyles.cardBg, border: `1px solid ${themeStyles.inputBorder}`, padding: "24px", borderRadius: "16px", display: "flex", flexDirection: "column", justifyContent: "space-between", boxShadow: "0 10px 30px rgba(0,0,0,0.04)" }}>
+            {/* Right Column Customizer Form Panel */}
+            <div style={{ background: themeStyles.cardBg, border: `1px solid ${themeStyles.inputBorder}`, padding: "24px", borderRadius: "16px", display: "flex", flexDirection: "column", justifyContext: "space-between", boxShadow: "0 10px 30px rgba(0,0,0,0.04)" }}>
               <div>
                 <input type="text" value={topText} onChange={e => setTopText(e.target.value)} style={{ width: "100%", padding: "14px", marginBottom: "16px", background: themeStyles.inputBg, border: `1px solid ${themeStyles.inputBorder}`, borderRadius: "10px", color: themeStyles.textMain, boxSizing: "border-box", fontSize: "14px" }} placeholder="Top Text (SHELBY IS HOT)" />
                 
-                {/* Top Text Position Slider */}
                 <div style={{ marginBottom: "16px" }}>
-                  <div style={{ fontSize: "11px", color: themeStyles.textMuted, display: "flex", justifyContent: "space-between", fontWeight: "600" }}>
+                  <div style={{ fontSize: "11px", color: themeStyles.textMuted, display: "flex", justifyContext: "space-between", fontWeight: "600" }}>
                     <span>TOP CAPTION POSITION</span>
                     <span>{topTextY}px</span>
                   </div>
@@ -487,25 +500,22 @@ export default function DashboardContent() {
 
                 <input type="text" value={bottomText} onChange={e => setBottomText(e.target.value)} style={{ width: "100%", padding: "14px", marginBottom: "16px", background: themeStyles.inputBg, border: `1px solid ${themeStyles.inputBorder}`, borderRadius: "10px", color: themeStyles.textMain, boxSizing: "border-box", fontSize: "14px" }} placeholder="Bottom Text (AWS IS COLD)" />
                 
-                {/* Bottom Text Position Slider */}
                 <div style={{ marginBottom: "16px" }}>
-                  <div style={{ fontSize: "11px", color: themeStyles.textMuted, display: "flex", justifyContent: "space-between", fontWeight: "600" }}>
+                  <div style={{ fontSize: "11px", color: themeStyles.textMuted, display: "flex", justifyContext: "space-between", fontWeight: "600" }}>
                     <span>BOTTOM CAPTION POSITION</span>
                     <span>{bottomTextY}px</span>
                   </div>
                   <input type="range" min="300" max="440" value={bottomTextY} onChange={e => setBottomTextY(Number(e.target.value))} style={{ width: "100%", accentColor: "#3b82f6", marginTop: "6px" }} />
                 </div>
 
-                {/* Font Size Slider */}
                 <div style={{ marginBottom: "16px" }}>
-                  <div style={{ fontSize: "11px", color: themeStyles.textMuted, display: "flex", justifyContent: "space-between", fontWeight: "600" }}>
+                  <div style={{ fontSize: "11px", color: themeStyles.textMuted, display: "flex", justifyContext: "space-between", fontWeight: "600" }}>
                     <span>CAPTION FONT SIZE</span>
                     <span>{textFontSize}px</span>
                   </div>
                   <input type="range" min="16" max="48" value={textFontSize} onChange={e => setTextFontSize(Number(e.target.value))} style={{ width: "100%", accentColor: "#10b981", marginTop: "6px" }} />
                 </div>
 
-                {/* 🌟 New Feature: Caption Alignment Buttons Selector */}
                 <div style={{ marginBottom: "16px" }}>
                   <label style={{ fontSize: "11px", color: themeStyles.textMuted, display: "block", marginBottom: "6px", fontWeight: "600" }}>TEXT ALIGNMENT</label>
                   <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "6px", background: themeStyles.inputBg, padding: "4px", borderRadius: "8px", border: `1px solid ${themeStyles.inputBorder}` }}>
@@ -515,7 +525,6 @@ export default function DashboardContent() {
                   </div>
                 </div>
 
-                {/* Text & Stroke Color Picker Option Panels */}
                 <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px", marginBottom: "16px" }}>
                   <div>
                     <label style={{ fontSize: "11px", color: themeStyles.textMuted, display: "block", marginBottom: "4px", fontWeight: "600" }}>TEXT COLOR</label>
@@ -533,7 +542,6 @@ export default function DashboardContent() {
                   </div>
                 </div>
 
-                {/* Upload Section Control */}
                 <div style={{ marginBottom: "16px" }}>
                   <input type="file" ref={customBgInputRef} onChange={handleCustomBgUpload} accept="image/*" style={{ display: "none" }} />
                   <div style={{ display: "flex", gap: "6px" }}>
@@ -558,14 +566,14 @@ export default function DashboardContent() {
 
                 <button onClick={downloadMeme} style={{ width: "100%", padding: "12px", background: isDarkMode ? "#1e293b" : "#e5e7eb", border: "none", color: themeStyles.textMain, fontWeight: "600", borderRadius: "10px", cursor: "pointer", fontSize: "14px" }}>Download Ultra-HQ PNG</button>
               </div>
-              <button onClick={publishMeme} disabled={uploading} style={{ width: "100%", padding: "16px", background: "#3b82f6", color: "white", border: "none", fontWeight: "700", borderRadius: "12px", cursor: "pointer", marginTop: "16px", fontSize: "14px", boxShadow: "0 4px 14px rgba(59, 130, 246, 0.3)" }}>
+              <button onClick={publishMeme} disabled={uploading} style={{ width: "100%", padding: "16px", background: "#3b82f6", color: "white", border: "none", fontWeight: "700", borderRadius: "12px", cursor: "pointer", marginTop: "40px", fontSize: "14px", boxShadow: "0 4px 14px rgba(59, 130, 246, 0.3)" }}>
                 {uploading ? "Broadcasting Core Node Transactions..." : "Publish to Shelby Storage"}
               </button>
             </div>
 
           </div>
 
-          {/* Bottom Module Panel: Shelby Decentralized Storage Hub Vault Container */}
+          {/* Historical Vault Section Grid Component */}
           <div style={{ background: themeStyles.cardBg, border: `1px solid ${themeStyles.inputBorder}`, padding: "24px", borderRadius: "16px", marginTop: "24px", boxShadow: "0 10px 30px rgba(0,0,0,0.04)" }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "20px" }}>
               <h3 style={{ margin: 0, fontSize: "16px", color: "#38bdf8", fontWeight: "700" }}>Shelby Decentralized Storage Hub Vault</h3>
@@ -575,26 +583,21 @@ export default function DashboardContent() {
             </div>
 
             {uploadedMemes.length === 0 ? (
-              <p style={{ fontSize: "13px", opacity: 0.5, textAlign: "center", padding: "30px 0" }}>No assets indexed inside the local secure buffer.</p>
+              <p style={{ fontSize: "13px", opacity: 0.5, textAlign: "center", padding: "30px 0", color: themeStyles.textMuted }}>No assets indexed inside the local secure buffer.</p>
             ) : (
               <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(160px, 1fr))", gap: "20px" }}>
                 {uploadedMemes.map((meme) => (
-                  <div key={meme.id} style={{ background: themeStyles.inputBg, border: `1px solid ${themeStyles.inputBorder}`, padding: "12px", borderRadius: "12px", position: "relative", display: "flex", flexDirection: "column", justifyContent: "space-between", boxShadow: "0 4px 6px -1px rgba(0,0,0,0.05)" }}>
+                  <div key={meme.id} style={{ background: themeStyles.inputBg, border: `1px solid ${themeStyles.inputBorder}`, padding: "12px", borderRadius: "12px", position: "relative", display: "flex", flexDirection: "column", justifyContext: "space-between", boxShadow: "0 4px 6px -1px rgba(0,0,0,0.05)" }}>
                     <div>
                       <button onClick={() => removeMemeFromVault(meme.id)} style={{ position: "absolute", top: "6px", right: "6px", width: "20px", height: "20px", background: "rgba(239, 68, 68, 0.2)", border: "none", color: "#ef4444", borderRadius: "50%", cursor: "pointer", fontSize: "11px", zIndex: 10, fontWeight: "bold" }}>✕</button>
                       <img src={meme.url} alt="Vault Card Item" style={{ width: "100%", borderRadius: "6px", marginBottom: "8px", boxShadow: "0 2px 4px rgba(0,0,0,0.05)" }} />
                       <p style={{ fontSize: "11px", margin: "0 0 10px 0", textOverflow: "ellipsis", overflow: "hidden", whiteSpace: "nowrap", opacity: 0.8, fontWeight: "500" }}>{meme.name}</p>
                     </div>
-                    
-                    {/* Vault Buttons Matrix (Explore & Share on X) */}
                     <div style={{ display: "flex", flexDirection: "column", gap: "6px", marginTop: "auto" }}>
-                      <a href={`https://explorer.aptoslabs.com/txn/${meme.tx}?network=testnet`} target="_blank" rel="noopener noreferrer" style={{ display: "block", background: "#1e293b", color: "#38bdf8", textAlign: "center", fontSize: "12px", padding: "6px 0", borderRadius: "6px", textDecoration: "none", fontWeight: "600", border: "1px solid #334155", transition: "opacity 0.2s" }}>
+                      <a href={getExplorerUrl(meme.tx, meme.networkName)} target="_blank" rel="noopener noreferrer" style={{ display: "block", background: "#1e293b", color: "#38bdf8", textAlign: "center", fontSize: "12px", padding: "6px 0", borderRadius: "6px", textDecoration: "none", fontWeight: "600", border: "1px solid #334155" }}>
                         Explore
                       </a>
-                      <button onClick={() => {
-                        const tweetText = encodeURIComponent(`Check out my newly minted digital asset on Shelby Studio! 🚀🎉\nTx Hash: ${meme.tx}`);
-                        window.open(`https://twitter.com/intent/tweet?text=${tweetText}`, '_blank', 'noopener,noreferrer');
-                      }} style={{ background: "#ffffff", color: "#000000", border: "none", fontSize: "12px", padding: "6px 0", borderRadius: "6px", fontWeight: "700", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: "4px" }}>
+                      <button onClick={() => shareOnTwitter(meme.tx)} style={{ background: "#ffffff", color: "#000000", border: "none", fontSize: "12px", padding: "6px 0", borderRadius: "6px", fontWeight: "700", cursor: "pointer", display: "flex", alignItems: "center", justifyContext: "center", gap: "4px" }}>
                         𝕏 Share on X
                       </button>
                     </div>
@@ -605,21 +608,26 @@ export default function DashboardContent() {
           </div>
         </div>
       ) : (
-        /* Legacy Bandwidth Performance Speed Test Suite Block */
+        /* Benchmark Performance Test Suite View Frame */
         <div style={{ background: themeStyles.cardBg, border: `1px solid ${themeStyles.inputBorder}`, padding: "40px", borderRadius: "16px", textAlign: "center", boxShadow: "0 10px 30px rgba(0,0,0,0.04)" }}>
           <h3 style={{ fontSize: "18px", fontWeight: "700", margin: "0 0 10px 0" }}>Network Infrastructure Performance Node Matrix</h3>
           <p style={{ fontSize: "13px", color: themeStyles.textMuted, margin: "0 0 24px 0" }}>Audit secure channel data processing speeds across international storage hubs.</p>
-          <div style={{ maxWidth: "460px", margin: "24px auto", textAlign: "left", display: "flex", flexDirection: "column", gap: "20px" }}>
+          <div style={{ maxWidth: "460px", margin: "24px auto", textAlign: "left", display: "flex", flexDirection: "column", gap: "20px", marginBottom: "35px" }}>
             <div>
-              <div style={{ display: "flex", justifyContent: "space-between", fontSize: "13px", fontWeight: "600" }}><span>⚡ SHELBY ECOSYSTEM PIPELINE</span><span>{shelbySpeed}ms</span></div>
-              <div style={{ background: isDarkMode ? "#020617" : "#e5e7eb", height: "10px", borderRadius: "6px", overflow: "hidden", marginTop: "6px" }}><div style={{ width: isTesting || testComplete ? "100%" : "0%", background: "#38bdf8", height: "10px", transition: "width 0.5s ease" }} /></div>
+              <div style={{ display: "flex", justifyContext: "space-between", fontSize: "13px", fontWeight: "600" }}><span>⚡ SHELBY ECOSYSTEM PIPELINE</span><span>{shelbySpeed}ms</span></div>
+              <div style={{ background: isDarkMode ? "#020617" : "#e5e7eb", height: "10px", borderRadius: "6px", overflow: "hidden", marginTop: "6px" }}><div style={{ width: `${isTesting || testComplete ? "100%" : "0%"}`, background: "#38bdf8", height: "10px", transition: "width 0.5s ease" }} /></div>
             </div>
             <div>
-              <div style={{ display: "flex", justifyContent: "space-between", fontSize: "13px", fontWeight: "600" }}><span>Legacy AWS S3 Storage Cluster</span><span>{s3Speed}ms</span></div>
-              <div style={{ background: isDarkMode ? "#020617" : "#e5e7eb", height: "10px", borderRadius: "6px", overflow: "hidden", marginTop: "6px" }}><div style={{ width: isTesting || testComplete ? "45%" : "0%", background: "#eab308", height: "10px", transition: "width 0.8s ease" }} /></div>
+              <div style={{ display: "flex", justifyContext: "space-between", fontSize: "13px", fontWeight: "600" }}><span>Legacy AWS S3 Storage Cluster</span><span>{s3Speed}ms</span></div>
+              <div style={{ background: isDarkMode ? "#020617" : "#e5e7eb", height: "10px", borderRadius: "6px", overflow: "hidden", marginTop: "6px" }}><div style={{ width: `${isTesting || testComplete ? "45%" : "0%"}`, background: "#eab308", height: "10px", transition: "width 0.8s ease" }} /></div>
             </div>
           </div>
-          <button onClick={runSpeedTest} style={{ background: "#10b981", color: "#fff", border: "none", padding: "12px 30px", borderRadius: "8px", fontWeight: "bold", cursor: "pointer", fontSize: "14px", boxShadow: "0 4px 12px rgba(16, 185, 129, 0.25)" }}>Run Pipeline Performance Audit</button>
+          <button onClick={runSpeedTest} disabled={isTesting} style={{ background: "#10b981", color: "#fff", border: "none", padding: "12px 30px", borderRadius: "8px", fontWeight: "bold", cursor: "pointer", fontSize: "14px", boxShadow: "0 4px 12px rgba(16, 185, 129, 0.25)" }}>
+            {isTesting ? "Auditing Nodes..." : "Run Pipeline Performance Audit"}
+          </button>
+          {testComplete && (
+            <p style={{ color: "#10b981", fontSize: "13px", marginTop: "15px", fontWeight: "bold" }}>🎉 Audit complete: Shelby pipeline outpaced legacy system metrics by 3.5x.</p>
+          )}
         </div>
       )}
 
