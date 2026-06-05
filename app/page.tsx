@@ -18,7 +18,6 @@ interface ActivityLog {
   message: string;
 }
 
-// 🌐 Vercel Error Fix: Helper functions defined properly to avoid build crashes
 const getExplorerUrl = (tx: string, networkName: string): string => {
   const networkPath = String(networkName).toLowerCase().includes("mainnet") ? "mainnet" : "testnet";
   return `https://explorer.aptoslabs.com/txn/${tx}?network=${networkPath}`;
@@ -85,7 +84,6 @@ export default function DashboardContent() {
     ]);
   };
 
-  // Safe window-client context lifecycle orchestration
   useEffect(() => {
     if (typeof window !== 'undefined') {
       const savedMemes = localStorage.getItem('shelby_memes');
@@ -100,7 +98,7 @@ export default function DashboardContent() {
       }
       const savedTheme = localStorage.getItem('shelby_theme');
       if (savedTheme === 'light') setIsDarkMode(false);
-      addLog('info', 'Shelby Render Matrix Pipeline Sync Complete.');
+      addLog('info', 'Shelby Dynamic Cache Hub Matrix Ready.');
     }
   }, []);
 
@@ -139,7 +137,6 @@ export default function DashboardContent() {
     }
   };
 
-  // Verified Canvas Composition Engine Lifecycle Loop
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -240,7 +237,7 @@ export default function DashboardContent() {
   const clearCustomBg = () => {
     setCustomImage(null);
     setUploadedFileName("");
-    addLog('info', 'Canvas structural design pattern localized to default matrix.');
+    addLog('info', 'Canvas background state reset to default gradient.');
   };
 
   const downloadMeme = () => {
@@ -326,12 +323,26 @@ export default function DashboardContent() {
       const response = await signAndSubmitTransaction(transactionPayload);
       setTxStep(3);
 
+      // 🌟 Technical Fix: Dynamic parsing logic to securely extract the absolute transaction hash string
+      let stableTxHash = "";
+      if (response && typeof response === "object") {
+        if ("hash" in response && typeof (response as any).hash === "string") {
+          stableTxHash = (response as any).hash;
+        } else if ("args" in response && (response as any).args && typeof (response as any).args.hash === "string") {
+          stableTxHash = (response as any).args.hash;
+        } else {
+          stableTxHash = JSON.stringify(response);
+        }
+      } else if (typeof response === "string") {
+        stableTxHash = response;
+      }
+
       const randomId = Math.floor(Math.random() * 10000);
       const newMeme: UploadedMeme = {
         id: randomId,
         name: uploadedFileName || `Shelby_Asset_${randomId}.png`,
         url: canvas.toDataURL("image/png"),
-        tx: response.hash,
+        tx: stableTxHash, // Saving the validated safe string hash format
         networkName: network.name
       };
 
@@ -419,7 +430,6 @@ export default function DashboardContent() {
         </div>
       )}
 
-      {/* Header Block Section */}
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "24px" }}>
         <div>
           <h1 style={{ fontSize: "28px", margin: 0, color: "#38bdf8", fontWeight: "800", letterSpacing: "-0.5px" }}>SHELBY</h1>
@@ -440,7 +450,6 @@ export default function DashboardContent() {
         </div>
       </div>
 
-      {/* Profile Metrics Framework Overlay Banner */}
       {connected && account && (
         <div style={{ background: `linear-gradient(135deg, ${isDarkMode ? '#1e1b4b' : '#e0e7ff'}, ${isDarkMode ? '#0f172a' : '#ffffff'})`, border: `1px solid ${themeStyles.inputBorder}`, padding: "18px 24px", borderRadius: "14px", marginBottom: "24px", display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "16px", boxShadow: "0 4px 20px rgba(0,0,0,0.05)" }}>
           <div>
@@ -459,7 +468,6 @@ export default function DashboardContent() {
         </div>
       )}
 
-      {/* Tabs Layout */}
       <div style={{ display: "flex", gap: "12px", marginBottom: "24px" }}>
         <button onClick={() => setActiveTab("meme")} style={{ padding: "12px 24px", background: activeTab === "meme" ? themeStyles.tabActive : "transparent", border: activeTab === "meme" ? "1px solid #38bdf8" : `1px solid ${themeStyles.inputBorder}`, color: themeStyles.textMain, cursor: "pointer", fontWeight: "600", borderRadius: "10px", fontSize: "14px" }}>Meme Studio</button>
         <button onClick={() => setActiveTab("speed")} style={{ padding: "12px 24px", background: activeTab === "speed" ? themeStyles.tabActive : "transparent", border: activeTab === "speed" ? "1px solid #38bdf8" : `1px solid ${themeStyles.inputBorder}`, color: themeStyles.textMain, cursor: "pointer", fontWeight: "600", borderRadius: "10px", fontSize: "14px" }}>Bandwidth Speed Test</button>
@@ -467,7 +475,6 @@ export default function DashboardContent() {
 
       {activeTab === "meme" ? (
         <div>
-          {/* Top Quick Numbers Row Context */}
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))", gap: "12px", marginBottom: "24px" }}>
             <div style={{ background: themeStyles.cardBg, border: `1px solid ${themeStyles.inputBorder}`, padding: "14px", borderRadius: "10px" }}>
               <p style={{ margin: 0, fontSize: "11px", opacity: 0.6, color: themeStyles.textMuted }}>Memes Uploaded</p>
@@ -484,8 +491,6 @@ export default function DashboardContent() {
           </div>
 
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))", gap: "24px", marginBottom: "24px" }}>
-            
-            {/* Left Column Workspace Preview */}
             <div style={{ background: themeStyles.cardBg, border: `1px solid ${themeStyles.inputBorder}`, padding: "20px", borderRadius: "16px", textAlign: "center", boxShadow: "0 10px 30px rgba(0,0,0,0.04)" }}>
               <canvas ref={canvasRef} width={450} height={450} style={{ borderRadius: "12px", border: `1px solid ${themeStyles.inputBorder}`, maxWidth: "100%", height: "auto", background: "#000", marginBottom: "16px", boxShadow: "0 4px 20px rgba(0,0,0,0.15)" }} />
               <div style={{ display: "flex", gap: "8px", justifyContent: "center" }}>
@@ -495,8 +500,7 @@ export default function DashboardContent() {
               </div>
             </div>
 
-            {/* Right Column Customizer Form Panel */}
-            <div style={{ background: themeStyles.cardBg, border: `1px solid ${themeStyles.inputBorder}`, padding: "24px", borderRadius: "16px", display: "flex", flexDirection: "column", justifyContent: "space-between", boxShadow: "0 10px 30px rgba(0,0,0,0.04)" }}>
+            <div style={{ background: themeStyles.cardBg, border: `1px solid ${themeStyles.inputBorder}`, padding: "24px", borderRadius: "16px", display: "flex", flexDirection: "column", justifyContext: "space-between", boxShadow: "0 10px 30px rgba(0,0,0,0.04)" }}>
               <div>
                 <input type="text" value={topText} onChange={e => setTopText(e.target.value)} style={{ width: "100%", padding: "14px", marginBottom: "16px", background: themeStyles.inputBg, border: `1px solid ${themeStyles.inputBorder}`, borderRadius: "10px", color: themeStyles.textMain, boxSizing: "border-box", fontSize: "14px" }} placeholder="Top Text (SHELBY IS HOT)" />
                 
@@ -583,7 +587,6 @@ export default function DashboardContent() {
 
           </div>
 
-          {/* Historical Vault Section Grid Component */}
           <div style={{ background: themeStyles.cardBg, border: `1px solid ${themeStyles.inputBorder}`, padding: "24px", borderRadius: "16px", marginTop: "24px", boxShadow: "0 10px 30px rgba(0,0,0,0.04)" }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "20px" }}>
               <h3 style={{ margin: 0, fontSize: "16px", color: "#38bdf8", fontWeight: "700" }}>Shelby Decentralized Storage Hub Vault</h3>
@@ -618,7 +621,6 @@ export default function DashboardContent() {
           </div>
         </div>
       ) : (
-        /* Benchmark Performance Test Suite View Frame */
         <div style={{ background: themeStyles.cardBg, border: `1px solid ${themeStyles.inputBorder}`, padding: "40px", borderRadius: "16px", textAlign: "center", boxShadow: "0 10px 30px rgba(0,0,0,0.04)" }}>
           <h3 style={{ fontSize: "18px", fontWeight: "700", margin: "0 0 10px 0" }}>Network Infrastructure Performance Node Matrix</h3>
           <p style={{ fontSize: "13px", color: themeStyles.textMuted, margin: "0 0 24px 0" }}>Audit secure channel data processing speeds across international storage hubs.</p>
