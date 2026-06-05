@@ -511,7 +511,8 @@ export default function DashboardContent() {
       <div className="animated-card" style={{ background: themeStyles.cardBg, border: `1px solid ${themeStyles.inputBorder}`, borderRadius: "16px", padding: "16px 24px", display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "24px", flexWrap: "wrap", gap: "16px" }}>
         <div>
           <p style={{ fontSize: "11px", color: shelbyPink, fontWeight: "bold", margin: "0 0 4px 0", letterSpacing: "1px" }}>SECURED NODE PATH</p>
-          <p style={{ fontFamily: "monospace", fontSize: "13px", color: themeStyles.textMain, margin: 0 }}>{connected && account ? account.address : "Offline - Connect Wallet"}</p>
+          {/* এই লাইনে String() ব্যবহার করে Type Error ফিক্স করা হয়েছে */}
+          <p style={{ fontFamily: "monospace", fontSize: "13px", color: themeStyles.textMain, margin: 0 }}>{connected && account ? String(account.address) : "Offline - Connect Wallet"}</p>
         </div>
         <div style={{ display: "flex", gap: "16px", alignItems: "center", flexWrap: "wrap" }}>
            <a href="https://aptoslabs.com/testnet-faucet" target="_blank" rel="noreferrer" style={{ background: "#0ea5e9", color: "white", padding: "8px 16px", borderRadius: "8px", fontSize: "13px", fontWeight: "bold", textDecoration: "none", display: "flex", alignItems: "center", gap: "6px", boxShadow: "0 4px 10px rgba(14, 165, 233, 0.3)" }}>💧 Get Free Aptos APT</a>
