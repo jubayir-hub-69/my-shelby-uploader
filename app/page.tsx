@@ -35,12 +35,15 @@ export default function DashboardContent() {
   const [showToast, setShowToast] = useState<boolean>(false);
   const [isDarkMode, setIsDarkMode] = useState<boolean>(true);
 
+  // 🌟 New State for Top-Right Rejection Notification
+  const [rejectNotification, setRejectNotification] = useState<boolean>(false);
+
   // Text Positioning Sliders States
   const [topTextY, setTopTextY] = useState<number>(30);
   const [bottomTextY, setBottomTextY] = useState<number>(420);
   const [textFontSize, setTextFontSize] = useState<number>(24);
 
-  // 🌟 New Features: Text and Stroke Colors
+  // Text and Stroke Colors
   const [textColor, setTextColor] = useState<string>("#ffffff");
   const [strokeColor, setStrokeColor] = useState<string>("#000000");
 
@@ -84,7 +87,7 @@ export default function DashboardContent() {
       }
       const savedTheme = localStorage.getItem('shelby_theme');
       if (savedTheme === 'light') setIsDarkMode(false);
-      addLog('info', 'Shelby Engine v2.5 Faucet Suite Integrated.');
+      addLog('info', 'Shelby Studio System Pipeline Initialized.');
     }
   }, []);
 
@@ -192,7 +195,7 @@ export default function DashboardContent() {
     try {
       await connect("Petra");
     } catch (error) {
-      addLog('warning', 'Wallet connection flow closed or rejected.');
+      triggerRejectNotification();
     }
   };
 
@@ -261,6 +264,15 @@ export default function DashboardContent() {
     }, 15);
   };
 
+  // Helper to trigger 2-second Top-Right Notification
+  const triggerRejectNotification = () => {
+    setRejectNotification(true);
+    addLog('warning', 'Transaction flow rejected by node owner.');
+    setTimeout(() => {
+      setRejectNotification(false);
+    }, 2000);
+  };
+
   const publishMeme = async () => {
     if (!connected) return alert("Please connect your Petra Wallet first!");
     if (!network) return alert("Network parameters missing.");
@@ -311,8 +323,8 @@ export default function DashboardContent() {
       setShowToast(true);
       setTimeout(() => setShowToast(false), 4000);
     } catch (error) {
-      alert("Transaction declined or rejected.");
       setShowProgressModal(false);
+      triggerRejectNotification(); // 🌟 Replaced alert popup with seamless top-right toast
     } finally {
       setUploading(false);
     }
@@ -331,6 +343,13 @@ export default function DashboardContent() {
   return (
     <main style={{ minHeight: "100vh", background: themeStyles.mainBg, color: themeStyles.textMain, padding: "20px", fontFamily: "sans-serif", position: "relative", transition: "all 0.3s ease" }}>
       
+      {/* 🌟 New Smooth Auto-Expiry Top-Right Notification Element */}
+      {rejectNotification && (
+        <div style={{ position: "fixed", top: "24px", right: "24px", background: "#ef4444", color: "white", padding: "12px 24px", borderRadius: "8px", fontWeight: "bold", fontSize: "14px", zIndex: 99999, boxShadow: "0 4px 15px rgba(239, 68, 68, 0.4)", animation: "fadeIn 0.2s ease" }}>
+          🛑 Transaction Rejected
+        </div>
+      )}
+
       {/* Dynamic Progress Modal */}
       {showProgressModal && (
         <div style={{ position: "fixed", top: 0, left: 0, width: "100vw", height: "100vh", background: "rgba(3, 7, 18, 0.85)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 99999 }}>
@@ -406,7 +425,7 @@ export default function DashboardContent() {
         </div>
       </div>
 
-      {/* 🌟 Dynamic Wallet Profile Status & Faucet Dashboard Component */}
+      {/* Dynamic Wallet Profile Status Dashboard Component */}
       {connected && account && (
         <div style={{ background: `linear-gradient(135deg, ${isDarkMode ? '#1e1b4b' : '#e0e7ff'}, ${isDarkMode ? '#111827' : '#ffffff'})`, border: `1px solid ${themeStyles.inputBorder}`, padding: "15px 20px", borderRadius: "12px", marginBottom: "20px", display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "15px" }}>
           <div>
@@ -414,8 +433,7 @@ export default function DashboardContent() {
             <span style={{ fontSize: "14px", fontFamily: "monospace", color: themeStyles.textMain }}>{account.address.toString()}</span>
           </div>
           <div style={{ display: "flex", alignItems: "center", gap: "15px" }}>
-            {/* 💧 Restored Aptos Faucet Button */}
-            <a href="https://aptos.dev/network/faucet" target="_blank" rel="noopener noreferrer" style={{ background: "linear-gradient(45deg, #0284c7, #0369a1)", color: "white", textDecoration: "none", fontSize: "12px", fontWeight: "bold", padding: "8px 16px", borderRadius: "6px", display: "inline-block", boxShadow: "0 0 10px rgba(3, 105, 161, 0.4)", transition: "opacity 0.2s" }}>
+            <a href="https://aptos.dev/network/faucet" target="_blank" rel="noopener noreferrer" style={{ background: "linear-gradient(45deg, #0284c7, #0369a1)", color: "white", textDecoration: "none", fontSize: "12px", fontWeight: "bold", padding: "8px 16px", borderRadius: "6px", display: "inline-block", boxShadow: "0 0 10px rgba(3, 105, 161, 0.4)" }}>
               💧 Get Free Aptos APT
             </a>
             <div style={{ textAlign: "right" }}>
@@ -480,7 +498,7 @@ export default function DashboardContent() {
                   <input type="range" min="16" max="48" value={textFontSize} onChange={e => setTextFontSize(Number(e.target.value))} style={{ width: "100%", accentColor: "#10b981" }} />
                 </div>
 
-                {/* 🌟 Dynamic Text & Stroke Color Picker Option */}
+                {/* Dynamic Text & Stroke Color Picker Option */}
                 <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px", marginBottom: "15px" }}>
                   <div>
                     <label style={{ fontSize: "11px", color: themeStyles.textMuted, display: "block", marginBottom: "4px" }}>TEXT COLOR</label>
@@ -539,13 +557,26 @@ export default function DashboardContent() {
             {uploadedMemes.length === 0 ? (
               <p style={{ fontSize: "12px", opacity: 0.5, textAlign: "center", padding: "20px 0" }}>No assets indexed inside the local secure buffer.</p>
             ) : (
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(140px, 1fr))", gap: "15px" }}>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(150px, 1fr))", gap: "15px" }}>
                 {uploadedMemes.map((meme) => (
-                  <div key={meme.id} style={{ background: themeStyles.inputBg, border: `1px solid ${themeStyles.inputBorder}`, padding: "8px", borderRadius: "8px", position: "relative" }}>
-                    <button onClick={() => removeMemeFromVault(meme.id)} style={{ position: "absolute", top: "5px", right: "5px", width: "18px", height: "18px", background: "rgba(239, 68, 68, 0.2)", border: "none", color: "#ef4444", borderRadius: "50%", cursor: "pointer", fontSize: "10px" }}>✕</button>
-                    <img src={meme.url} alt="Vault Card Item" style={{ width: "100%", borderRadius: "4px", marginBottom: "6px" }} />
-                    <p style={{ fontSize: "10px", margin: "0 0 6px 0", textOverflow: "ellipsis", overflow: "hidden", whiteSpace: "nowrap" }}>{meme.name}</p>
-                    <a href={`https://explorer.aptoslabs.com/txn/${meme.tx}?network=testnet`} target="_blank" rel="noopener noreferrer" style={{ display: "block", background: "#1e293b", color: "#38bdf8", textAlign: "center", fontSize: "10px", padding: "4px 0", borderRadius: "4px", textDecoration: "none", fontWeight: "bold" }}>View Node Ledger</a>
+                  <div key={meme.id} style={{ background: themeStyles.inputBg, border: `1px solid ${themeStyles.inputBorder}`, padding: "10px", borderRadius: "8px", position: "relative", display: "flex", flexDirection: "column", justifyContent: "space-between" }}>
+                    <div>
+                      <button onClick={() => removeMemeFromVault(meme.id)} style={{ position: "absolute", top: "5px", right: "5px", width: "18px", height: "18px", background: "rgba(239, 68, 68, 0.2)", border: "none", color: "#ef4444", borderRadius: "50%", cursor: "pointer", fontSize: "10px", zIndex: 10 }}>✕</button>
+                      <img src={meme.url} alt="Vault Card Item" style={{ width: "100%", borderRadius: "4px", marginBottom: "6px" }} />
+                      <p style={{ fontSize: "10px", margin: "0 0 8px 0", textOverflow: "ellipsis", overflow: "hidden", whiteSpace: "nowrap", opacity: 0.8 }}>{meme.name}</p>
+                    </div>
+                    {/* 🌟 Updated Buttons Section with Explore and Share on X */}
+                    <div style={{ display: "flex", flexDirection: "column", gap: "5px", marginTop: "auto" }}>
+                      <a href={`https://explorer.aptoslabs.com/txn/${meme.tx}?network=testnet`} target="_blank" rel="noopener noreferrer" style={{ display: "block", background: "#1e293b", color: "#38bdf8", textAlign: "center", fontSize: "11px", padding: "5px 0", borderRadius: "4px", textDecoration: "none", fontWeight: "bold", border: "1px solid #334155" }}>
+                        Explore
+                      </a>
+                      <button onClick={() => {
+                        const tweetText = encodeURIComponent(`Check out my newly minted asset on Shelby Studio! 🎉\nTx: ${meme.tx}`);
+                        window.open(`https://twitter.com/intent/tweet?text=${tweetText}`, '_blank', 'noopener,noreferrer');
+                      }} style={{ background: "#ffffff", color: "#000000", border: "none", fontSize: "11px", padding: "5px 0", borderRadius: "4px", fontWeight: "bold", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: "4px" }}>
+                        𝕏 Share on X
+                      </button>
+                    </div>
                   </div>
                 ))}
               </div>
