@@ -255,7 +255,7 @@ export default function DashboardContent() {
     const defaultImg = new Image();
     defaultImg.src = '/shelby-bg.jpg';
     defaultImg.onload = () => setCustomImage(defaultImg);
-    setUploadedFileName("");
+    setUploadedFileName(""); // Reset the uploaded file name
   };
 
   const downloadMeme = () => {
@@ -586,7 +586,6 @@ export default function DashboardContent() {
           </div>
           <div style={{ display: "flex", gap: "16px", alignItems: "center", flexWrap: "wrap" }}>
              
-             {/* FAUCET BUTTON UPDATED HERE */}
              <a href="https://docs.shelby.xyz/tools/wallets/petra-setup#apt-faucet" target="_blank" rel="noreferrer" style={{ background: "#0ea5e9", color: "white", padding: "8px 16px", borderRadius: "8px", fontSize: "13px", fontWeight: "bold", textDecoration: "none", display: "flex", alignItems: "center", gap: "6px", boxShadow: "0 4px 10px rgba(14, 165, 233, 0.3)" }}>💧 Faucet</a>
              
              <div>
@@ -692,7 +691,8 @@ export default function DashboardContent() {
                   <button onClick={() => customBgInputRef.current?.click()} style={{ width: "100%", background: themeStyles.inputBg, border: `1px dashed ${shelbyPink}`, color: themeStyles.textMain, padding: "16px", borderRadius: "12px", cursor: "pointer", fontWeight: "bold", display: "flex", justifyContent: "center", alignItems: "center", gap: "8px", transition: "all 0.3s" }}>
                     📁 Upload Media Canvas
                   </button>
-                  {customImage && (
+                  {/* এই লাইনে পরিবর্তন করা হয়েছে, এখন শুধু ইউজার আপলোড করলেই এই বাটন আসবে */}
+                  {uploadedFileName && (
                     <button onClick={clearCustomBg} style={{ width: "100%", marginTop: "8px", background: "transparent", color: "#ef4444", border: "none", fontSize: "12px", cursor: "pointer", fontWeight: "bold" }}>❌ Reset Default Canvas</button>
                   )}
                 </div>
