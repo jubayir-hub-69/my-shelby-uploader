@@ -18,6 +18,19 @@ interface ActivityLog {
   message: string;
 }
 
+// 🌐 Vercel Error Fix: Helper functions defined properly to avoid build crashes
+const getExplorerUrl = (tx: string, networkName: string): string => {
+  const networkPath = String(networkName).toLowerCase().includes("mainnet") ? "mainnet" : "testnet";
+  return `https://explorer.aptoslabs.com/txn/${tx}?network=${networkPath}`;
+};
+
+const shareOnTwitter = (tx: string): void => {
+  if (typeof window !== "undefined") {
+    const text = encodeURIComponent(`Just minted a secure decentralized asset on Shelby Workshop! Tx: ${tx}`);
+    window.open(`https://twitter.com/intent/tweet?text=${text}`, '_blank');
+  }
+};
+
 export default function DashboardContent() {
   const { connect, disconnect, connected, account, network, signAndSubmitTransaction } = useWallet();
 
@@ -60,7 +73,6 @@ export default function DashboardContent() {
   const [testComplete, setTestComplete] = useState<boolean>(false);
   const [shelbySpeed, setShelbySpeed] = useState<number>(0);
   const [s3Speed, setS3Speed] = useState<number>(0);
-  const [ipfsSpeed, setIpfsSpeed] = useState<number>(0);
 
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const customBgInputRef = useRef<HTMLInputElement>(null);
@@ -127,7 +139,7 @@ export default function DashboardContent() {
     }
   };
 
-  // 🌟 Verified High-Fidelity Canvas Composition Engine Lifecycle Loop
+  // Verified Canvas Composition Engine Lifecycle Loop
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -260,13 +272,11 @@ export default function DashboardContent() {
       current += 20;
       if (current <= 95) setShelbySpeed(current);
       if (current <= 280) setS3Speed(current);
-      if (current <= 3850) setIpfsSpeed(current);
 
-      if (current >= 3850) {
+      if (current >= 280) {
         clearInterval(interval);
         setShelbySpeed(95);
         setS3Speed(280);
-        setIpfsSpeed(3850);
         setIsTesting(false);
         setTestComplete(true);
         addLog('success', 'Network environment benchmarking pipeline verified.');
@@ -359,7 +369,7 @@ export default function DashboardContent() {
       )}
 
       {showProgressModal && (
-        <div style={{ position: "fixed", top: 0, left: 0, width: "100vw", height: "100vh", background: "rgba(2, 6, 23, 0.85)", display: "flex", alignItems: "center", justifyContext: "center", zIndex: 99999, backdropFilter: "blur(4px)" }}>
+        <div style={{ position: "fixed", top: 0, left: 0, width: "100vw", height: "100vh", background: "rgba(2, 6, 23, 0.85)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 99999, backdropFilter: "blur(4px)" }}>
           <div style={{ background: themeStyles.cardBg, border: `1px solid ${themeStyles.inputBorder}`, borderRadius: "16px", padding: "30px", maxWidth: "420px", width: "90%", textAlign: "center", margin: "auto", boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.5)" }}>
             <h3 style={{ margin: "0 0 10px 0", color: "#38bdf8", fontSize: "18px" }}>Aptos Blockchain Pipeline</h3>
             <div style={{ display: "flex", flexDirection: "column", gap: "16px", textAlign: "left", marginBottom: "25px", marginTop: "25px" }}>
@@ -486,12 +496,12 @@ export default function DashboardContent() {
             </div>
 
             {/* Right Column Customizer Form Panel */}
-            <div style={{ background: themeStyles.cardBg, border: `1px solid ${themeStyles.inputBorder}`, padding: "24px", borderRadius: "16px", display: "flex", flexDirection: "column", justifyContext: "space-between", boxShadow: "0 10px 30px rgba(0,0,0,0.04)" }}>
+            <div style={{ background: themeStyles.cardBg, border: `1px solid ${themeStyles.inputBorder}`, padding: "24px", borderRadius: "16px", display: "flex", flexDirection: "column", justifyContent: "space-between", boxShadow: "0 10px 30px rgba(0,0,0,0.04)" }}>
               <div>
                 <input type="text" value={topText} onChange={e => setTopText(e.target.value)} style={{ width: "100%", padding: "14px", marginBottom: "16px", background: themeStyles.inputBg, border: `1px solid ${themeStyles.inputBorder}`, borderRadius: "10px", color: themeStyles.textMain, boxSizing: "border-box", fontSize: "14px" }} placeholder="Top Text (SHELBY IS HOT)" />
                 
                 <div style={{ marginBottom: "16px" }}>
-                  <div style={{ fontSize: "11px", color: themeStyles.textMuted, display: "flex", justifyContext: "space-between", fontWeight: "600" }}>
+                  <div style={{ fontSize: "11px", color: themeStyles.textMuted, display: "flex", justifyContent: "space-between", fontWeight: "600" }}>
                     <span>TOP CAPTION POSITION</span>
                     <span>{topTextY}px</span>
                   </div>
@@ -501,7 +511,7 @@ export default function DashboardContent() {
                 <input type="text" value={bottomText} onChange={e => setBottomText(e.target.value)} style={{ width: "100%", padding: "14px", marginBottom: "16px", background: themeStyles.inputBg, border: `1px solid ${themeStyles.inputBorder}`, borderRadius: "10px", color: themeStyles.textMain, boxSizing: "border-box", fontSize: "14px" }} placeholder="Bottom Text (AWS IS COLD)" />
                 
                 <div style={{ marginBottom: "16px" }}>
-                  <div style={{ fontSize: "11px", color: themeStyles.textMuted, display: "flex", justifyContext: "space-between", fontWeight: "600" }}>
+                  <div style={{ fontSize: "11px", color: themeStyles.textMuted, display: "flex", justifyContent: "space-between", fontWeight: "600" }}>
                     <span>BOTTOM CAPTION POSITION</span>
                     <span>{bottomTextY}px</span>
                   </div>
@@ -509,7 +519,7 @@ export default function DashboardContent() {
                 </div>
 
                 <div style={{ marginBottom: "16px" }}>
-                  <div style={{ fontSize: "11px", color: themeStyles.textMuted, display: "flex", justifyContext: "space-between", fontWeight: "600" }}>
+                  <div style={{ fontSize: "11px", color: themeStyles.textMuted, display: "flex", justifyContent: "space-between", fontWeight: "600" }}>
                     <span>CAPTION FONT SIZE</span>
                     <span>{textFontSize}px</span>
                   </div>
@@ -587,7 +597,7 @@ export default function DashboardContent() {
             ) : (
               <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(160px, 1fr))", gap: "20px" }}>
                 {uploadedMemes.map((meme) => (
-                  <div key={meme.id} style={{ background: themeStyles.inputBg, border: `1px solid ${themeStyles.inputBorder}`, padding: "12px", borderRadius: "12px", position: "relative", display: "flex", flexDirection: "column", justifyContext: "space-between", boxShadow: "0 4px 6px -1px rgba(0,0,0,0.05)" }}>
+                  <div key={meme.id} style={{ background: themeStyles.inputBg, border: `1px solid ${themeStyles.inputBorder}`, padding: "12px", borderRadius: "12px", position: "relative", display: "flex", flexDirection: "column", justifyContent: "space-between", boxShadow: "0 4px 6px -1px rgba(0,0,0,0.05)" }}>
                     <div>
                       <button onClick={() => removeMemeFromVault(meme.id)} style={{ position: "absolute", top: "6px", right: "6px", width: "20px", height: "20px", background: "rgba(239, 68, 68, 0.2)", border: "none", color: "#ef4444", borderRadius: "50%", cursor: "pointer", fontSize: "11px", zIndex: 10, fontWeight: "bold" }}>✕</button>
                       <img src={meme.url} alt="Vault Card Item" style={{ width: "100%", borderRadius: "6px", marginBottom: "8px", boxShadow: "0 2px 4px rgba(0,0,0,0.05)" }} />
@@ -597,7 +607,7 @@ export default function DashboardContent() {
                       <a href={getExplorerUrl(meme.tx, meme.networkName)} target="_blank" rel="noopener noreferrer" style={{ display: "block", background: "#1e293b", color: "#38bdf8", textAlign: "center", fontSize: "12px", padding: "6px 0", borderRadius: "6px", textDecoration: "none", fontWeight: "600", border: "1px solid #334155" }}>
                         Explore
                       </a>
-                      <button onClick={() => shareOnTwitter(meme.tx)} style={{ background: "#ffffff", color: "#000000", border: "none", fontSize: "12px", padding: "6px 0", borderRadius: "6px", fontWeight: "700", cursor: "pointer", display: "flex", alignItems: "center", justifyContext: "center", gap: "4px" }}>
+                      <button onClick={() => shareOnTwitter(meme.tx)} style={{ width: "100%", background: "#ffffff", color: "#000000", border: "none", fontSize: "12px", padding: "6px 0", borderRadius: "6px", fontWeight: "700", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: "4px" }}>
                         𝕏 Share on X
                       </button>
                     </div>
@@ -614,11 +624,11 @@ export default function DashboardContent() {
           <p style={{ fontSize: "13px", color: themeStyles.textMuted, margin: "0 0 24px 0" }}>Audit secure channel data processing speeds across international storage hubs.</p>
           <div style={{ maxWidth: "460px", margin: "24px auto", textAlign: "left", display: "flex", flexDirection: "column", gap: "20px", marginBottom: "35px" }}>
             <div>
-              <div style={{ display: "flex", justifyContext: "space-between", fontSize: "13px", fontWeight: "600" }}><span>⚡ SHELBY ECOSYSTEM PIPELINE</span><span>{shelbySpeed}ms</span></div>
-              <div style={{ background: isDarkMode ? "#020617" : "#e5e7eb", height: "10px", borderRadius: "6px", overflow: "hidden", marginTop: "6px" }}><div style={{ width: `${isTesting || testComplete ? "100%" : "0%"}`, background: "#38bdf8", height: "10px", transition: "width 0.5s ease" }} /></div>
+              <div style={{ display: "flex", justifyContent: "space-between", fontSize: "13px", fontWeight: "600" }}><span>⚡ SHELBY ECOSYSTEM PIPELINE</span><span>{shelbySpeed}ms</span></div>
+              <div style={{ background: isDarkMode ? "#020617" : "#e5e7eb", height: "10px", borderRadius: "6px", overflow: "hidden", marginTop: "6px"} }><div style={{ width: `${isTesting || testComplete ? "100%" : "0%"}`, background: "#38bdf8", height: "10px", transition: "width 0.5s ease" }} /></div>
             </div>
             <div>
-              <div style={{ display: "flex", justifyContext: "space-between", fontSize: "13px", fontWeight: "600" }}><span>Legacy AWS S3 Storage Cluster</span><span>{s3Speed}ms</span></div>
+              <div style={{ display: "flex", justifyContent: "space-between", fontSize: "13px", fontWeight: "600" }}><span>Legacy AWS S3 Storage Cluster</span><span>{s3Speed}ms</span></div>
               <div style={{ background: isDarkMode ? "#020617" : "#e5e7eb", height: "10px", borderRadius: "6px", overflow: "hidden", marginTop: "6px" }}><div style={{ width: `${isTesting || testComplete ? "45%" : "0%"}`, background: "#eab308", height: "10px", transition: "width 0.8s ease" }} /></div>
             </div>
           </div>
