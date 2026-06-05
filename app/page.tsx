@@ -32,18 +32,18 @@ export default function DashboardContent() {
   const [watermark, setWatermark] = useState<boolean>(true);
   const [uploadedMemes, setUploadedMemes] = useState<UploadedMeme[]>([]);
   const [customImage, setCustomImage] = useState<HTMLImageElement | null>(null);
+  const [uploadedFileName, setUploadedFileName] = useState<string>("");
   const [showToast, setShowToast] = useState<boolean>(false);
   const [isDarkMode, setIsDarkMode] = useState<boolean>(true);
-
-  // 🌟 New State for Top-Right Rejection Notification
   const [rejectNotification, setRejectNotification] = useState<boolean>(false);
 
-  // Text Positioning Sliders States
-  const [topTextY, setTopTextY] = useState<number>(30);
-  const [bottomTextY, setBottomTextY] = useState<number>(420);
-  const [textFontSize, setTextFontSize] = useState<number>(24);
+  // Text Customization Sliders & Alignment States
+  const [topTextY, setTopTextY] = useState<number>(40);
+  const [bottomTextY, setBottomTextY] = useState<number>(410);
+  const [textFontSize, setTextFontSize] = useState<number>(26);
+  const [textAlignment, setTextAlignment] = useState<"left" | "center" | "right">("center");
 
-  // Text and Stroke Colors
+  // Premium Text and Stroke Colors
   const [textColor, setTextColor] = useState<string>("#ffffff");
   const [strokeColor, setStrokeColor] = useState<string>("#000000");
 
@@ -87,7 +87,7 @@ export default function DashboardContent() {
       }
       const savedTheme = localStorage.getItem('shelby_theme');
       if (savedTheme === 'light') setIsDarkMode(false);
-      addLog('info', 'Shelby Studio System Pipeline Initialized.');
+      addLog('info', 'Shelby Premium Engine Initialized Successfully.');
     }
   }, []);
 
@@ -141,11 +141,11 @@ export default function DashboardContent() {
     } else {
       const grad = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
       if (activeGradient === "sunset") {
-        grad.addColorStop(0, "#f43f5e"); grad.addColorStop(1, "#eab308");
+        grad.addColorStop(0, "#ff416c"); grad.addColorStop(1, "#ff4b2b");
       } else if (activeGradient === "green") {
-        grad.addColorStop(0, "#10b981"); grad.addColorStop(1, "#06b6d4");
+        grad.addColorStop(0, "#02aab0"); grad.addColorStop(1, "#00cdac");
       } else {
-        grad.addColorStop(0, "#3b82f6"); grad.addColorStop(1, "#8b5cf6");
+        grad.addColorStop(0, "#1e3c72"); grad.addColorStop(1, "#2a5298");
       }
       ctx.fillStyle = grad;
       ctx.fillRect(0, 0, canvas.width, canvas.height);
@@ -153,43 +153,49 @@ export default function DashboardContent() {
 
     // Text Font Configuration
     ctx.strokeStyle = strokeColor;
-    ctx.lineWidth = Math.max(4, textFontSize / 5);
-    ctx.textAlign = "center";
-    ctx.font = `bold ${textFontSize}px sans-serif`;
+    ctx.lineWidth = Math.max(5, textFontSize / 4.5);
+    ctx.textAlign = textAlignment;
+    ctx.font = `bold ${textFontSize}px system-ui, -apple-system, sans-serif`;
+
+    // Calculate dynamic X coordinate based on alignment state
+    let textX = canvas.width / 2;
+    if (textAlignment === "left") textX = 25;
+    if (textAlignment === "right") textX = canvas.width - 25;
 
     const renderTopText = topText.trim() !== "" ? topText.toUpperCase() : "SHELBY IS HOT";
     const renderBottomText = bottomText.trim() !== "" ? bottomText.toUpperCase() : "AWS IS COLD";
 
     // Top text rendering with custom colors
     if (topText.trim() === "") {
-      ctx.fillStyle = isDarkMode ? "rgba(255, 255, 255, 0.3)" : "rgba(0, 0, 0, 0.25)";
+      ctx.fillStyle = isDarkMode ? "rgba(255, 255, 255, 0.25)" : "rgba(0, 0, 0, 0.2)";
     } else {
       ctx.fillStyle = textColor;
     }
     ctx.textBaseline = "top";
-    ctx.strokeText(renderTopText, canvas.width / 2, topTextY);
-    ctx.fillText(renderTopText, canvas.width / 2, topTextY);
+    ctx.strokeText(renderTopText, textX, topTextY);
+    ctx.fillText(renderTopText, textX, topTextY);
 
     // Bottom text rendering with custom colors
     if (bottomText.trim() === "") {
-      ctx.fillStyle = isDarkMode ? "rgba(255, 255, 255, 0.3)" : "rgba(0, 0, 0, 0.25)";
+      ctx.fillStyle = isDarkMode ? "rgba(255, 255, 255, 0.25)" : "rgba(0, 0, 0, 0.2)" ;
     } else {
       ctx.fillStyle = textColor;
     }
     ctx.textBaseline = "bottom";
-    ctx.strokeText(renderBottomText, canvas.width / 2, bottomTextY);
-    ctx.fillText(renderBottomText, canvas.width / 2, bottomTextY);
+    ctx.strokeText(renderBottomText, textX, bottomTextY);
+    ctx.fillText(renderBottomText, textX, bottomTextY);
 
     // Neon Secure Label Layer
     if (watermark) {
-      ctx.fillStyle = "rgba(0, 0, 0, 0.4)";
-      ctx.fillRect(canvas.width - 140, canvas.height - 35, 130, 25);
+      ctx.fillStyle = "rgba(10, 15, 30, 0.6)";
+      ctx.fillRect(canvas.width - 145, canvas.height - 35, 135, 25);
       ctx.fillStyle = "#38bdf8";
-      ctx.font = "bold 9px sans-serif";
+      ctx.font = "bold 9px monospace";
+      ctx.textAlign = "center";
       ctx.textBaseline = "middle";
-      ctx.fillText("SHELBY HOT SECURE", canvas.width - 75, canvas.height - 23);
+      ctx.fillText("SHELBY HOT SECURE", canvas.width - 77, canvas.height - 23);
     }
-  }, [topText, bottomText, activeGradient, customImage, watermark, isDarkMode, topTextY, bottomTextY, textFontSize, textColor, strokeColor]);
+  }, [topText, bottomText, activeGradient, customImage, watermark, isDarkMode, topTextY, bottomTextY, textFontSize, textColor, strokeColor, textAlignment]);
 
   const handleConnect = async () => {
     try {
@@ -203,6 +209,7 @@ export default function DashboardContent() {
     if (e.target.files && e.target.files.length > 0) {
       const file = e.target.files.item(0);
       if (file) {
+        setUploadedFileName(file.name);
         const reader = new FileReader();
         reader.onload = (event) => {
           if (event.target?.result) {
@@ -210,7 +217,7 @@ export default function DashboardContent() {
             img.src = event.target.result as string;
             img.onload = () => {
               setCustomImage(img);
-              addLog('info', 'Custom background buffer loaded successfully.');
+              addLog('info', `Uploaded Asset: ${file.name}`);
             };
           }
         };
@@ -221,6 +228,7 @@ export default function DashboardContent() {
 
   const clearCustomBg = () => {
     setCustomImage(null);
+    setUploadedFileName("");
     addLog('info', 'Canvas background state reset to default gradient.');
   };
 
@@ -238,7 +246,7 @@ export default function DashboardContent() {
       exportCtx.drawImage(canvas, 0, 0);
       
       const link = document.createElement("a");
-      link.download = `shelby_hq_meme_${Date.now()}.png`;
+      link.download = `shelby_hq_studio_${Date.now()}.png`;
       link.href = exportCanvas.toDataURL("image/png", 1.0);
       link.click();
       addLog('success', 'High-Res Studio assets compiled and downloaded.');
@@ -264,7 +272,6 @@ export default function DashboardContent() {
     }, 15);
   };
 
-  // Helper to trigger 2-second Top-Right Notification
   const triggerRejectNotification = () => {
     setRejectNotification(true);
     addLog('warning', 'Transaction flow rejected by node owner.');
@@ -310,7 +317,7 @@ export default function DashboardContent() {
       const randomId = Math.floor(Math.random() * 10000);
       const newMeme: UploadedMeme = {
         id: randomId,
-        name: `Shelby_Asset_${randomId}.png`,
+        name: uploadedFileName || `Shelby_Asset_${randomId}.png`,
         url: canvas.toDataURL("image/png"),
         tx: response.hash,
         networkName: network.name
@@ -324,53 +331,53 @@ export default function DashboardContent() {
       setTimeout(() => setShowToast(false), 4000);
     } catch (error) {
       setShowProgressModal(false);
-      triggerRejectNotification(); // 🌟 Replaced alert popup with seamless top-right toast
+      triggerRejectNotification();
     } finally {
       setUploading(false);
     }
   };
 
   const themeStyles = {
-    mainBg: isDarkMode ? "#0a0f24" : "#f8fafc",
-    cardBg: isDarkMode ? "#111827" : "#ffffff",
-    textMain: isDarkMode ? "#ffffff" : "#0f172a",
-    textMuted: isDarkMode ? "#64748b" : "#475569",
-    inputBg: isDarkMode ? "#030712" : "#f1f5f9",
-    inputBorder: isDarkMode ? "#1e293b" : "#cbd5e1",
-    tabActive: isDarkMode ? "#1e293b" : "#e2e8f0"
+    mainBg: isDarkMode ? "#070b19" : "#f3f4f6",
+    cardBg: isDarkMode ? "#0f172a" : "#ffffff",
+    textMain: isDarkMode ? "#f8fafc" : "#111827",
+    textMuted: isDarkMode ? "#64748b" : "#6b7280",
+    inputBg: isDarkMode ? "#020617" : "#f9fafb",
+    inputBorder: isDarkMode ? "#1e293b" : "#e5e7eb",
+    tabActive: isDarkMode ? "#1e293b" : "#e5e7eb"
   };
 
   return (
-    <main style={{ minHeight: "100vh", background: themeStyles.mainBg, color: themeStyles.textMain, padding: "20px", fontFamily: "sans-serif", position: "relative", transition: "all 0.3s ease" }}>
+    <main style={{ minHeight: "100vh", background: themeStyles.mainBg, color: themeStyles.textMain, padding: "24px", fontFamily: "system-ui, -apple-system, sans-serif", position: "relative", transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)" }}>
       
-      {/* 🌟 New Smooth Auto-Expiry Top-Right Notification Element */}
+      {/* Auto-Expiry Top-Right Notification Element */}
       {rejectNotification && (
-        <div style={{ position: "fixed", top: "24px", right: "24px", background: "#ef4444", color: "white", padding: "12px 24px", borderRadius: "8px", fontWeight: "bold", fontSize: "14px", zIndex: 99999, boxShadow: "0 4px 15px rgba(239, 68, 68, 0.4)", animation: "fadeIn 0.2s ease" }}>
+        <div style={{ position: "fixed", top: "24px", right: "24px", background: "#ef4444", color: "white", padding: "14px 28px", borderRadius: "10px", fontWeight: "600", fontSize: "14px", zIndex: 99999, boxShadow: "0 10px 25px rgba(239, 68, 68, 0.35)", border: "1px solid rgba(255,255,255,0.1)" }}>
           🛑 Transaction Rejected
         </div>
       )}
 
       {/* Dynamic Progress Modal */}
       {showProgressModal && (
-        <div style={{ position: "fixed", top: 0, left: 0, width: "100vw", height: "100vh", background: "rgba(3, 7, 18, 0.85)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 99999 }}>
-          <div style={{ background: themeStyles.cardBg, border: `1px solid ${themeStyles.inputBorder}`, borderRadius: "12px", padding: "25px", maxWidth: "400px", width: "90%", textAlign: "center" }}>
-            <h3 style={{ margin: "0 0 10px 0", color: "#38bdf8" }}>Aptos Blockchain Pipeline</h3>
-            <div style={{ display: "flex", flexDirection: "column", gap: "15px", textAlign: "left", marginBottom: "25px", marginTop: "20px" }}>
-              <div style={{ display: "flex", alignItems: "center", gap: "10px", opacity: txStep >= 1 ? 1 : 0.4 }}>
-                <div style={{ width: "8px", height: "8px", borderRadius: "50%", background: txStep === 1 ? "#38bdf8" : "#10b981" }} />
-                <span>Preparing Digital Structural Matrix</span>
+        <div style={{ position: "fixed", top: 0, left: 0, width: "100vw", height: "100vh", background: "rgba(2, 6, 23, 0.85)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 99999, backdropFilter: "blur(4px)" }}>
+          <div style={{ background: themeStyles.cardBg, border: `1px solid ${themeStyles.inputBorder}`, borderRadius: "16px", padding: "30px", maxWidth: "420px", width: "90%", textAlign: "center", boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.5)" }}>
+            <h3 style={{ margin: "0 0 10px 0", color: "#38bdf8", fontSize: "18px" }}>Aptos Blockchain Pipeline</h3>
+            <div style={{ display: "flex", flexDirection: "column", gap: "16px", textAlign: "left", marginBottom: "25px", marginTop: "25px" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: "12px", opacity: txStep >= 1 ? 1 : 0.4, transition: "opacity 0.3s" }}>
+                <div style={{ width: "10px", height: "10px", borderRadius: "50%", background: txStep === 1 ? "#38bdf8" : "#10b981", boxShadow: txStep === 1 ? "0 0 8px #38bdf8" : "none" }} />
+                <span style={{ fontSize: "14px" }}>Preparing Digital Structural Matrix</span>
               </div>
-              <div style={{ display: "flex", alignItems: "center", gap: "10px", opacity: txStep >= 2 ? 1 : 0.4 }}>
-                <div style={{ width: "8px", height: "8px", borderRadius: "50%", background: txStep === 2 ? "#eab308" : txStep > 2 ? "#10b981" : "#334155" }} />
-                <span>Awaiting Ledger Master Signature</span>
+              <div style={{ display: "flex", alignItems: "center", gap: "12px", opacity: txStep >= 2 ? 1 : 0.4, transition: "opacity 0.3s" }}>
+                <div style={{ width: "10px", height: "10px", borderRadius: "50%", background: txStep === 2 ? "#eab308" : txStep > 2 ? "#10b981" : "#475569", boxShadow: txStep === 2 ? "0 0 8px #eab308" : "none" }} />
+                <span style={{ fontSize: "14px" }}>Awaiting Ledger Master Signature</span>
               </div>
-              <div style={{ display: "flex", alignItems: "center", gap: "10px", opacity: txStep >= 3 ? 1 : 0.4 }}>
-                <div style={{ width: "8px", height: "8px", borderRadius: "50%", background: txStep === 3 ? "#10b981" : "#334155" }} />
-                <span>Asset Successfully Minted to Vault</span>
+              <div style={{ display: "flex", alignItems: "center", gap: "12px", opacity: txStep >= 3 ? 1 : 0.4, transition: "opacity 0.3s" }}>
+                <div style={{ width: "10px", height: "10px", borderRadius: "50%", background: txStep === 3 ? "#10b981" : "#475569", boxShadow: txStep === 3 ? "0 0 8px #10b981" : "none" }} />
+                <span style={{ fontSize: "14px" }}>Asset Successfully Minted to Vault</span>
               </div>
             </div>
             {txStep === 3 && (
-              <button onClick={() => setShowProgressModal(false)} style={{ background: "#10b981", color: "white", border: "none", padding: "10px 20px", borderRadius: "6px", fontWeight: "bold", cursor: "pointer", width: "100%" }}>Dismiss Dashboard</button>
+              <button onClick={() => setShowProgressModal(false)} style={{ background: "#10b981", color: "white", border: "none", padding: "12px 24px", borderRadius: "8px", fontWeight: "bold", cursor: "pointer", width: "100%", boxShadow: "0 4px 12px rgba(16, 185, 129, 0.3)", transition: "all 0.2s" }}>Dismiss Dashboard</button>
             )}
           </div>
         </div>
@@ -378,19 +385,19 @@ export default function DashboardContent() {
 
       {/* Terminal Drawer Component */}
       {showLogCenter && (
-        <div style={{ position: "fixed", top: 0, right: 0, width: "320px", height: "100vh", background: isDarkMode ? "#0f172a" : "#f1f5f9", borderLeft: `1px solid ${themeStyles.inputBorder}`, padding: "20px", boxSizing: "border-box", zIndex: 9998, boxShadow: "-5px 0 25px rgba(0,0,0,0.2)" }}>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "20px", borderBottom: `1px solid ${themeStyles.inputBorder}`, paddingBottom: "10px" }}>
-            <h3 style={{ margin: 0, fontSize: "14px", color: "#38bdf8" }}>Node Activity Terminal</h3>
-            <button onClick={() => setShowLogCenter(false)} style={{ background: "transparent", border: "none", color: "#64748b", cursor: "pointer" }}>✕</button>
+        <div style={{ position: "fixed", top: 0, right: 0, width: "340px", height: "100vh", background: isDarkMode ? "#0f172a" : "#f3f4f6", borderLeft: `1px solid ${themeStyles.inputBorder}`, padding: "24px", boxSizing: "border-box", zIndex: 9998, boxShadow: "-10px 0 30px rgba(0,0,0,0.25)" }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "20px", borderBottom: `1px solid ${themeStyles.inputBorder}`, paddingBottom: "12px" }}>
+            <h3 style={{ margin: 0, fontSize: "15px", color: "#38bdf8", fontWeight: "600" }}>Node Activity Terminal</h3>
+            <button onClick={() => setShowLogCenter(false)} style={{ background: "transparent", border: "none", color: "#64748b", cursor: "pointer", fontSize: "16px" }}>✕</button>
           </div>
-          <div style={{ display: "flex", flexDirection: "column", gap: "12px", height: "calc(100vh - 80px)", overflowY: "auto" }}>
+          <div style={{ display: "flex", flexDirection: "column", gap: "12px", height: "calc(100vh - 90px)", overflowY: "auto" }}>
             {activityLogs.map((log) => (
-              <div key={log.id} style={{ fontSize: "11px", background: isDarkMode ? "#030712" : "#ffffff", padding: "8px", borderRadius: "6px", borderLeft: `3px solid ${log.type === 'success' ? '#10b981' : '#38bdf8'}` }}>
-                <div style={{ display: "flex", justifyContent: "space-between", opacity: 0.5, marginBottom: "4px" }}>
-                  <span>{log.type.toUpperCase()}</span>
+              <div key={log.id} style={{ fontSize: "12px", background: isDarkMode ? "#020617" : "#ffffff", padding: "10px", borderRadius: "8px", borderLeft: `4px solid ${log.type === 'success' ? '#10b981' : '#38bdf8'}`, boxShadow: "0 2px 4px rgba(0,0,0,0.05)" }}>
+                <div style={{ display: "flex", justifyContent: "space-between", opacity: 0.5, marginBottom: "6px", fontSize: "11px" }}>
+                  <span style={{ fontWeight: "bold" }}>{log.type.toUpperCase()}</span>
                   <span>{log.timestamp}</span>
                 </div>
-                <div>{log.message}</div>
+                <div style={{ fontFamily: "monospace", lineHeight: "1.4" }}>{log.message}</div>
               </div>
             ))}
           </div>
@@ -399,181 +406,195 @@ export default function DashboardContent() {
 
       {/* Toast Notification */}
       {showToast && (
-        <div style={{ position: "fixed", bottom: "24px", right: "24px", background: "rgba(31, 41, 55, 0.95)", border: "1px solid #10b981", borderRadius: "9999px", padding: "10px 24px", display: "inline-flex", alignItems: "center", gap: "10px", zIndex: 9999 }}>
-          <span style={{ color: "white", fontWeight: "bold", fontSize: "14px" }}>Transaction successful!</span>
+        <div style={{ position: "fixed", bottom: "24px", right: "24px", background: "rgba(15, 23, 42, 0.95)", border: "1px solid #10b981", borderRadius: "9999px", padding: "12px 28px", display: "inline-flex", alignItems: "center", gap: "10px", zIndex: 9999, boxShadow: "0 10px 25px rgba(0,0,0,0.3)" }}>
+          <span style={{ color: "white", fontWeight: "600", fontSize: "14px" }}>🎉 Transaction successful!</span>
         </div>
       )}
 
-      {/* Navigation and Actions Row Container */}
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "20px" }}>
+      {/* Navigation Top Header Bar */}
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "24px" }}>
         <div>
-          <h1 style={{ fontSize: "24px", margin: 0, color: "#38bdf8", fontWeight: "bold" }}>SHELBY</h1>
-          <p style={{ margin: 0, fontSize: "11px", opacity: 0.6, color: themeStyles.textMuted }}>Decentralized Asset Workshop</p>
+          <h1 style={{ fontSize: "28px", margin: 0, color: "#38bdf8", fontWeight: "800", letterSpacing: "-0.5px" }}>SHELBY</h1>
+          <p style={{ margin: "2px 0 0 0", fontSize: "12px", opacity: 0.7, color: themeStyles.textMuted, fontWeight: "500" }}>Decentralized Asset Workshop</p>
         </div>
-        <div style={{ display: "flex", gap: "10px", alignItems: "center" }}>
-          <button onClick={toggleTheme} style={{ background: themeStyles.cardBg, border: `1px solid ${themeStyles.inputBorder}`, padding: "8px 14px", borderRadius: "6px", color: themeStyles.textMain, cursor: "pointer", fontWeight: "bold", fontSize: "12px" }}>
-            {isDarkMode ? "☀️ Light Mode" : "🌙 Dark Mode"}
+        <div style={{ display: "flex", gap: "12px", alignItems: "center" }}>
+          <button onClick={toggleTheme} style={{ background: themeStyles.cardBg, border: `1px solid ${themeStyles.inputBorder}`, padding: "10px 16px", borderRadius: "8px", color: themeStyles.textMain, cursor: "pointer", fontWeight: "600", fontSize: "13px", display: "flex", alignItems: "center", gap: "6px", boxShadow: "0 2px 4px rgba(0,0,0,0.05)" }}>
+            {isDarkMode ? "☀️ Light" : "🌙 Dark"}
           </button>
-          <button onClick={() => setShowLogCenter(!showLogCenter)} style={{ position: "relative", background: themeStyles.cardBg, border: `1px solid ${themeStyles.inputBorder}`, padding: "8px 12px", borderRadius: "6px", cursor: "pointer" }}>
-            🔔 {activityLogs.length > 0 && <span style={{ position: "absolute", top: "0", right: "0", background: "#ef4444", width: "6px", height: "6px", borderRadius: "50%" }} />}
+          <button onClick={() => setShowLogCenter(!showLogCenter)} style={{ position: "relative", background: themeStyles.cardBg, border: `1px solid ${themeStyles.inputBorder}`, padding: "10px 14px", borderRadius: "8px", cursor: "pointer", boxShadow: "0 2px 4px rgba(0,0,0,0.05)" }}>
+            🔔 {activityLogs.length > 0 && <span style={{ position: "absolute", top: "2px", right: "2px", background: "#ef4444", width: "8px", height: "8px", borderRadius: "50%", boxShadow: "0 0 6px #ef4444" }} />}
           </button>
           {connected && account ? (
-            <button onClick={() => disconnect()} style={{ background: "#ef4444", border: "none", padding: "8px 12px", borderRadius: "6px", color: "white", cursor: "pointer", fontWeight: "bold" }}>Disconnect Wallet</button>
+            <button onClick={() => disconnect()} style={{ background: "#ef4444", border: "none", padding: "10px 18px", borderRadius: "8px", color: "white", cursor: "pointer", fontWeight: "600", fontSize: "13px", boxShadow: "0 4px 12px rgba(239, 68, 68, 0.2)" }}>Disconnect</button>
           ) : (
-            <button onClick={handleConnect} style={{ background: "#3b82f6", border: "none", padding: "8px 16px", borderRadius: "6px", color: "white", fontWeight: "bold", cursor: "pointer" }}>Connect Wallet</button>
+            <button onClick={handleConnect} style={{ background: "#3b82f6", border: "none", padding: "10px 20px", borderRadius: "8px", color: "white", fontWeight: "600", fontSize: "13px", cursor: "pointer", boxShadow: "0 4px 12px rgba(59, 130, 246, 0.25)" }}>Connect Wallet</button>
           )}
         </div>
       </div>
 
-      {/* Dynamic Wallet Profile Status Dashboard Component */}
+      {/* Wallet Profile Banner Dashboard Module */}
       {connected && account && (
-        <div style={{ background: `linear-gradient(135deg, ${isDarkMode ? '#1e1b4b' : '#e0e7ff'}, ${isDarkMode ? '#111827' : '#ffffff'})`, border: `1px solid ${themeStyles.inputBorder}`, padding: "15px 20px", borderRadius: "12px", marginBottom: "20px", display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "15px" }}>
+        <div style={{ background: `linear-gradient(135deg, ${isDarkMode ? '#1e1b4b' : '#e0e7ff'}, ${isDarkMode ? '#0f172a' : '#ffffff'})`, border: `1px solid ${themeStyles.inputBorder}`, padding: "18px 24px", borderRadius: "14px", marginBottom: "24px", display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "16px", boxShadow: "0 4px 20px rgba(0,0,0,0.05)" }}>
           <div>
-            <span style={{ fontSize: "11px", textTransform: "uppercase", fontWeight: "bold", color: "#818cf8", display: "block" }}>SECURED NODE PATH</span>
-            <span style={{ fontSize: "14px", fontFamily: "monospace", color: themeStyles.textMain }}>{account.address.toString()}</span>
+            <span style={{ fontSize: "11px", textTransform: "uppercase", fontWeight: "700", color: "#818cf8", display: "block", letterSpacing: "0.5px" }}>SECURED NODE PATH</span>
+            <span style={{ fontSize: "14px", fontFamily: "monospace", color: themeStyles.textMain, fontWeight: "500" }}>{account.address.toString()}</span>
           </div>
-          <div style={{ display: "flex", alignItems: "center", gap: "15px" }}>
-            <a href="https://aptos.dev/network/faucet" target="_blank" rel="noopener noreferrer" style={{ background: "linear-gradient(45deg, #0284c7, #0369a1)", color: "white", textDecoration: "none", fontSize: "12px", fontWeight: "bold", padding: "8px 16px", borderRadius: "6px", display: "inline-block", boxShadow: "0 0 10px rgba(3, 105, 161, 0.4)" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "16px" }}>
+            <a href="https://aptos.dev/network/faucet" target="_blank" rel="noopener noreferrer" style={{ background: "linear-gradient(45deg, #0284c7, #0369a1)", color: "white", textDecoration: "none", fontSize: "13px", fontWeight: "600", padding: "10px 20px", borderRadius: "8px", display: "inline-block", boxShadow: "0 4px 12px rgba(3, 105, 161, 0.35)", transition: "transform 0.2s" }}>
               💧 Get Free Aptos APT
             </a>
             <div style={{ textAlign: "right" }}>
-              <span style={{ fontSize: "11px", fontWeight: "bold", color: themeStyles.textMuted, display: "block" }}>CHAIN ECOSYSTEM</span>
-              <span style={{ fontSize: "14px", fontWeight: "bold", color: "#10b981" }}>● Aptos {network?.name || "Testnet"} Active</span>
+              <span style={{ fontSize: "11px", fontWeight: "700", color: themeStyles.textMuted, display: "block" }}>CHAIN ECOSYSTEM</span>
+              <span style={{ fontSize: "14px", fontWeight: "600", color: "#10b981" }}>● Aptos {network?.name || "Testnet"} Active</span>
             </div>
           </div>
         </div>
       )}
 
-      {/* Interface Context Tabs Row Control */}
-      <div style={{ display: "flex", gap: "10px", marginBottom: "25px" }}>
-        <button onClick={() => setActiveTab("meme")} style={{ padding: "10px 20px", background: activeTab === "meme" ? themeStyles.tabActive : "transparent", border: activeTab === "meme" ? "1px solid #38bdf8" : `1px solid ${themeStyles.inputBorder}`, color: themeStyles.textMain, cursor: "pointer", fontWeight: "bold", borderRadius: "8px" }}>Meme Studio</button>
-        <button onClick={() => setActiveTab("speed")} style={{ padding: "10px 20px", background: activeTab === "speed" ? themeStyles.tabActive : "transparent", border: activeTab === "speed" ? "1px solid #38bdf8" : `1px solid ${themeStyles.inputBorder}`, color: themeStyles.textMain, cursor: "pointer", fontWeight: "bold", borderRadius: "8px" }}>Bandwidth Speed Test</button>
+      {/* Tabs Layout Button Control Row */}
+      <div style={{ display: "flex", gap: "12px", marginBottom: "24px" }}>
+        <button onClick={() => setActiveTab("meme")} style={{ padding: "12px 24px", background: activeTab === "meme" ? themeStyles.tabActive : "transparent", border: activeTab === "meme" ? "1px solid #38bdf8" : `1px solid ${themeStyles.inputBorder}`, color: themeStyles.textMain, cursor: "pointer", fontWeight: "600", borderRadius: "10px", fontSize: "14px", transition: "all 0.2s" }}>Meme Studio</button>
+        <button onClick={() => setActiveTab("speed")} style={{ padding: "12px 24px", background: activeTab === "speed" ? themeStyles.tabActive : "transparent", border: activeTab === "speed" ? "1px solid #38bdf8" : `1px solid ${themeStyles.inputBorder}`, color: themeStyles.textMain, cursor: "pointer", fontWeight: "600", borderRadius: "10px", fontSize: "14px", transition: "all 0.2s" }}>Bandwidth Speed Test</button>
       </div>
 
       {activeTab === "meme" ? (
         <div>
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: "20px", marginBottom: "20px" }}>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))", gap: "24px", marginBottom: "24px" }}>
             
-            {/* Left Box Canvas Frame */}
-            <div style={{ background: themeStyles.cardBg, border: `1px solid ${themeStyles.inputBorder}`, padding: "15px", borderRadius: "12px", textAlign: "center" }}>
-              <canvas ref={canvasRef} width={450} height={450} style={{ borderRadius: "8px", border: `1px solid ${themeStyles.inputBorder}`, maxWidth: "100%", height: "auto", background: "#000", marginBottom: "12px" }} />
-              <div style={{ display: "flex", gap: "5px", justifyContent: "center" }}>
-                <button onClick={() => setActiveGradient("blue")} style={{ padding: "6px 12px", background: "#3b82f6", border: "none", borderRadius: "4px", color: "white", cursor: "pointer" }}>Classic</button>
-                <button onClick={() => setActiveGradient("sunset")} style={{ padding: "6px 12px", background: "#f43f5e", border: "none", borderRadius: "4px", color: "white", cursor: "pointer" }}>Sunset</button>
-                <button onClick={() => setActiveGradient("green")} style={{ padding: "6px 12px", background: "#10b981", border: "none", borderRadius: "4px", color: "white", cursor: "pointer" }}>Nordic</button>
+            {/* Left Frame: Premium Studio Canvas */}
+            <div style={{ background: themeStyles.cardBg, border: `1px solid ${themeStyles.inputBorder}`, padding: "20px", borderRadius: "16px", textAlign: "center", boxShadow: "0 10px 30px rgba(0,0,0,0.04)" }}>
+              <canvas ref={canvasRef} width={450} height={450} style={{ borderRadius: "12px", border: `1px solid ${themeStyles.inputBorder}`, maxWidth: "100%", height: "auto", background: "#000", marginBottom: "16px", boxShadow: "0 4px 20px rgba(0,0,0,0.15)" }} />
+              <div style={{ display: "flex", gap: "8px", justifyContent: "center" }}>
+                <button onClick={() => setActiveGradient("blue")} style={{ padding: "8px 16px", background: "linear-gradient(135deg, #1e3c72, #2a5298)", border: "none", borderRadius: "6px", color: "white", cursor: "pointer", fontSize: "12px", fontWeight: "600" }}>Classic</button>
+                <button onClick={() => setActiveGradient("sunset")} style={{ padding: "8px 16px", background: "linear-gradient(135deg, #ff416c, #ff4b2b)", border: "none", borderRadius: "6px", color: "white", cursor: "pointer", fontSize: "12px", fontWeight: "600" }}>Sunset</button>
+                <button onClick={() => setActiveGradient("green")} style={{ padding: "8px 16px", background: "linear-gradient(135deg, #02aab0, #00cdac)", border: "none", borderRadius: "6px", color: "white", cursor: "pointer", fontSize: "12px", fontWeight: "600" }}>Nordic</button>
               </div>
             </div>
 
-            {/* Right Box Input Customizer Control Frame */}
-            <div style={{ background: themeStyles.cardBg, border: `1px solid ${themeStyles.inputBorder}`, padding: "20px", borderRadius: "12px", display: "flex", flexDirection: "column", justifyContent: "space-between" }}>
+            {/* Right Frame: Input Customizer Luxury Panel */}
+            <div style={{ background: themeStyles.cardBg, border: `1px solid ${themeStyles.inputBorder}`, padding: "24px", borderRadius: "16px", display: "flex", flexDirection: "column", justifyContent: "space-between", boxShadow: "0 10px 30px rgba(0,0,0,0.04)" }}>
               <div>
-                <input type="text" value={topText} onChange={e => setTopText(e.target.value)} style={{ width: "100%", padding: "12px", marginBottom: "15px", background: themeStyles.inputBg, border: `1px solid ${themeStyles.inputBorder}`, borderRadius: "8px", color: themeStyles.textMain, boxSizing: "border-box" }} placeholder="Top Text (SHELBY IS HOT)" />
+                <input type="text" value={topText} onChange={e => setTopText(e.target.value)} style={{ width: "100%", padding: "14px", marginBottom: "16px", background: themeStyles.inputBg, border: `1px solid ${themeStyles.inputBorder}`, borderRadius: "10px", color: themeStyles.textMain, boxSizing: "border-box", fontSize: "14px" }} placeholder="Top Text (SHELBY IS HOT)" />
                 
-                {/* Top Text Y Sliders Control */}
-                <div style={{ marginBottom: "15px" }}>
-                  <div style={{ fontSize: "11px", color: themeStyles.textMuted, display: "flex", justifyContent: "space-between" }}>
+                {/* Top Text Position Slider */}
+                <div style={{ marginBottom: "16px" }}>
+                  <div style={{ fontSize: "11px", color: themeStyles.textMuted, display: "flex", justifyContent: "space-between", fontWeight: "600" }}>
                     <span>TOP CAPTION POSITION</span>
                     <span>{topTextY}px</span>
                   </div>
-                  <input type="range" min="10" max="150" value={topTextY} onChange={e => setTopTextY(Number(e.target.value))} style={{ width: "100%", accentColor: "#3b82f6" }} />
+                  <input type="range" min="10" max="150" value={topTextY} onChange={e => setTopTextY(Number(e.target.value))} style={{ width: "100%", accentColor: "#3b82f6", marginTop: "6px" }} />
                 </div>
 
-                <input type="text" value={bottomText} onChange={e => setBottomText(e.target.value)} style={{ width: "100%", padding: "12px", marginBottom: "15px", background: themeStyles.inputBg, border: `1px solid ${themeStyles.inputBorder}`, borderRadius: "8px", color: themeStyles.textMain, boxSizing: "border-box" }} placeholder="Bottom Text (AWS IS COLD)" />
+                <input type="text" value={bottomText} onChange={e => setBottomText(e.target.value)} style={{ width: "100%", padding: "14px", marginBottom: "16px", background: themeStyles.inputBg, border: `1px solid ${themeStyles.inputBorder}`, borderRadius: "10px", color: themeStyles.textMain, boxSizing: "border-box", fontSize: "14px" }} placeholder="Bottom Text (AWS IS COLD)" />
                 
-                {/* Bottom Text Y Sliders Control */}
-                <div style={{ marginBottom: "15px" }}>
-                  <div style={{ fontSize: "11px", color: themeStyles.textMuted, display: "flex", justifyContent: "space-between" }}>
+                {/* Bottom Text Position Slider */}
+                <div style={{ marginBottom: "16px" }}>
+                  <div style={{ fontSize: "11px", color: themeStyles.textMuted, display: "flex", justifyContent: "space-between", fontWeight: "600" }}>
                     <span>BOTTOM CAPTION POSITION</span>
                     <span>{bottomTextY}px</span>
                   </div>
-                  <input type="range" min="300" max="440" value={bottomTextY} onChange={e => setBottomTextY(Number(e.target.value))} style={{ width: "100%", accentColor: "#3b82f6" }} />
+                  <input type="range" min="300" max="440" value={bottomTextY} onChange={e => setBottomTextY(Number(e.target.value))} style={{ width: "100%", accentColor: "#3b82f6", marginTop: "6px" }} />
                 </div>
 
-                {/* Font Size Controller Slider */}
-                <div style={{ marginBottom: "15px" }}>
-                  <div style={{ fontSize: "11px", color: themeStyles.textMuted, display: "flex", justifyContent: "space-between" }}>
+                {/* Font Size Slider */}
+                <div style={{ marginBottom: "16px" }}>
+                  <div style={{ fontSize: "11px", color: themeStyles.textMuted, display: "flex", justifyContent: "space-between", fontWeight: "600" }}>
                     <span>CAPTION FONT SIZE</span>
                     <span>{textFontSize}px</span>
                   </div>
-                  <input type="range" min="16" max="48" value={textFontSize} onChange={e => setTextFontSize(Number(e.target.value))} style={{ width: "100%", accentColor: "#10b981" }} />
+                  <input type="range" min="16" max="48" value={textFontSize} onChange={e => setTextFontSize(Number(e.target.value))} style={{ width: "100%", accentColor: "#10b981", marginTop: "6px" }} />
                 </div>
 
-                {/* Dynamic Text & Stroke Color Picker Option */}
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px", marginBottom: "15px" }}>
-                  <div>
-                    <label style={{ fontSize: "11px", color: themeStyles.textMuted, display: "block", marginBottom: "4px" }}>TEXT COLOR</label>
-                    <div style={{ display: "flex", gap: "6px", alignItems: "center", background: themeStyles.inputBg, padding: "6px", borderRadius: "6px", border: `1px solid ${themeStyles.inputBorder}` }}>
-                      <input type="color" value={textColor} onChange={e => setTextColor(e.target.value)} style={{ border: "none", width: "30px", height: "25px", cursor: "pointer", background: "none" }} />
-                      <span style={{ fontSize: "11px", fontFamily: "monospace" }}>{textColor.toUpperCase()}</span>
-                    </div>
-                  </div>
-                  <div>
-                    <label style={{ fontSize: "11px", color: themeStyles.textMuted, display: "block", marginBottom: "4px" }}>STROKE BORDER</label>
-                    <div style={{ display: "flex", gap: "6px", alignItems: "center", background: themeStyles.inputBg, padding: "6px", borderRadius: "6px", border: `1px solid ${themeStyles.inputBorder}` }}>
-                      <input type="color" value={strokeColor} onChange={e => setStrokeColor(e.target.value)} style={{ border: "none", width: "30px", height: "25px", cursor: "pointer", background: "none" }} />
-                      <span style={{ fontSize: "11px", fontFamily: "monospace" }}>{strokeColor.toUpperCase()}</span>
-                    </div>
+                {/* 🌟 New Feature: Caption Alignment Buttons Selector */}
+                <div style={{ marginBottom: "16px" }}>
+                  <label style={{ fontSize: "11px", color: themeStyles.textMuted, display: "block", marginBottom: "6px", fontWeight: "600" }}>TEXT ALIGNMENT</label>
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "6px", background: themeStyles.inputBg, padding: "4px", borderRadius: "8px", border: `1px solid ${themeStyles.inputBorder}` }}>
+                    <button onClick={() => setTextAlignment("left")} style={{ padding: "6px", border: "none", borderRadius: "6px", background: textAlignment === "left" ? themeStyles.tabActive : "transparent", color: themeStyles.textMain, cursor: "pointer", fontSize: "12px", fontWeight: "600" }}>Left</button>
+                    <button onClick={() => setTextAlignment("center")} style={{ padding: "6px", border: "none", borderRadius: "6px", background: textAlignment === "center" ? themeStyles.tabActive : "transparent", color: themeStyles.textMain, cursor: "pointer", fontSize: "12px", fontWeight: "600" }}>Center</button>
+                    <button onClick={() => setTextAlignment("right")} style={{ padding: "6px", border: "none", borderRadius: "6px", background: textAlignment === "right" ? themeStyles.tabActive : "transparent", color: themeStyles.textMain, cursor: "pointer", fontSize: "12px", fontWeight: "600" }}>Right</button>
                   </div>
                 </div>
 
-                <div style={{ marginBottom: "15px" }}>
+                {/* Text & Stroke Color Picker Option Panels */}
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px", marginBottom: "16px" }}>
+                  <div>
+                    <label style={{ fontSize: "11px", color: themeStyles.textMuted, display: "block", marginBottom: "4px", fontWeight: "600" }}>TEXT COLOR</label>
+                    <div style={{ display: "flex", gap: "8px", alignItems: "center", background: themeStyles.inputBg, padding: "8px", borderRadius: "8px", border: `1px solid ${themeStyles.inputBorder}` }}>
+                      <input type="color" value={textColor} onChange={e => setTextColor(e.target.value)} style={{ border: "none", width: "32px", height: "28px", cursor: "pointer", background: "none" }} />
+                      <span style={{ fontSize: "12px", fontFamily: "monospace", fontWeight: "500" }}>{textColor.toUpperCase()}</span>
+                    </div>
+                  </div>
+                  <div>
+                    <label style={{ fontSize: "11px", color: themeStyles.textMuted, display: "block", marginBottom: "4px", fontWeight: "600" }}>STROKE BORDER</label>
+                    <div style={{ display: "flex", gap: "8px", alignItems: "center", background: themeStyles.inputBg, padding: "8px", borderRadius: "8px", border: `1px solid ${themeStyles.inputBorder}` }}>
+                      <input type="color" value={strokeColor} onChange={e => setStrokeColor(e.target.value)} style={{ border: "none", width: "32px", height: "28px", cursor: "pointer", background: "none" }} />
+                      <span style={{ fontSize: "12px", fontFamily: "monospace", fontWeight: "500" }}>{strokeColor.toUpperCase()}</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Upload Section Control */}
+                <div style={{ marginBottom: "16px" }}>
                   <input type="file" ref={customBgInputRef} onChange={handleCustomBgUpload} accept="image/*" style={{ display: "none" }} />
-                  <div style={{ display: "flex", gap: "5px" }}>
-                    <button onClick={() => customBgInputRef.current?.click()} style={{ flex: 1, padding: "10px", background: themeStyles.inputBg, border: `1px solid ${themeStyles.inputBorder}`, borderRadius: "6px", color: themeStyles.textMain, cursor: "pointer", fontWeight: "bold", fontSize: "12px" }}>Upload Media Canvas</button>
-                    {customImage && <button onClick={clearCustomBg} style={{ padding: "10px", background: "#ef4444", border: "none", color: "white", borderRadius: "6px", cursor: "pointer" }}>Reset</button>}
+                  <div style={{ display: "flex", gap: "6px" }}>
+                    <button onClick={() => customBgInputRef.current?.click()} style={{ flex: 1, padding: "12px", background: themeStyles.inputBg, border: `1px solid ${themeStyles.inputBorder}`, borderRadius: "8px", color: themeStyles.textMain, cursor: "pointer", fontWeight: "600", fontSize: "13px", textAlign: "left", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                      📁 {uploadedFileName || "Upload Media Canvas"}
+                    </button>
+                    {customImage && <button onClick={clearCustomBg} style={{ padding: "12px 16px", background: "#ef4444", border: "none", color: "white", borderRadius: "8px", cursor: "pointer", fontWeight: "bold" }}>Reset</button>}
                   </div>
                 </div>
 
-                <div style={{ marginBottom: "15px" }}>
-                  <select value={expiration} onChange={(e) => setExpiration(e.target.value)} style={{ width: "100%", padding: "10px", background: themeStyles.inputBg, border: `1px solid ${themeStyles.inputBorder}`, borderRadius: "8px", color: themeStyles.textMain, cursor: "pointer" }}>
+                <div style={{ marginBottom: "16px" }}>
+                  <select value={expiration} onChange={(e) => setExpiration(e.target.value)} style={{ width: "100%", padding: "12px", background: themeStyles.inputBg, border: `1px solid ${themeStyles.inputBorder}`, borderRadius: "10px", color: themeStyles.textMain, cursor: "pointer", fontSize: "13px" }}>
                     <option value="1day">Buffer Allocation Framework: 1 Day</option>
                     <option value="1week">Buffer Allocation Framework: 1 Week</option>
                   </select>
                 </div>
 
-                <label style={{ display: "flex", alignItems: "center", gap: "8px", fontSize: "12px", marginBottom: "15px", cursor: "pointer" }}>
-                  <input type="checkbox" checked={watermark} onChange={e => setWatermark(e.target.checked)} />
+                <label style={{ display: "flex", alignItems: "center", gap: "10px", fontSize: "13px", marginBottom: "16px", cursor: "pointer", fontWeight: "500" }}>
+                  <input type="checkbox" checked={watermark} onChange={e => setWatermark(e.target.checked)} style={{ width: "16px", height: "16px", accentColor: "#3b82f6" }} />
                   Embed Encrypted Watermark Tag
                 </label>
 
-                <button onClick={downloadMeme} style={{ width: "100%", padding: "10px", background: isDarkMode ? "#1f2937" : "#e2e8f0", border: "none", color: themeStyles.textMain, fontWeight: "bold", borderRadius: "8px", cursor: "pointer" }}>Download Ultra-HQ PNG</button>
+                <button onClick={downloadMeme} style={{ width: "100%", padding: "12px", background: isDarkMode ? "#1e293b" : "#e5e7eb", border: "none", color: themeStyles.textMain, fontWeight: "600", borderRadius: "10px", cursor: "pointer", fontSize: "14px" }}>Download Ultra-HQ PNG</button>
               </div>
-              <button onClick={publishMeme} disabled={uploading} style={{ width: "100%", padding: "14px", background: "#3b82f6", color: "white", border: "none", fontWeight: "bold", borderRadius: "8px", cursor: "pointer", marginTop: "15px" }}>
+              <button onClick={publishMeme} disabled={uploading} style={{ width: "100%", padding: "16px", background: "#3b82f6", color: "white", border: "none", fontWeight: "700", borderRadius: "12px", cursor: "pointer", marginTop: "16px", fontSize: "14px", boxShadow: "0 4px 14px rgba(59, 130, 246, 0.3)" }}>
                 {uploading ? "Broadcasting Core Node Transactions..." : "Publish to Shelby Storage"}
               </button>
             </div>
 
           </div>
 
-          {/* Lower Vault Storage Section Component Module */}
-          <div style={{ background: themeStyles.cardBg, border: `1px solid ${themeStyles.inputBorder}`, padding: "20px", borderRadius: "12px", marginTop: "20px" }}>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "15px" }}>
-              <h3 style={{ margin: 0, fontSize: "15px", color: "#38bdf8" }}>Shelby Decentralized Storage Hub Vault</h3>
+          {/* Bottom Module Panel: Shelby Decentralized Storage Hub Vault Container */}
+          <div style={{ background: themeStyles.cardBg, border: `1px solid ${themeStyles.inputBorder}`, padding: "24px", borderRadius: "16px", marginTop: "24px", boxShadow: "0 10px 30px rgba(0,0,0,0.04)" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "20px" }}>
+              <h3 style={{ margin: 0, fontSize: "16px", color: "#38bdf8", fontWeight: "700" }}>Shelby Decentralized Storage Hub Vault</h3>
               {uploadedMemes.length > 0 && (
-                <button onClick={clearEntireVaultCache} style={{ background: "rgba(239, 68, 68, 0.1)", color: "#ef4444", border: "1px solid rgba(239, 68, 68, 0.2)", padding: "5px 10px", borderRadius: "6px", fontSize: "11px", fontWeight: "bold", cursor: "pointer" }}>Clear All Cache Assets</button>
+                <button onClick={clearEntireVaultCache} style={{ background: "rgba(239, 68, 68, 0.1)", color: "#ef4444", border: "1px solid rgba(239, 68, 68, 0.2)", padding: "6px 14px", borderRadius: "8px", fontSize: "12px", fontWeight: "600", cursor: "pointer" }}>Clear All Cache Assets</button>
               )}
             </div>
 
             {uploadedMemes.length === 0 ? (
-              <p style={{ fontSize: "12px", opacity: 0.5, textAlign: "center", padding: "20px 0" }}>No assets indexed inside the local secure buffer.</p>
+              <p style={{ fontSize: "13px", opacity: 0.5, textAlign: "center", padding: "30px 0" }}>No assets indexed inside the local secure buffer.</p>
             ) : (
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(150px, 1fr))", gap: "15px" }}>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(160px, 1fr))", gap: "20px" }}>
                 {uploadedMemes.map((meme) => (
-                  <div key={meme.id} style={{ background: themeStyles.inputBg, border: `1px solid ${themeStyles.inputBorder}`, padding: "10px", borderRadius: "8px", position: "relative", display: "flex", flexDirection: "column", justifyContent: "space-between" }}>
+                  <div key={meme.id} style={{ background: themeStyles.inputBg, border: `1px solid ${themeStyles.inputBorder}`, padding: "12px", borderRadius: "12px", position: "relative", display: "flex", flexDirection: "column", justifyContent: "space-between", boxShadow: "0 4px 6px -1px rgba(0,0,0,0.05)" }}>
                     <div>
-                      <button onClick={() => removeMemeFromVault(meme.id)} style={{ position: "absolute", top: "5px", right: "5px", width: "18px", height: "18px", background: "rgba(239, 68, 68, 0.2)", border: "none", color: "#ef4444", borderRadius: "50%", cursor: "pointer", fontSize: "10px", zIndex: 10 }}>✕</button>
-                      <img src={meme.url} alt="Vault Card Item" style={{ width: "100%", borderRadius: "4px", marginBottom: "6px" }} />
-                      <p style={{ fontSize: "10px", margin: "0 0 8px 0", textOverflow: "ellipsis", overflow: "hidden", whiteSpace: "nowrap", opacity: 0.8 }}>{meme.name}</p>
+                      <button onClick={() => removeMemeFromVault(meme.id)} style={{ position: "absolute", top: "6px", right: "6px", width: "20px", height: "20px", background: "rgba(239, 68, 68, 0.2)", border: "none", color: "#ef4444", borderRadius: "50%", cursor: "pointer", fontSize: "11px", zIndex: 10, fontWeight: "bold" }}>✕</button>
+                      <img src={meme.url} alt="Vault Card Item" style={{ width: "100%", borderRadius: "6px", marginBottom: "8px", boxShadow: "0 2px 4px rgba(0,0,0,0.05)" }} />
+                      <p style={{ fontSize: "11px", margin: "0 0 10px 0", textOverflow: "ellipsis", overflow: "hidden", whiteSpace: "nowrap", opacity: 0.8, fontWeight: "500" }}>{meme.name}</p>
                     </div>
-                    {/* 🌟 Updated Buttons Section with Explore and Share on X */}
-                    <div style={{ display: "flex", flexDirection: "column", gap: "5px", marginTop: "auto" }}>
-                      <a href={`https://explorer.aptoslabs.com/txn/${meme.tx}?network=testnet`} target="_blank" rel="noopener noreferrer" style={{ display: "block", background: "#1e293b", color: "#38bdf8", textAlign: "center", fontSize: "11px", padding: "5px 0", borderRadius: "4px", textDecoration: "none", fontWeight: "bold", border: "1px solid #334155" }}>
+                    
+                    {/* Vault Buttons Matrix (Explore & Share on X) */}
+                    <div style={{ display: "flex", flexDirection: "column", gap: "6px", marginTop: "auto" }}>
+                      <a href={`https://explorer.aptoslabs.com/txn/${meme.tx}?network=testnet`} target="_blank" rel="noopener noreferrer" style={{ display: "block", background: "#1e293b", color: "#38bdf8", textAlign: "center", fontSize: "12px", padding: "6px 0", borderRadius: "6px", textDecoration: "none", fontWeight: "600", border: "1px solid #334155", transition: "opacity 0.2s" }}>
                         Explore
                       </a>
                       <button onClick={() => {
-                        const tweetText = encodeURIComponent(`Check out my newly minted asset on Shelby Studio! 🎉\nTx: ${meme.tx}`);
+                        const tweetText = encodeURIComponent(`Check out my newly minted digital asset on Shelby Studio! 🚀🎉\nTx Hash: ${meme.tx}`);
                         window.open(`https://twitter.com/intent/tweet?text=${tweetText}`, '_blank', 'noopener,noreferrer');
-                      }} style={{ background: "#ffffff", color: "#000000", border: "none", fontSize: "11px", padding: "5px 0", borderRadius: "4px", fontWeight: "bold", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: "4px" }}>
+                      }} style={{ background: "#ffffff", color: "#000000", border: "none", fontSize: "12px", padding: "6px 0", borderRadius: "6px", fontWeight: "700", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: "4px" }}>
                         𝕏 Share on X
                       </button>
                     </div>
@@ -584,24 +605,25 @@ export default function DashboardContent() {
           </div>
         </div>
       ) : (
-        /* Speed Test Block */
-        <div style={{ background: themeStyles.cardBg, border: `1px solid ${themeStyles.inputBorder}`, padding: "30px", borderRadius: "12px", textAlign: "center" }}>
-          <h3>Network Infrastructure Performance Node Matrix</h3>
-          <div style={{ maxWidth: "450px", margin: "20px auto", textAlign: "left", display: "flex", flexDirection: "column", gap: "15px" }}>
+        /* Legacy Bandwidth Performance Speed Test Suite Block */
+        <div style={{ background: themeStyles.cardBg, border: `1px solid ${themeStyles.inputBorder}`, padding: "40px", borderRadius: "16px", textAlign: "center", boxShadow: "0 10px 30px rgba(0,0,0,0.04)" }}>
+          <h3 style={{ fontSize: "18px", fontWeight: "700", margin: "0 0 10px 0" }}>Network Infrastructure Performance Node Matrix</h3>
+          <p style={{ fontSize: "13px", color: themeStyles.textMuted, margin: "0 0 24px 0" }}>Audit secure channel data processing speeds across international storage hubs.</p>
+          <div style={{ maxWidth: "460px", margin: "24px auto", textAlign: "left", display: "flex", flexDirection: "column", gap: "20px" }}>
             <div>
-              <div style={{ display: "flex", justifyContent: "space-between", fontSize: "12px" }}><span>⚡ SHELBY NETWORK</span><span>{shelbySpeed}ms</span></div>
-              <div style={{ background: "#1e293b", height: "8px", borderRadius: "4px", overflow: "hidden", marginTop: "4px" }}><div style={{ width: isTesting || testComplete ? "100%" : "0%", background: "#38bdf8", height: "10px" }} /></div>
+              <div style={{ display: "flex", justifyContent: "space-between", fontSize: "13px", fontWeight: "600" }}><span>⚡ SHELBY ECOSYSTEM PIPELINE</span><span>{shelbySpeed}ms</span></div>
+              <div style={{ background: isDarkMode ? "#020617" : "#e5e7eb", height: "10px", borderRadius: "6px", overflow: "hidden", marginTop: "6px" }}><div style={{ width: isTesting || testComplete ? "100%" : "0%", background: "#38bdf8", height: "10px", transition: "width 0.5s ease" }} /></div>
             </div>
             <div>
-              <div style={{ display: "flex", justifyContent: "space-between", fontSize: "12px" }}><span>Legacy AWS S3 Storage Cluster</span><span>{s3Speed}ms</span></div>
-              <div style={{ background: "#1e293b", height: "8px", borderRadius: "4px", overflow: "hidden", marginTop: "4px" }}><div style={{ width: isTesting || testComplete ? "45%" : "0%", background: "#eab308", height: "10px" }} /></div>
+              <div style={{ display: "flex", justifyContent: "space-between", fontSize: "13px", fontWeight: "600" }}><span>Legacy AWS S3 Storage Cluster</span><span>{s3Speed}ms</span></div>
+              <div style={{ background: isDarkMode ? "#020617" : "#e5e7eb", height: "10px", borderRadius: "6px", overflow: "hidden", marginTop: "6px" }}><div style={{ width: isTesting || testComplete ? "45%" : "0%", background: "#eab308", height: "10px", transition: "width 0.8s ease" }} /></div>
             </div>
           </div>
-          <button onClick={runSpeedTest} style={{ background: "#10b981", color: "#fff", border: "none", padding: "10px 24px", borderRadius: "6px", fontWeight: "bold", cursor: "pointer" }}>Run Pipeline Performance Audit</button>
+          <button onClick={runSpeedTest} style={{ background: "#10b981", color: "#fff", border: "none", padding: "12px 30px", borderRadius: "8px", fontWeight: "bold", cursor: "pointer", fontSize: "14px", boxShadow: "0 4px 12px rgba(16, 185, 129, 0.25)" }}>Run Pipeline Performance Audit</button>
         </div>
       )}
 
-      <footer style={{ marginTop: "40px", borderTop: `1px solid ${themeStyles.inputBorder}`, paddingTop: "20px", textAlign: "center", opacity: 0.4, fontSize: "12px" }}>
+      <footer style={{ marginTop: "48px", borderTop: `1px solid ${themeStyles.inputBorder}`, paddingTop: "24px", textAlign: "center", opacity: 0.5, fontSize: "12px", fontWeight: "500" }}>
         © 2026 Shelby Workspace Ecosystem. Powered by Aptos Secure High-Performance Blockchain Modules.
       </footer>
     </main>
