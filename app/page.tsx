@@ -104,9 +104,9 @@ export default function DashboardContent() {
       if (savedTheme === 'light') setIsDarkMode(false);
       addLog('info', 'Shelby V3 UI Engine initialized with official brand metrics.');
 
-      // Load Default Background Image
+      // Load Default Background Image from public folder
       const defaultImg = new Image();
-      defaultImg.src = '/shelby-bg.jpg'; // This looks for the image in the public folder
+      defaultImg.src = '/shelby-bg.jpg'; 
       defaultImg.onload = () => {
         setCustomImage(prev => prev ? prev : defaultImg);
       };
@@ -201,7 +201,7 @@ export default function DashboardContent() {
     };
 
     if (customImage) {
-      // Draw uploaded or default image
+      // Draw uploaded or default image perfectly scaled
       const scale = Math.max(canvas.width / customImage.width, canvas.height / customImage.height);
       const x = (canvas.width / 2) - (customImage.width / 2) * scale;
       const y = (canvas.height / 2) - (customImage.height / 2) * scale;
@@ -251,7 +251,7 @@ export default function DashboardContent() {
   };
 
   const clearCustomBg = () => {
-    // If they clear it, reload the default image instead of blank gradient
+    // Reload default image when custom image is removed
     const defaultImg = new Image();
     defaultImg.src = '/shelby-bg.jpg';
     defaultImg.onload = () => setCustomImage(defaultImg);
@@ -287,13 +287,12 @@ export default function DashboardContent() {
 
     try {
       const startTime = Date.now();
-      // This sends a real request to the Aptos blockchain network
       await fetch("https://fullnode.testnet.aptoslabs.com/v1/");
       const latency = Date.now() - startTime;
 
       let current = 0;
       const targetShelby = latency; 
-      const targetS3 = targetShelby > 50 ? targetShelby + 165 : 280; // S3 Benchmark for comparison
+      const targetS3 = targetShelby > 50 ? targetShelby + 165 : 280; 
 
       const interval = setInterval(() => {
         current += Math.ceil(targetShelby / 15);
@@ -311,7 +310,6 @@ export default function DashboardContent() {
       }, 40);
 
     } catch (e) {
-      // Fallback if network fails
       setShelbySpeed(999);
       setS3Speed(999);
       setIsTesting(false);
@@ -587,7 +585,10 @@ export default function DashboardContent() {
             <p style={{ fontFamily: "monospace", fontSize: "13px", color: themeStyles.textMain, margin: 0 }}>{connected && account ? String(account.address) : "Offline - Connect Wallet"}</p>
           </div>
           <div style={{ display: "flex", gap: "16px", alignItems: "center", flexWrap: "wrap" }}>
-             <a href="https://aptoslabs.com/testnet-faucet" target="_blank" rel="noreferrer" style={{ background: "#0ea5e9", color: "white", padding: "8px 16px", borderRadius: "8px", fontSize: "13px", fontWeight: "bold", textDecoration: "none", display: "flex", alignItems: "center", gap: "6px", boxShadow: "0 4px 10px rgba(14, 165, 233, 0.3)" }}>💧 Get Free Aptos APT</a>
+             
+             {/* FAUCET BUTTON UPDATED HERE */}
+             <a href="https://docs.shelby.xyz/tools/wallets/petra-setup#apt-faucet" target="_blank" rel="noreferrer" style={{ background: "#0ea5e9", color: "white", padding: "8px 16px", borderRadius: "8px", fontSize: "13px", fontWeight: "bold", textDecoration: "none", display: "flex", alignItems: "center", gap: "6px", boxShadow: "0 4px 10px rgba(14, 165, 233, 0.3)" }}>💧 Faucet</a>
+             
              <div>
                <p style={{ fontSize: "11px", color: themeStyles.textMuted, fontWeight: "bold", margin: "0 0 4px 0" }}>CHAIN ECOSYSTEM</p>
                <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
