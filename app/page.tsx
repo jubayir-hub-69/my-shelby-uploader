@@ -323,7 +323,6 @@ export default function DashboardContent() {
       const response = await signAndSubmitTransaction(transactionPayload);
       setTxStep(3);
 
-      // 🌟 Technical Fix: Dynamic parsing logic to securely extract the absolute transaction hash string
       let stableTxHash = "";
       if (response && typeof response === "object") {
         if ("hash" in response && typeof (response as any).hash === "string") {
@@ -342,7 +341,7 @@ export default function DashboardContent() {
         id: randomId,
         name: uploadedFileName || `Shelby_Asset_${randomId}.png`,
         url: canvas.toDataURL("image/png"),
-        tx: stableTxHash, // Saving the validated safe string hash format
+        tx: stableTxHash, 
         networkName: network.name
       };
 
@@ -500,7 +499,7 @@ export default function DashboardContent() {
               </div>
             </div>
 
-            <div style={{ background: themeStyles.cardBg, border: `1px solid ${themeStyles.inputBorder}`, padding: "24px", borderRadius: "16px", display: "flex", flexDirection: "column", justifyContext: "space-between", boxShadow: "0 10px 30px rgba(0,0,0,0.04)" }}>
+            <div style={{ background: themeStyles.cardBg, border: `1px solid ${themeStyles.inputBorder}`, padding: "24px", borderRadius: "16px", display: "flex", flexDirection: "column", justifyContent: "space-between", boxShadow: "0 10px 30px rgba(0,0,0,0.04)" }}>
               <div>
                 <input type="text" value={topText} onChange={e => setTopText(e.target.value)} style={{ width: "100%", padding: "14px", marginBottom: "16px", background: themeStyles.inputBg, border: `1px solid ${themeStyles.inputBorder}`, borderRadius: "10px", color: themeStyles.textMain, boxSizing: "border-box", fontSize: "14px" }} placeholder="Top Text (SHELBY IS HOT)" />
                 
