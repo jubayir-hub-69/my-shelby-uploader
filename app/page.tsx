@@ -342,8 +342,10 @@ export default function DashboardContent() {
       setUploadedMemes(updatedList);
       setFilesUploaded(prev => prev + 1);
       localStorage.setItem('shelby_memes', JSON.stringify(updatedList));
+      
+      // Show Success Toast and Confetti Animation
       setShowToast(true);
-      setTimeout(() => setShowToast(false), 4000);
+      setTimeout(() => setShowToast(false), 5000); // 5 seconds display
     } catch (error) {
       setShowProgressModal(false);
       triggerRejectNotification();
@@ -365,7 +367,7 @@ export default function DashboardContent() {
   };
 
   return (
-    <main style={{ minHeight: "100vh", background: themeStyles.mainBg, color: themeStyles.textMain, padding: "24px", fontFamily: "system-ui, -apple-system, sans-serif", position: "relative", transition: "all 0.4s ease" }}>
+    <main style={{ minHeight: "100vh", background: themeStyles.mainBg, color: themeStyles.textMain, padding: "24px", fontFamily: "system-ui, -apple-system, sans-serif", position: "relative", transition: "all 0.4s ease", overflowX: "hidden" }}>
       
       {/* Dynamic Global Animations & Media Queries Injected */}
       <style dangerouslySetInnerHTML={{__html: `
@@ -378,6 +380,10 @@ export default function DashboardContent() {
           50% { box-shadow: 0 0 25px rgba(255, 66, 161, 0.6); }
           100% { box-shadow: 0 0 10px rgba(255, 66, 161, 0.3); }
         }
+        @keyframes floatUpConfetti {
+          0% { transform: translateY(100vh) scale(0.5) rotate(0deg); opacity: 1; }
+          100% { transform: translateY(-10vh) scale(1.5) rotate(360deg); opacity: 0; }
+        }
         .animated-card {
           animation: fadeInUp 0.6s ease-out forwards;
           backdrop-filter: blur(16px);
@@ -387,7 +393,15 @@ export default function DashboardContent() {
           animation: pulseGlow 1.5s infinite;
           transform: translateY(-2px);
         }
-        /* Mobile Responsiveness Added Here */
+        .confetti-piece {
+          position: fixed;
+          bottom: -50px;
+          font-size: 28px;
+          animation: floatUpConfetti 3s ease-out forwards;
+          z-index: 99998;
+          pointer-events: none;
+        }
+        /* Mobile Responsiveness */
         .responsive-workshop-grid {
           display: grid;
           grid-template-columns: 1fr 1.2fr;
@@ -453,10 +467,22 @@ export default function DashboardContent() {
         </div>
       )}
 
+      {/* Success Toast & Celebration Animation */}
       {showToast && (
-        <div style={{ position: "fixed", bottom: "24px", right: "24px", background: "rgba(16, 185, 129, 0.15)", border: "1px solid #10b981", backdropFilter: "blur(10px)", borderRadius: "9999px", padding: "12px 28px", display: "inline-flex", alignItems: "center", gap: "10px", zIndex: 9999, boxShadow: "0 10px 25px rgba(16, 185, 129, 0.2)" }}>
-          <span style={{ color: "#10b981", fontWeight: "700", fontSize: "14px" }}>🎉 Transaction successful!</span>
-        </div>
+        <>
+          {Array.from({length: 25}).map((_, i) => (
+            <div key={i} className="confetti-piece" style={{
+              left: `${Math.random() * 100}vw`,
+              animationDelay: `${Math.random() * 0.5}s`,
+              animationDuration: `${2 + Math.random() * 2}s`
+            }}>
+              {['🚀', '✨', '🎉', '🔥', '💎', '💰'][Math.floor(Math.random() * 6)]}
+            </div>
+          ))}
+          <div style={{ position: "fixed", bottom: "24px", right: "24px", background: "rgba(16, 185, 129, 0.15)", border: "1px solid #10b981", backdropFilter: "blur(10px)", borderRadius: "9999px", padding: "12px 28px", display: "inline-flex", alignItems: "center", gap: "10px", zIndex: 9999, boxShadow: "0 10px 25px rgba(16, 185, 129, 0.2)" }}>
+            <span style={{ color: "#10b981", fontWeight: "700", fontSize: "14px" }}>🎉 Transaction successful!</span>
+          </div>
+        </>
       )}
 
       {/* Header Block Section */}
@@ -539,7 +565,7 @@ export default function DashboardContent() {
           <div className="animated-card" style={{ background: themeStyles.cardBg, padding: "30px", borderRadius: "24px", border: `1px solid ${themeStyles.inputBorder}` }}>
             <div style={{ display: "flex", flexDirection: "column", gap: "24px" }}>
               
-              {/* Text Input Block (With MaxLength applied for safety) */}
+              {/* Text Input Block */}
               <div>
                  <input type="text" maxLength={35} placeholder="Top Text (SHELBY IS HOT)" value={topText} onChange={(e) => setTopText(e.target.value)} style={{ width: "100%", background: themeStyles.inputBg, border: `1px solid ${themeStyles.inputBorder}`, color: themeStyles.textMain, padding: "16px", borderRadius: "12px", fontSize: "15px", boxSizing: "border-box" }} />
                  <div style={{ marginTop: "12px", display: "flex", justifyContent: "space-between", fontSize: "11px", fontWeight: "bold", color: themeStyles.textMuted }}>
