@@ -58,13 +58,14 @@ export default function DashboardContent() {
   const [textFontSize, setTextFontSize] = useState<number>(26);
   const [textAlignment, setTextAlignment] = useState<"left" | "center" | "right">("center");
 
-  // Premium Text and Stroke Colors
+  // Premium Text and Stroke Colors (Kept for Canvas Logic, removed from UI)
   const [textColor, setTextColor] = useState<string>("#ffffff");
   const [strokeColor, setStrokeColor] = useState<string>("#000000");
 
   // Notification and Logs States
   const [activityLogs, setActivityLogs] = useState<ActivityLog[]>([]);
   const [showLogCenter, setShowLogCenter] = useState<boolean>(false);
+  const [hasUnreadLogs, setHasUnreadLogs] = useState<boolean>(false); // NEW STATE FOR NOTIFICATION DOT
 
   // Progress Modal States
   const [showProgressModal, setShowProgressModal] = useState<boolean>(false);
@@ -85,6 +86,7 @@ export default function DashboardContent() {
       { id: Math.random().toString(), timestamp: timeString, type, message },
       ...prev
     ]);
+    setHasUnreadLogs(true); // TRIGGER RED DOT ON NEW NOTIFICATION
   };
 
   // On Load Effects
@@ -566,10 +568,13 @@ export default function DashboardContent() {
             <button onClick={toggleTheme} className="pulse-btn" style={{ background: themeStyles.cardBg, border: `1px solid ${themeStyles.inputBorder}`, padding: "8px 16px", borderRadius: "20px", color: themeStyles.textMain, cursor: "pointer", display: "flex", alignItems: "center", gap: "8px", fontWeight: "600" }}>
               {isDarkMode ? "☀️ Light" : "🌙 Dark"}
             </button>
-            <button onClick={() => setShowLogCenter(true)} className="pulse-btn" style={{ background: themeStyles.cardBg, border: `1px solid ${themeStyles.inputBorder}`, padding: "8px", borderRadius: "50%", color: themeStyles.textMain, cursor: "pointer", position: "relative" }}>
+            
+            {/* UPDATED NOTIFICATION BELL WITH DYNAMIC DOT */}
+            <button onClick={() => { setShowLogCenter(true); setHasUnreadLogs(false); }} className="pulse-btn" style={{ background: themeStyles.cardBg, border: `1px solid ${themeStyles.inputBorder}`, padding: "8px", borderRadius: "50%", color: themeStyles.textMain, cursor: "pointer", position: "relative" }}>
               🔔
-              <span style={{ position: "absolute", top: -2, right: -2, background: shelbyPink, width: "10px", height: "10px", borderRadius: "50%" }}></span>
+              {hasUnreadLogs && <span style={{ position: "absolute", top: -2, right: -2, background: shelbyPink, width: "10px", height: "10px", borderRadius: "50%" }}></span>}
             </button>
+
             {connected ? (
               <button onClick={disconnect} className="pulse-btn" style={{ background: "rgba(239, 68, 68, 0.15)", color: "#ef4444", border: "1px solid rgba(239, 68, 68, 0.3)", padding: "8px 20px", borderRadius: "20px", fontWeight: "bold", cursor: "pointer", transition: "all 0.3s" }}>Disconnect</button>
             ) : (
@@ -673,25 +678,12 @@ export default function DashboardContent() {
                    </div>
                 </div>
 
-                {/* Color Mapping */}
-                <div style={{ display: "flex", gap: "16px" }}>
-                   <div style={{ flex: 1 }}>
-                     <p style={{ fontSize: "11px", color: themeStyles.textMuted, fontWeight: "bold", margin: "0 0 8px 0" }}>TEXT COLOR</p>
-                     <input type="color" value={textColor} onChange={(e) => setTextColor(e.target.value)} style={{ width: "100%", height: "45px", padding: "0", border: `1px solid ${themeStyles.inputBorder}`, borderRadius: "8px", cursor: "pointer", background: "transparent" }} />
-                   </div>
-                   <div style={{ flex: 1 }}>
-                     <p style={{ fontSize: "11px", color: themeStyles.textMuted, fontWeight: "bold", margin: "0 0 8px 0" }}>STROKE COLOR</p>
-                     <input type="color" value={strokeColor} onChange={(e) => setStrokeColor(e.target.value)} style={{ width: "100%", height: "45px", padding: "0", border: `1px solid ${themeStyles.inputBorder}`, borderRadius: "8px", cursor: "pointer", background: "transparent" }} />
-                   </div>
-                </div>
-
-                {/* Image Uploader Area */}
+                {/* Image Uploader Area (Color Picker removed for clean UI) */}
                 <div>
                   <input type="file" accept="image/*" ref={customBgInputRef} style={{ display: "none" }} onChange={handleCustomBgUpload} />
                   <button onClick={() => customBgInputRef.current?.click()} style={{ width: "100%", background: themeStyles.inputBg, border: `1px dashed ${shelbyPink}`, color: themeStyles.textMain, padding: "16px", borderRadius: "12px", cursor: "pointer", fontWeight: "bold", display: "flex", justifyContent: "center", alignItems: "center", gap: "8px", transition: "all 0.3s" }}>
                     📁 Upload Media Canvas
                   </button>
-                  {/* এই লাইনে পরিবর্তন করা হয়েছে, এখন শুধু ইউজার আপলোড করলেই এই বাটন আসবে */}
                   {uploadedFileName && (
                     <button onClick={clearCustomBg} style={{ width: "100%", marginTop: "8px", background: "transparent", color: "#ef4444", border: "none", fontSize: "12px", cursor: "pointer", fontWeight: "bold" }}>❌ Reset Default Canvas</button>
                   )}
