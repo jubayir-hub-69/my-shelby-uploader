@@ -15,4 +15,4 @@ A professional decentralized Web3 dApp powered by the Shelby Protocol and **Apto
 * **Frontend:** React, Next.js, Tailwind CSS
 * **Blockchain:** Aptos L1, Aptos TypeScript SDK, Petra Wallet Adapter
 * **Graphics:** HTML5 Canvas API
-* 
+  
