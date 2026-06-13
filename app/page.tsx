@@ -39,7 +39,6 @@ export default function DashboardContent() {
   const [topText, setTopText] = useState<string>("");
   const [bottomText, setBottomText] = useState<string>("");
   const [activeGradient, setActiveGradient] = useState<string>("shelby");
-  const [expiration, setExpiration] = useState<string>("1day");
   const [watermark, setWatermark] = useState<boolean>(true);
   const [uploadedMemes, setUploadedMemes] = useState<UploadedMeme[]>([]);
   const [customImage, setCustomImage] = useState<HTMLImageElement | null>(null);
@@ -69,6 +68,7 @@ export default function DashboardContent() {
   const [isVerifying, setIsVerifying] = useState<boolean>(false);
   const [verifySteps, setVerifySteps] = useState<string[]>([]);
   const [verifySuccess, setVerifySuccess] = useState<boolean>(false);
+  const [verifyError, setVerifyError] = useState<string>(""); // New state for custom error pop-up
 
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const customBgInputRef = useRef<HTMLInputElement>(null);
@@ -308,20 +308,24 @@ export default function DashboardContent() {
 
   // ================= 100% REAL ON-CHAIN ASSET VERIFIER =================
   const handleVerifyAsset = async () => {
-    if (verifyHash.trim() === "") return alert("Please enter a valid Transaction Hash (e.g., 0x...).");
+    // Custom Professional Error Handling instead of alert()
+    if (verifyHash.trim() === "") {
+      setVerifyError("Please enter a valid Transaction Hash (e.g., 0x...).");
+      setTimeout(() => setVerifyError(""), 4000);
+      return;
+    }
+
     setIsVerifying(true);
     setVerifySuccess(false);
     setVerifySteps([`> Initializing connection to Aptos Node...`]);
 
     try {
-      // Step 1: Query setup
       await new Promise(r => setTimeout(r, 800));
       setVerifySteps(prev => [...prev, `> Querying blockchain state for Tx: ${verifyHash.substring(0, 15)}...`]);
 
-      // Step 2: REAL FETCH CALL TO APTOS BLOCKCHAIN
       const response = await fetch(`https://fullnode.testnet.aptoslabs.com/v1/transactions/by_hash/${verifyHash}`);
       
-      await new Promise(r => setTimeout(r, 1200)); // UI pacing
+      await new Promise(r => setTimeout(r, 1200)); 
 
       if (!response.ok) {
          throw new Error("Transaction not found on chain");
@@ -329,7 +333,6 @@ export default function DashboardContent() {
 
       const txData = await response.json();
       
-      // Real data extraction from chain
       const senderAddr = txData.sender ? `${txData.sender.substring(0, 10)}...${txData.sender.substring(txData.sender.length - 6)}` : "System";
       setVerifySteps(prev => [...prev, `> Block Data Extracted. Sender Address: ${senderAddr}`]);
 
@@ -346,12 +349,26 @@ export default function DashboardContent() {
       setVerifySuccess(true);
       addLog('success', `Asset verified on-chain for Tx: ${verifyHash.substring(0, 8)}...`);
 
+      // Auto-Reset after 10 Seconds
+      setTimeout(() => {
+        setVerifySteps([]);
+        setVerifySuccess(false);
+        setVerifyHash("");
+      }, 10000);
+
     } catch (error) {
       setVerifySteps(prev => [...prev, `> ERROR: Invalid Hash or Asset not found on Aptos L1 Network.`]);
       setVerifySteps(prev => [...prev, `> STATUS: VERIFICATION FAILED ❌`]);
       setIsVerifying(false);
       setVerifySuccess(false);
       addLog('warning', `Verification failed for Tx: ${verifyHash.substring(0, 8)}...`);
+
+      // Auto-Reset after 10 Seconds
+      setTimeout(() => {
+        setVerifySteps([]);
+        setVerifySuccess(false);
+        setVerifyHash("");
+      }, 10000);
     }
   };
 
@@ -520,6 +537,13 @@ export default function DashboardContent() {
 
       <div style={{ position: "relative", zIndex: 1 }}>
 
+        {/* Custom Professional Error Toast for Verifier */}
+        {verifyError && (
+          <div style={{ position: "fixed", top: "24px", right: "24px", background: "#ef4444", color: "white", padding: "14px 28px", borderRadius: "10px", fontWeight: "600", fontSize: "14px", zIndex: 99999, boxShadow: "0 10px 25px rgba(239, 68, 68, 0.35)", border: "1px solid rgba(255,255,255,0.1)", animation: "fadeInUp 0.3s ease-out" }}>
+            ⚠️ {verifyError}
+          </div>
+        )}
+
         {rejectNotification && (
           <div style={{ position: "fixed", top: "24px", right: "24px", background: "#ef4444", color: "white", padding: "14px 28px", borderRadius: "10px", fontWeight: "600", fontSize: "14px", zIndex: 99999, boxShadow: "0 10px 25px rgba(239, 68, 68, 0.35)", border: "1px solid rgba(255,255,255,0.1)" }}>
             🛑 Transaction Rejected
@@ -646,13 +670,13 @@ export default function DashboardContent() {
           </div>
         </div>
 
-        {/* Tabs / Navigation */}
+        {/* Tabs / Navigation (Emoji Removed) */}
         <div style={{ display: "flex", gap: "16px", marginBottom: "24px", flexWrap: "wrap" }}>
           <button onClick={() => setActiveTab("meme")} style={{ background: activeTab === "meme" ? themeStyles.tabActive : "transparent", color: activeTab === "meme" ? shelbyPink : themeStyles.textMain, border: `1px solid ${activeTab === "meme" ? shelbyPink : themeStyles.inputBorder}`, padding: "10px 24px", borderRadius: "12px", fontWeight: "bold", cursor: "pointer", transition: "all 0.3s" }}>Workshop Studio</button>
           
           <button onClick={() => setActiveTab("speed")} style={{ background: activeTab === "speed" ? themeStyles.tabActive : "transparent", color: activeTab === "speed" ? shelbyPink : themeStyles.textMain, border: `1px solid ${activeTab === "speed" ? shelbyPink : themeStyles.inputBorder}`, padding: "10px 24px", borderRadius: "12px", fontWeight: "bold", cursor: "pointer", transition: "all 0.3s" }}>Network Speed Test</button>
 
-          <button onClick={() => setActiveTab("verify")} style={{ background: activeTab === "verify" ? themeStyles.tabActive : "transparent", color: activeTab === "verify" ? shelbyPink : themeStyles.textMain, border: `1px solid ${activeTab === "verify" ? shelbyPink : themeStyles.inputBorder}`, padding: "10px 24px", borderRadius: "12px", fontWeight: "bold", cursor: "pointer", transition: "all 0.3s" }}>🛡️ Asset Integrity Scanner</button>
+          <button onClick={() => setActiveTab("verify")} style={{ background: activeTab === "verify" ? themeStyles.tabActive : "transparent", color: activeTab === "verify" ? shelbyPink : themeStyles.textMain, border: `1px solid ${activeTab === "verify" ? shelbyPink : themeStyles.inputBorder}`, padding: "10px 24px", borderRadius: "12px", fontWeight: "bold", cursor: "pointer", transition: "all 0.3s" }}>Asset Integrity Scanner</button>
         </div>
 
         {/* Overview Metrics Row */}
@@ -671,7 +695,7 @@ export default function DashboardContent() {
           </div>
         </div>
 
-        {/* Workshop Studio */}
+        {/* Workshop Studio (Fake Dropdown Removed) */}
         {activeTab === "meme" && (
           <div className="responsive-workshop-grid">
             <div className="animated-card" style={{ position: "sticky", top: "24px" }}>
@@ -719,11 +743,7 @@ export default function DashboardContent() {
                     <button onClick={clearCustomBg} style={{ width: "100%", marginTop: "8px", background: "transparent", color: "#ef4444", border: "none", fontSize: "12px", cursor: "pointer", fontWeight: "bold" }}>❌ Reset Default Canvas</button>
                   )}
                 </div>
-                <select value={expiration} onChange={(e) => setExpiration(e.target.value)} style={{ width: "100%", background: themeStyles.inputBg, border: `1px solid ${themeStyles.inputBorder}`, color: themeStyles.textMain, padding: "16px", borderRadius: "12px", fontSize: "14px", outline: "none" }}>
-                  <option value="1day">Buffer Allocation Framework: 1 Day</option>
-                  <option value="7days">Buffer Allocation Framework: 7 Days</option>
-                  <option value="forever">Permanent Vault Storage</option>
-                </select>
+                
                 <label style={{ display: "flex", alignItems: "center", gap: "12px", cursor: "pointer", color: themeStyles.textMain, fontWeight: "bold", fontSize: "14px", background: themeStyles.inputBg, padding: "12px", borderRadius: "12px", border: `1px solid ${themeStyles.inputBorder}` }}>
                   <input type="checkbox" checked={watermark} onChange={(e) => setWatermark(e.target.checked)} style={{ accentColor: shelbyPink, width: "18px", height: "18px" }} />
                   Embed Encrypted Watermark Tag
@@ -764,7 +784,7 @@ export default function DashboardContent() {
           </div>
         )}
 
-        {/* ================= 100% REAL ASSET VERIFIER UI ================= */}
+        {/* 100% REAL ASSET VERIFIER UI */}
         {activeTab === "verify" && (
           <div className="animated-card" style={{ background: themeStyles.cardBg, padding: "50px", borderRadius: "24px", border: `1px solid ${themeStyles.inputBorder}`, marginBottom: "40px" }}>
             <div style={{ textAlign: "center", marginBottom: "30px" }}>
@@ -791,7 +811,6 @@ export default function DashboardContent() {
               </button>
             </div>
 
-            {/* Terminal Window (Fixed Error Here - Missing Comma added) */}
             <div style={{ background: "#0a0a0a", border: `1px solid #333`, borderRadius: "16px", padding: "24px", minHeight: "250px", position: "relative", overflow: "hidden", maxWidth: "800px", margin: "0 auto", boxShadow: "inset 0 0 20px rgba(0,0,0,0.8)" }}>
               {isVerifying && <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: "20%", background: "linear-gradient(to bottom, transparent, rgba(16, 185, 129, 0.2), transparent)", animation: "scanline 2s linear infinite", zIndex: 0, pointerEvents: "none" }} />}
               
@@ -810,7 +829,7 @@ export default function DashboardContent() {
               </div>
 
               {verifySuccess && (
-                <div style={{ marginTop: "24px", padding: "16px", border: "1px dashed #ff42a1", borderRadius: "8px", background: "rgba(255, 66, 161, 0.05)", textAlign: "center" }}>
+                <div style={{ marginTop: "24px", padding: "16px", border: "1px dashed #ff42a1", borderRadius: "8px", background: "rgba(255, 66, 161, 0.05)", textAlign: "center", animation: "fadeInUp 0.5s ease-out" }}>
                   <h4 style={{ color: "#ff42a1", margin: "0 0 8px 0", fontSize: "18px" }}>CERTIFICATE OF AUTHENTICITY</h4>
                   <p style={{ color: "#9ca3af", margin: 0, fontSize: "13px" }}>This asset contains a valid Shelby Encrypted Watermark and is securely verified on the Aptos L1 Blockchain.</p>
                 </div>
@@ -869,7 +888,7 @@ export default function DashboardContent() {
               <svg style={{ width: "28px", height: "28px" }} fill="currentColor" viewBox="0 0 24 24"><path fillRule="evenodd" d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z" clipRule="evenodd" /></svg>
             </a>
             <a href="https://shelby.xyz/" target="_blank" rel="noopener noreferrer" style={{ color: "#9ca3af", transition: "color 0.3s" }} onMouseOver={(e) => e.currentTarget.style.color = shelbyPink} onMouseOut={(e) => e.currentTarget.style.color = "#9ca3af"}>
-              <svg style={{ width: "28px", height: "28px" }} fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="2" y1="12" x2="22" y2="12"></line><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path></svg>
+              <svg style={{ width: "28px", height: "28px" }} fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="2" y1="12" x2="22" y2="12"></line><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path></svg>
             </a>
           </div>
         </footer>
