@@ -2,16 +2,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { useWallet } from "@aptos-labs/wallet-adapter-react";
-
-// ============================================================================
-// SHELBY PROTOCOL CUSTOM CLIENT INTEGRATION
-// ============================================================================
-class ShelbyProtocolClient {
-  async secureAssetOnChain(blob: Blob) {
-    console.log("Initializing Shelby Decentralized Storage Node...");
-    return new Promise((resolve) => setTimeout(() => resolve({ status: "secured", node: "L1" }), 1500));
-  }
-}
+import { ShelbyClient } from '@shelby-protocol/sdk';
 
 interface UploadedMeme {
   id: number;
@@ -49,6 +40,7 @@ export default function DashboardContent() {
   const [topText, setTopText] = useState<string>("");
   const [bottomText, setBottomText] = useState<string>("");
   const [activeGradient, setActiveGradient] = useState<string>("shelby");
+  const [expiration, setExpiration] = useState<string>("1day");
   const [watermark, setWatermark] = useState<boolean>(true);
   const [uploadedMemes, setUploadedMemes] = useState<UploadedMeme[]>([]);
   const [customImage, setCustomImage] = useState<HTMLImageElement | null>(null);
@@ -222,12 +214,9 @@ export default function DashboardContent() {
     }
   }, [topText, bottomText, activeGradient, customImage, watermark, isDarkMode, topTextY, bottomTextY, textFontSize, textColor, strokeColor, textAlignment, activeTab]);
 
-  // ============================================================================
-  // EXACT ERROR FIX IS HERE (Added 'as any' to bypass strict TS checking)
-  // ============================================================================
   const handleConnect = async () => {
     try {
-      await connect("Petra" as any);
+      await (connect as any)("Petra");
     } catch (error) {
       triggerRejectNotification();
     }
@@ -404,11 +393,11 @@ export default function DashboardContent() {
     setTxStep(1);
 
     try {
-      const shelby = new ShelbyProtocolClient();
+      const shelby = new ShelbyClient();
       const blob = await new Promise<Blob | null>(resolve => canvas.toBlob(resolve, 'image/png'));
       if (!blob) throw new Error("Canvas rendering sector failure.");
 
-      await shelby.secureAssetOnChain(blob); 
+      await shelby.upload(blob); 
       setTxStep(2);
 
       const transactionPayload = {
@@ -422,7 +411,7 @@ export default function DashboardContent() {
         }
       };
 
-      const response = await signAndSubmitTransaction(transactionPayload);
+      const response = await (signAndSubmitTransaction as any)(transactionPayload);
       setTxStep(3);
 
       let stableTxHash = "";
@@ -639,7 +628,6 @@ export default function DashboardContent() {
           </>
         )}
 
-        {/* Header Block Section */}
         <div className="animated-card" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "30px", padding: "10px 0" }}>
           <div>
             <h1 style={{ fontSize: "32px", margin: 0, fontWeight: "900", letterSpacing: "-1px", background: `linear-gradient(90deg, ${shelbyPink}, #ffa6d4)`, WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>SHELBY</h1>
@@ -663,7 +651,6 @@ export default function DashboardContent() {
           </div>
         </div>
 
-        {/* Network & Node Information Banner */}
         <div className="animated-card" style={{ background: themeStyles.cardBg, border: `1px solid ${themeStyles.inputBorder}`, borderRadius: "16px", padding: "16px 24px", display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "24px", flexWrap: "wrap", gap: "16px" }}>
           <div>
             <p style={{ fontSize: "11px", color: shelbyPink, fontWeight: "bold", margin: "0 0 4px 0", letterSpacing: "1px" }}>SECURED NODE PATH</p>
@@ -681,7 +668,6 @@ export default function DashboardContent() {
           </div>
         </div>
 
-        {/* Tabs / Navigation */}
         <div style={{ display: "flex", gap: "16px", marginBottom: "24px", flexWrap: "wrap" }}>
           <button onClick={() => setActiveTab("meme")} style={{ background: activeTab === "meme" ? themeStyles.tabActive : "transparent", color: activeTab === "meme" ? shelbyPink : themeStyles.textMain, border: `1px solid ${activeTab === "meme" ? shelbyPink : themeStyles.inputBorder}`, padding: "10px 24px", borderRadius: "12px", fontWeight: "bold", cursor: "pointer", transition: "all 0.3s" }}>Workshop Studio</button>
           
@@ -690,7 +676,6 @@ export default function DashboardContent() {
           <button onClick={() => setActiveTab("verify")} style={{ background: activeTab === "verify" ? themeStyles.tabActive : "transparent", color: activeTab === "verify" ? shelbyPink : themeStyles.textMain, border: `1px solid ${activeTab === "verify" ? shelbyPink : themeStyles.inputBorder}`, padding: "10px 24px", borderRadius: "12px", fontWeight: "bold", cursor: "pointer", transition: "all 0.3s" }}>Asset Integrity Scanner</button>
         </div>
 
-        {/* Overview Metrics Row */}
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: "20px", marginBottom: "30px" }}>
           <div className="animated-card" style={{ background: themeStyles.cardBg, padding: "20px", borderRadius: "16px", border: `1px solid ${themeStyles.inputBorder}` }}>
             <p style={{ fontSize: "12px", color: themeStyles.textMuted, fontWeight: "bold", margin: "0 0 8px 0" }}>ASSETS UPLOADED</p>
@@ -706,7 +691,6 @@ export default function DashboardContent() {
           </div>
         </div>
 
-        {/* Workshop Studio */}
         {activeTab === "meme" && (
           <div className="responsive-workshop-grid">
             <div className="animated-card" style={{ position: "sticky", top: "24px" }}>
@@ -754,7 +738,11 @@ export default function DashboardContent() {
                     <button onClick={clearCustomBg} style={{ width: "100%", marginTop: "8px", background: "transparent", color: "#ef4444", border: "none", fontSize: "12px", cursor: "pointer", fontWeight: "bold" }}>❌ Reset Default Canvas</button>
                   )}
                 </div>
-                
+                <select value={expiration} onChange={(e) => setExpiration(e.target.value)} style={{ width: "100%", background: themeStyles.inputBg, border: `1px solid ${themeStyles.inputBorder}`, color: themeStyles.textMain, padding: "16px", borderRadius: "12px", fontSize: "14px", outline: "none" }}>
+                  <option value="1day">Buffer Allocation Framework: 1 Day</option>
+                  <option value="7days">Buffer Allocation Framework: 7 Days</option>
+                  <option value="forever">Permanent Vault Storage</option>
+                </select>
                 <label style={{ display: "flex", alignItems: "center", gap: "12px", cursor: "pointer", color: themeStyles.textMain, fontWeight: "bold", fontSize: "14px", background: themeStyles.inputBg, padding: "12px", borderRadius: "12px", border: `1px solid ${themeStyles.inputBorder}` }}>
                   <input type="checkbox" checked={watermark} onChange={(e) => setWatermark(e.target.checked)} style={{ accentColor: shelbyPink, width: "18px", height: "18px" }} />
                   Embed Encrypted Watermark Tag
@@ -772,7 +760,6 @@ export default function DashboardContent() {
           </div>
         )}
 
-        {/* Network Speed Test Framework */}
         {activeTab === "speed" && (
           <div className="animated-card" style={{ background: themeStyles.cardBg, padding: "50px", borderRadius: "24px", border: `1px solid ${themeStyles.inputBorder}`, textAlign: "center", marginBottom: "40px" }}>
             <h2 style={{ color: shelbyPink, margin: "0 0 15px 0", fontSize: "28px" }}>Live On-Chain Network Latency</h2>
@@ -795,7 +782,6 @@ export default function DashboardContent() {
           </div>
         )}
 
-        {/* 100% REAL ASSET VERIFIER UI */}
         {activeTab === "verify" && (
           <div className="animated-card" style={{ background: themeStyles.cardBg, padding: "50px", borderRadius: "24px", border: `1px solid ${themeStyles.inputBorder}`, marginBottom: "40px" }}>
             <div style={{ textAlign: "center", marginBottom: "30px" }}>
@@ -849,7 +835,6 @@ export default function DashboardContent() {
           </div>
         )}
 
-        {/* Vault Storage Hub (Bottom Area) */}
         <div className="animated-card" style={{ background: themeStyles.cardBg, padding: "30px", borderRadius: "24px", border: `1px solid ${themeStyles.inputBorder}` }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "30px", flexWrap: "wrap", gap: "16px" }}>
             <h2 style={{ fontSize: "22px", margin: 0, color: shelbyPink, fontWeight: "900" }}>Shelby Decentralized Storage Hub Vault</h2>
