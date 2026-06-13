@@ -2,6 +2,8 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { useWallet } from "@aptos-labs/wallet-adapter-react";
+// Shelby Protocol-এর অফিশিয়াল SDK ইম্পোর্ট করা হলো
+import { ShelbyClient } from '@shelby-protocol/sdk';
 
 interface UploadedMeme {
   id: number;
@@ -33,6 +35,7 @@ const shareOnTwitter = (tx: string): void => {
 export default function DashboardContent() {
   const { connect, disconnect, connected, account, network, signAndSubmitTransaction } = useWallet();
 
+  // Core App States
   const [filesUploaded, setFilesUploaded] = useState<number>(0);
   const [uploading, setUploading] = useState<boolean>(false);
   const [activeTab, setActiveTab] = useState<string>("meme");
@@ -68,7 +71,7 @@ export default function DashboardContent() {
   const [isVerifying, setIsVerifying] = useState<boolean>(false);
   const [verifySteps, setVerifySteps] = useState<string[]>([]);
   const [verifySuccess, setVerifySuccess] = useState<boolean>(false);
-  const [verifyError, setVerifyError] = useState<string>(""); // New state for custom error pop-up
+  const [verifyError, setVerifyError] = useState<string>(""); 
 
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const customBgInputRef = useRef<HTMLInputElement>(null);
@@ -308,7 +311,6 @@ export default function DashboardContent() {
 
   // ================= 100% REAL ON-CHAIN ASSET VERIFIER =================
   const handleVerifyAsset = async () => {
-    // Custom Professional Error Handling instead of alert()
     if (verifyHash.trim() === "") {
       setVerifyError("Please enter a valid Transaction Hash (e.g., 0x...).");
       setTimeout(() => setVerifyError(""), 4000);
@@ -379,6 +381,7 @@ export default function DashboardContent() {
     }, 2000);
   };
 
+  // ================= UPGRADED: 100% REAL BUILT WITH SHELBY STORAGE =================
   const publishMeme = async () => {
     if (!connected) return alert("Please connect your Petra Wallet first!");
     if (!network) return alert("Network node handshake properties mapping missing.");
@@ -396,9 +399,16 @@ export default function DashboardContent() {
     setTxStep(1);
 
     try {
-      await new Promise(resolve => setTimeout(resolve, 1200));
+      // 1. রিয়েল ShelbyClient ইনিশিয়ালাইজ করা এবং Blob জেনারেট করা
+      const shelby = new ShelbyClient();
+      const blob = await new Promise<Blob | null>(resolve => canvas.toBlob(resolve, 'image/png'));
+      if (!blob) throw new Error("Canvas rendering sector failure.");
+
+      // 2. Shelby-র ডিসেন্ট্রালাইজড নেটওয়ার্কে রিয়েল ফাইল আপলোড কল
+      await shelby.upload(blob); 
       setTxStep(2);
 
+      // 3. অন-চেইন ট্রানজেকশন প্রসেস করা (Aptos L1 Payment Ledger)
       const transactionPayload = {
         data: {
           function: "0x1::coin::transfer" as const,
@@ -537,7 +547,7 @@ export default function DashboardContent() {
 
       <div style={{ position: "relative", zIndex: 1 }}>
 
-        {/* Custom Professional Error Toast for Verifier */}
+        {/* Custom Professional Error Toast */}
         {verifyError && (
           <div style={{ position: "fixed", top: "24px", right: "24px", background: "#ef4444", color: "white", padding: "14px 28px", borderRadius: "10px", fontWeight: "600", fontSize: "14px", zIndex: 99999, boxShadow: "0 10px 25px rgba(239, 68, 68, 0.35)", border: "1px solid rgba(255,255,255,0.1)", animation: "fadeInUp 0.3s ease-out" }}>
             ⚠️ {verifyError}
@@ -551,7 +561,7 @@ export default function DashboardContent() {
         )}
 
         {showClearConfirm && (
-          <div style={{ position: "fixed", top: 0, left: 0, width: "100vw", height: "100vh", background: "rgba(10, 5, 8, 0.85)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 99999, backdropFilter: "blur(8px)" }}>
+          <div style={{ position: "fixed", top: 0, left: 0, width: "100vw", height: "100vh", background: "rgba(10, 5, 8, 0.85)", display: "flex", alignItems: "center", justifyItems: "center", zIndex: 99999, backdropFilter: "blur(8px)" }}>
             <div className="animated-card" style={{ background: themeStyles.cardBg, border: `1px solid ${themeStyles.inputBorder}`, borderRadius: "24px", padding: "35px", maxWidth: "400px", width: "90%", textAlign: "center", margin: "auto", boxShadow: `0 25px 50px -12px rgba(255, 66, 161, 0.2)` }}>
               <div style={{ width: "60px", height: "60px", background: "rgba(239, 68, 68, 0.15)", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 20px auto" }}>
                 <span style={{ fontSize: "28px" }}>⚠️</span>
@@ -573,7 +583,7 @@ export default function DashboardContent() {
               <div style={{ display: "flex", flexDirection: "column", gap: "16px", textAlign: "left", marginBottom: "25px", marginTop: "25px" }}>
                 <div style={{ display: "flex", alignItems: "center", gap: "12px", opacity: txStep >= 1 ? 1 : 0.4, transition: "opacity 0.3s" }}>
                   <div style={{ width: "10px", height: "10px", borderRadius: "50%", background: txStep === 1 ? shelbyPink : "#10b981", boxShadow: txStep === 1 ? `0 0 10px ${shelbyPink}` : "none" }} />
-                  <span style={{ fontSize: "14px" }}>Preparing Digital Structural Matrix</span>
+                  <span style={{ fontSize: "14px" }}>Securing File to Shelby Decentralized Layer</span>
                 </div>
                 <div style={{ display: "flex", alignItems: "center", gap: "12px", opacity: txStep >= 2 ? 1 : 0.4, transition: "opacity 0.3s" }}>
                   <div style={{ width: "10px", height: "10px", borderRadius: "50%", background: txStep === 2 ? "#eab308" : txStep > 2 ? "#10b981" : "#475569", boxShadow: txStep === 2 ? "0 0 10px #eab308" : "none" }} />
@@ -670,7 +680,7 @@ export default function DashboardContent() {
           </div>
         </div>
 
-        {/* Tabs / Navigation (Emoji Removed) */}
+        {/* Tabs / Navigation */}
         <div style={{ display: "flex", gap: "16px", marginBottom: "24px", flexWrap: "wrap" }}>
           <button onClick={() => setActiveTab("meme")} style={{ background: activeTab === "meme" ? themeStyles.tabActive : "transparent", color: activeTab === "meme" ? shelbyPink : themeStyles.textMain, border: `1px solid ${activeTab === "meme" ? shelbyPink : themeStyles.inputBorder}`, padding: "10px 24px", borderRadius: "12px", fontWeight: "bold", cursor: "pointer", transition: "all 0.3s" }}>Workshop Studio</button>
           
@@ -695,7 +705,7 @@ export default function DashboardContent() {
           </div>
         </div>
 
-        {/* Workshop Studio (Fake Dropdown Removed) */}
+        {/* Workshop Studio */}
         {activeTab === "meme" && (
           <div className="responsive-workshop-grid">
             <div className="animated-card" style={{ position: "sticky", top: "24px" }}>
@@ -840,7 +850,7 @@ export default function DashboardContent() {
 
         {/* Vault Storage Hub (Bottom Area) */}
         <div className="animated-card" style={{ background: themeStyles.cardBg, padding: "30px", borderRadius: "24px", border: `1px solid ${themeStyles.inputBorder}` }}>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "30px", flexWrap: "wrap", gap: "16px" }}>
+          <div style={{ display: "flex", justifyItems: "space-between", alignItems: "center", marginBottom: "30px", flexWrap: "wrap", gap: "16px" }}>
             <h2 style={{ fontSize: "22px", margin: 0, color: shelbyPink, fontWeight: "900" }}>Shelby Decentralized Storage Hub Vault</h2>
             <button onClick={triggerClearVault} style={{ background: "rgba(239, 68, 68, 0.1)", color: "#ef4444", border: "1px solid rgba(239, 68, 68, 0.3)", padding: "10px 20px", borderRadius: "10px", fontWeight: "bold", cursor: "pointer", transition: "all 0.3s" }}>Clear All Cache Assets</button>
           </div>
@@ -873,7 +883,7 @@ export default function DashboardContent() {
           )}
         </div>
 
-        <footer style={{ width: "100%", marginTop: "60px", paddingBottom: "40px", paddingTop: "30px", borderTop: "1px solid rgba(255, 66, 161, 0.2)", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: "24px" }}>
+        <footer style={{ width: "100%", marginTop: "60px", paddingBottom: "40px", paddingTop: "30px", borderTop: "1px solid rgba(255, 66, 161, 0.2)", display: "flex", flexDirection: "column", alignItems: "center", justifyItems: "center", gap: "24px" }}>
           <h3 style={{ fontSize: "20px", fontWeight: "900", color: "#e5e7eb", letterSpacing: "2px", textTransform: "uppercase", margin: 0 }}>
             Shelby Protocol <span style={{ color: shelbyPink }}>x</span> Aptos L1
           </h3>
