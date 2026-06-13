@@ -16,6 +16,8 @@
     "@telegram-apps/bridge": "^2.11.0",
     "@wallet-standard/core": "^1.1.1",
     "aptos": "^1.22.1",
+    "graphql": "^16.8.1",
+    "graphql-request": "^6.1.0",
     "next": "14.2.6",
     "petra-plugin-wallet-adapter": "^0.4.5",
     "react": "^18.2.0",
