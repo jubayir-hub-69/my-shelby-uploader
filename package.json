@@ -12,6 +12,7 @@
     "@aptos-labs/ts-sdk": "^1.22.1",
     "@aptos-labs/wallet-adapter-ant-design": "^5.3.19",
     "@aptos-labs/wallet-adapter-react": "^3.3.3",
+    "@mizuwallet-sdk/core": "latest",
     "@telegram-apps/bridge": "^2.11.0",
     "@wallet-standard/core": "^1.1.1",
     "aptos": "^1.22.1",
