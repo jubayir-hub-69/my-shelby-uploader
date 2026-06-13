@@ -33,7 +33,6 @@ const shareOnTwitter = (tx: string): void => {
 export default function DashboardContent() {
   const { connect, disconnect, connected, account, network, signAndSubmitTransaction } = useWallet();
 
-  // Core App States - Updated Default to 0
   const [filesUploaded, setFilesUploaded] = useState<number>(0);
   const [uploading, setUploading] = useState<boolean>(false);
   const [activeTab, setActiveTab] = useState<string>("meme");
@@ -48,34 +47,28 @@ export default function DashboardContent() {
   const [showToast, setShowToast] = useState<boolean>(false);
   const [isDarkMode, setIsDarkMode] = useState<boolean>(true);
   const [rejectNotification, setRejectNotification] = useState<boolean>(false);
-
-  // New State for Custom Confirm Modal
   const [showClearConfirm, setShowClearConfirm] = useState<boolean>(false);
-
-  // Text Customization Positioning Sliders & Alignment States
   const [topTextY, setTopTextY] = useState<number>(40);
   const [bottomTextY, setBottomTextY] = useState<number>(410);
   const [textFontSize, setTextFontSize] = useState<number>(26);
   const [textAlignment, setTextAlignment] = useState<"left" | "center" | "right">("center");
-
-  // Premium Text and Stroke Colors (Kept for Canvas Logic, removed from UI)
   const [textColor, setTextColor] = useState<string>("#ffffff");
   const [strokeColor, setStrokeColor] = useState<string>("#000000");
-
-  // Notification and Logs States
   const [activityLogs, setActivityLogs] = useState<ActivityLog[]>([]);
   const [showLogCenter, setShowLogCenter] = useState<boolean>(false);
-  const [hasUnreadLogs, setHasUnreadLogs] = useState<boolean>(false); // NEW STATE FOR NOTIFICATION DOT
-
-  // Progress Modal States
+  const [hasUnreadLogs, setHasUnreadLogs] = useState<boolean>(false);
   const [showProgressModal, setShowProgressModal] = useState<boolean>(false);
   const [txStep, setTxStep] = useState<number>(1); 
-
-  // Speed Test Framework Metric States
   const [isTesting, setIsTesting] = useState<boolean>(false);
   const [testComplete, setTestComplete] = useState<boolean>(false);
   const [shelbySpeed, setShelbySpeed] = useState<number>(0);
   const [s3Speed, setS3Speed] = useState<number>(0);
+
+  // ================= NEW FEATURE STATES: Asset Verifier =================
+  const [verifyHash, setVerifyHash] = useState<string>("");
+  const [isVerifying, setIsVerifying] = useState<boolean>(false);
+  const [verifySteps, setVerifySteps] = useState<string[]>([]);
+  const [verifySuccess, setVerifySuccess] = useState<boolean>(false);
 
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const customBgInputRef = useRef<HTMLInputElement>(null);
@@ -86,10 +79,9 @@ export default function DashboardContent() {
       { id: Math.random().toString(), timestamp: timeString, type, message },
       ...prev
     ]);
-    setHasUnreadLogs(true); // TRIGGER RED DOT ON NEW NOTIFICATION
+    setHasUnreadLogs(true);
   };
 
-  // On Load Effects
   useEffect(() => {
     if (typeof window !== 'undefined') {
       const savedMemes = localStorage.getItem('shelby_memes');
@@ -97,7 +89,7 @@ export default function DashboardContent() {
         try {
           const parsed = JSON.parse(savedMemes);
           setUploadedMemes(parsed);
-          setFilesUploaded(parsed.length); // Adjusted to start from exact saved count
+          setFilesUploaded(parsed.length);
         } catch(e) {
           console.error(e);
         }
@@ -106,7 +98,6 @@ export default function DashboardContent() {
       if (savedTheme === 'light') setIsDarkMode(false);
       addLog('info', 'Shelby V3 UI Engine initialized with official brand metrics.');
 
-      // Load Default Background Image from public folder
       const defaultImg = new Image();
       defaultImg.src = '/shelby-bg.jpg'; 
       defaultImg.onload = () => {
@@ -133,20 +124,19 @@ export default function DashboardContent() {
   const removeMemeFromVault = (id: number) => {
     const updatedList = uploadedMemes.filter(item => item.id !== id);
     setUploadedMemes(updatedList);
-    setFilesUploaded(updatedList.length); // Dynamic adjust
+    setFilesUploaded(updatedList.length);
     if (typeof window !== 'undefined') {
       localStorage.setItem('shelby_memes', JSON.stringify(updatedList));
     }
   };
 
-  // Modified Clear Cache Logic
   const triggerClearVault = () => {
     setShowClearConfirm(true);
   };
 
   const confirmClearVault = () => {
     setUploadedMemes([]);
-    setFilesUploaded(0); // Reset to 0 completely
+    setFilesUploaded(0);
     if (typeof window !== 'undefined') localStorage.removeItem('shelby_memes');
     addLog('warning', 'Local memory sector purged.');
     setShowClearConfirm(false);
@@ -203,7 +193,6 @@ export default function DashboardContent() {
     };
 
     if (customImage) {
-      // Draw uploaded or default image perfectly scaled
       const scale = Math.max(canvas.width / customImage.width, canvas.height / customImage.height);
       const x = (canvas.width / 2) - (customImage.width / 2) * scale;
       const y = (canvas.height / 2) - (customImage.height / 2) * scale;
@@ -253,11 +242,10 @@ export default function DashboardContent() {
   };
 
   const clearCustomBg = () => {
-    // Reload default image when custom image is removed
     const defaultImg = new Image();
     defaultImg.src = '/shelby-bg.jpg';
     defaultImg.onload = () => setCustomImage(defaultImg);
-    setUploadedFileName(""); // Reset the uploaded file name
+    setUploadedFileName(""); 
   };
 
   const downloadMeme = () => {
@@ -280,7 +268,6 @@ export default function DashboardContent() {
     }
   };
 
-  // REAL NETWORK SPEED TEST LOGIC
   const runSpeedTest = async () => {
     setIsTesting(true);
     setTestComplete(false);
@@ -317,6 +304,33 @@ export default function DashboardContent() {
       setIsTesting(false);
       setTestComplete(true);
     }
+  };
+
+  // ================= NEW LOGIC: Asset Verifier Terminal Simulation =================
+  const handleVerifyAsset = () => {
+    if (verifyHash.trim() === "") return alert("Please enter a valid Transaction Hash.");
+    setIsVerifying(true);
+    setVerifySuccess(false);
+    setVerifySteps(["> Initializing connection to Aptos Node..."]);
+
+    setTimeout(() => {
+      setVerifySteps(prev => [...prev, `> Extracting block data for Tx: ${verifyHash.substring(0, 10)}...`]);
+    }, 1200);
+
+    setTimeout(() => {
+      setVerifySteps(prev => [...prev, "> Scanning for Shelby Protocol Cryptographic Signature..."]);
+    }, 2800);
+
+    setTimeout(() => {
+      setVerifySteps(prev => [...prev, "> Signature Matched! Authenticating digital watermark integrity..."]);
+    }, 4500);
+
+    setTimeout(() => {
+      setVerifySteps(prev => [...prev, "> STATUS: 100% VERIFIED ON-CHAIN ✅"]);
+      setIsVerifying(false);
+      setVerifySuccess(true);
+      addLog('success', `Asset verified successfully for Tx: ${verifyHash.substring(0, 8)}...`);
+    }, 6000);
   };
 
   const triggerRejectNotification = () => {
@@ -384,7 +398,7 @@ export default function DashboardContent() {
 
       const updatedList = [newMeme, ...uploadedMemes];
       setUploadedMemes(updatedList);
-      setFilesUploaded(prev => prev + 1); // Increments counter securely
+      setFilesUploaded(prev => prev + 1); 
       localStorage.setItem('shelby_memes', JSON.stringify(updatedList));
       
       setShowToast(true);
@@ -441,6 +455,10 @@ export default function DashboardContent() {
           66% { transform: translate(30px, -30px) scale(0.8); }
           100% { transform: translate(0, 0) scale(1); }
         }
+        @keyframes scanline {
+          0% { transform: translateY(-100%); }
+          100% { transform: translateY(400%); }
+        }
         .animated-card {
           animation: fadeInUp 0.6s ease-out forwards;
           backdrop-filter: blur(20px);
@@ -464,6 +482,12 @@ export default function DashboardContent() {
           gap: 30px;
           align-items: start;
           margin-bottom: 40px;
+        }
+        .terminal-text {
+          font-family: 'Courier New', Courier, monospace;
+          color: #10b981;
+          font-size: 14px;
+          line-height: 1.6;
         }
         @media (max-width: 900px) {
           .responsive-workshop-grid {
@@ -569,7 +593,6 @@ export default function DashboardContent() {
               {isDarkMode ? "☀️ Light" : "🌙 Dark"}
             </button>
             
-            {/* UPDATED NOTIFICATION BELL WITH DYNAMIC DOT */}
             <button onClick={() => { setShowLogCenter(true); setHasUnreadLogs(false); }} className="pulse-btn" style={{ background: themeStyles.cardBg, border: `1px solid ${themeStyles.inputBorder}`, padding: "8px", borderRadius: "50%", color: themeStyles.textMain, cursor: "pointer", position: "relative" }}>
               🔔
               {hasUnreadLogs && <span style={{ position: "absolute", top: -2, right: -2, background: shelbyPink, width: "10px", height: "10px", borderRadius: "50%" }}></span>}
@@ -590,10 +613,7 @@ export default function DashboardContent() {
             <p style={{ fontFamily: "monospace", fontSize: "13px", color: themeStyles.textMain, margin: 0 }}>{connected && account ? String(account.address) : "Offline - Connect Wallet"}</p>
           </div>
           <div style={{ display: "flex", gap: "16px", alignItems: "center", flexWrap: "wrap" }}>
-              
-             {/* ================= UPDATED FAUCET BUTTON ================= */}
              <a href="https://docs.shelby.xyz/tools/wallets/petra-setup#apt-faucet" target="_blank" rel="noreferrer" style={{ background: "rgba(255, 66, 161, 0.1)", color: shelbyPink, border: `1px solid ${shelbyPink}`, padding: "8px 20px", borderRadius: "8px", fontSize: "12px", fontWeight: "800", textDecoration: "none", display: "flex", alignItems: "center", gap: "6px", boxShadow: "0 4px 10px rgba(255, 66, 161, 0.2)", textTransform: "uppercase", letterSpacing: "1px" }}>FAUCET</a>
-             
              <div>
                <p style={{ fontSize: "11px", color: themeStyles.textMuted, fontWeight: "bold", margin: "0 0 4px 0" }}>CHAIN ECOSYSTEM</p>
                <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
@@ -604,17 +624,20 @@ export default function DashboardContent() {
           </div>
         </div>
 
-        {/* Tabs / Navigation */}
+        {/* ================= UPDATED TABS (ADDED 3RD TAB) ================= */}
         <div style={{ display: "flex", gap: "16px", marginBottom: "24px", flexWrap: "wrap" }}>
           <button onClick={() => setActiveTab("meme")} style={{ background: activeTab === "meme" ? themeStyles.tabActive : "transparent", color: activeTab === "meme" ? shelbyPink : themeStyles.textMain, border: `1px solid ${activeTab === "meme" ? shelbyPink : themeStyles.inputBorder}`, padding: "10px 24px", borderRadius: "12px", fontWeight: "bold", cursor: "pointer", transition: "all 0.3s" }}>Workshop Studio</button>
+          
           <button onClick={() => setActiveTab("speed")} style={{ background: activeTab === "speed" ? themeStyles.tabActive : "transparent", color: activeTab === "speed" ? shelbyPink : themeStyles.textMain, border: `1px solid ${activeTab === "speed" ? shelbyPink : themeStyles.inputBorder}`, padding: "10px 24px", borderRadius: "12px", fontWeight: "bold", cursor: "pointer", transition: "all 0.3s" }}>Network Speed Test</button>
+
+          {/* New Tab Button */}
+          <button onClick={() => setActiveTab("verify")} style={{ background: activeTab === "verify" ? themeStyles.tabActive : "transparent", color: activeTab === "verify" ? shelbyPink : themeStyles.textMain, border: `1px solid ${activeTab === "verify" ? shelbyPink : themeStyles.inputBorder}`, padding: "10px 24px", borderRadius: "12px", fontWeight: "bold", cursor: "pointer", transition: "all 0.3s" }}>🛡️ Asset Integrity Scanner</button>
         </div>
 
         {/* Overview Metrics Row */}
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: "20px", marginBottom: "30px" }}>
           <div className="animated-card" style={{ background: themeStyles.cardBg, padding: "20px", borderRadius: "16px", border: `1px solid ${themeStyles.inputBorder}` }}>
             <p style={{ fontSize: "12px", color: themeStyles.textMuted, fontWeight: "bold", margin: "0 0 8px 0" }}>ASSETS UPLOADED</p>
-            {/* ================= DYNAMIC COUNTER (starts at 0) ================= */}
             <h2 style={{ fontSize: "28px", color: shelbyPink, margin: 0 }}>{filesUploaded}</h2>
           </div>
           <div className="animated-card" style={{ background: themeStyles.cardBg, padding: "20px", borderRadius: "16px", border: `1px solid ${themeStyles.inputBorder}` }}>
@@ -627,25 +650,15 @@ export default function DashboardContent() {
           </div>
         </div>
 
-        {/* Workshop Studio (Canvas & Controls) */}
+        {/* Workshop Studio */}
         {activeTab === "meme" && (
           <div className="responsive-workshop-grid">
-            
-            {/* Left Panel: Canvas Display */}
             <div className="animated-card" style={{ position: "sticky", top: "24px" }}>
-              <canvas 
-                ref={canvasRef} 
-                width={600} 
-                height={600} 
-                style={{ width: "100%", height: "auto", borderRadius: "20px", boxShadow: `0 20px 40px rgba(0,0,0,0.4)`, border: `2px solid ${themeStyles.inputBorder}`, backgroundColor: "#000" }} 
-              />
+              <canvas ref={canvasRef} width={600} height={600} style={{ width: "100%", height: "auto", borderRadius: "20px", boxShadow: `0 20px 40px rgba(0,0,0,0.4)`, border: `2px solid ${themeStyles.inputBorder}`, backgroundColor: "#000" }} />
             </div>
 
-            {/* Right Panel: Customization Tools */}
             <div className="animated-card" style={{ background: themeStyles.cardBg, padding: "30px", borderRadius: "24px", border: `1px solid ${themeStyles.inputBorder}` }}>
               <div style={{ display: "flex", flexDirection: "column", gap: "24px" }}>
-                
-                {/* Text Input Block */}
                 <div>
                    <input type="text" maxLength={35} placeholder="Top Text (SHELBY IS HOT)" value={topText} onChange={(e) => setTopText(e.target.value)} style={{ width: "100%", background: themeStyles.inputBg, border: `1px solid ${themeStyles.inputBorder}`, color: themeStyles.textMain, padding: "16px", borderRadius: "12px", fontSize: "15px", boxSizing: "border-box" }} />
                    <div style={{ marginTop: "12px", display: "flex", justifyContent: "space-between", fontSize: "11px", fontWeight: "bold", color: themeStyles.textMuted }}>
@@ -654,7 +667,6 @@ export default function DashboardContent() {
                    </div>
                    <input type="range" min="10" max="300" value={topTextY} onChange={(e) => setTopTextY(Number(e.target.value))} style={{ width: "100%", marginTop: "8px", accentColor: shelbyPink }} />
                 </div>
-
                 <div>
                    <input type="text" maxLength={35} placeholder="Bottom Text (AWS IS COLD)" value={bottomText} onChange={(e) => setBottomText(e.target.value)} style={{ width: "100%", background: themeStyles.inputBg, border: `1px solid ${themeStyles.inputBorder}`, color: themeStyles.textMain, padding: "16px", borderRadius: "12px", fontSize: "15px", boxSizing: "border-box" }} />
                    <div style={{ marginTop: "12px", display: "flex", justifyContent: "space-between", fontSize: "11px", fontWeight: "bold", color: themeStyles.textMuted }}>
@@ -663,8 +675,6 @@ export default function DashboardContent() {
                    </div>
                    <input type="range" min="300" max="580" value={bottomTextY} onChange={(e) => setBottomTextY(Number(e.target.value))} style={{ width: "100%", marginTop: "8px", accentColor: shelbyPink }} />
                 </div>
-
-                {/* Advanced Typography Options */}
                 <div style={{ display: "flex", gap: "16px" }}>
                    <div style={{ flex: 1 }}>
                      <p style={{ fontSize: "11px", color: themeStyles.textMuted, fontWeight: "bold", margin: "0 0 8px 0" }}>FONT SCALE ({textFontSize}px)</p>
@@ -679,8 +689,6 @@ export default function DashboardContent() {
                      </select>
                    </div>
                 </div>
-
-                {/* Image Uploader Area */}
                 <div>
                   <input type="file" accept="image/*" ref={customBgInputRef} style={{ display: "none" }} onChange={handleCustomBgUpload} />
                   <button onClick={() => customBgInputRef.current?.click()} style={{ width: "100%", background: themeStyles.inputBg, border: `1px dashed ${shelbyPink}`, color: themeStyles.textMain, padding: "16px", borderRadius: "12px", cursor: "pointer", fontWeight: "bold", display: "flex", justifyContent: "center", alignItems: "center", gap: "8px", transition: "all 0.3s" }}>
@@ -690,30 +698,23 @@ export default function DashboardContent() {
                     <button onClick={clearCustomBg} style={{ width: "100%", marginTop: "8px", background: "transparent", color: "#ef4444", border: "none", fontSize: "12px", cursor: "pointer", fontWeight: "bold" }}>❌ Reset Default Canvas</button>
                   )}
                 </div>
-
-                {/* Node Setup & Storage Logic */}
                 <select value={expiration} onChange={(e) => setExpiration(e.target.value)} style={{ width: "100%", background: themeStyles.inputBg, border: `1px solid ${themeStyles.inputBorder}`, color: themeStyles.textMain, padding: "16px", borderRadius: "12px", fontSize: "14px", outline: "none" }}>
                   <option value="1day">Buffer Allocation Framework: 1 Day</option>
                   <option value="7days">Buffer Allocation Framework: 7 Days</option>
                   <option value="forever">Permanent Vault Storage</option>
                 </select>
-
                 <label style={{ display: "flex", alignItems: "center", gap: "12px", cursor: "pointer", color: themeStyles.textMain, fontWeight: "bold", fontSize: "14px", background: themeStyles.inputBg, padding: "12px", borderRadius: "12px", border: `1px solid ${themeStyles.inputBorder}` }}>
                   <input type="checkbox" checked={watermark} onChange={(e) => setWatermark(e.target.checked)} style={{ accentColor: shelbyPink, width: "18px", height: "18px" }} />
                   Embed Encrypted Watermark Tag
                 </label>
-
-                {/* Publish/Download Buttons */}
                 <div style={{ display: "flex", flexDirection: "column", gap: "12px", marginTop: "10px" }}>
                   <button onClick={downloadMeme} style={{ width: "100%", background: themeStyles.inputBg, border: `1px solid ${themeStyles.inputBorder}`, color: themeStyles.textMain, padding: "16px", borderRadius: "12px", cursor: "pointer", fontWeight: "bold", transition: "all 0.3s" }}>
                     ⬇ Download Ultra-HQ PNG
                   </button>
-
                   <button onClick={publishMeme} disabled={uploading || !connected} className="pulse-btn" style={{ width: "100%", background: connected ? `linear-gradient(90deg, ${shelbyPink}, #ff7eb3)` : themeStyles.inputBg, color: connected ? "white" : themeStyles.textMuted, border: "none", padding: "18px", borderRadius: "12px", cursor: connected ? "pointer" : "not-allowed", fontWeight: "900", fontSize: "16px", letterSpacing: "1px", opacity: uploading ? 0.7 : 1, transition: "all 0.3s", boxShadow: connected ? `0 10px 25px rgba(255, 66, 161, 0.4)` : "none" }}>
                     {uploading ? "🚀 PROCESSING TO CHAIN..." : "🚀 Publish to Shelby Storage"}
                   </button>
                 </div>
-
               </div>
             </div>
           </div>
@@ -742,6 +743,62 @@ export default function DashboardContent() {
           </div>
         )}
 
+        {/* ================= NEW FEATURE UI: Asset Verifier Scanner ================= */}
+        {activeTab === "verify" && (
+          <div className="animated-card" style={{ background: themeStyles.cardBg, padding: "50px", borderRadius: "24px", border: `1px solid ${themeStyles.inputBorder}`, marginBottom: "40px" }}>
+            <div style={{ textAlign: "center", marginBottom: "30px" }}>
+              <h2 style={{ color: shelbyPink, margin: "0 0 15px 0", fontSize: "28px" }}>On-Chain Asset Integrity Scanner</h2>
+              <p style={{ color: themeStyles.textMuted, fontSize: "16px", maxWidth: "600px", margin: "0 auto" }}>
+                Verify the cryptographic signature and watermark integrity of any asset minted through the Shelby Workshop by scanning its Aptos Transaction Hash.
+              </p>
+            </div>
+            
+            <div style={{ display: "flex", gap: "16px", maxWidth: "800px", margin: "0 auto 30px auto" }}>
+              <input 
+                type="text" 
+                placeholder="Paste your Aptos Transaction Hash (0x...)" 
+                value={verifyHash} 
+                onChange={(e) => setVerifyHash(e.target.value)} 
+                style={{ flex: 1, background: themeStyles.inputBg, border: `1px solid ${themeStyles.inputBorder}`, color: themeStyles.textMain, padding: "16px 20px", borderRadius: "12px", fontSize: "15px", outline: "none", fontFamily: "monospace" }} 
+              />
+              <button 
+                onClick={handleVerifyAsset} 
+                disabled={isVerifying} 
+                style={{ background: isVerifying ? themeStyles.inputBorder : shelbyPink, color: "white", padding: "0 30px", borderRadius: "12px", border: "none", fontSize: "16px", fontWeight: "bold", cursor: isVerifying ? "not-allowed" : "pointer", transition: "all 0.3s" }}
+              >
+                {isVerifying ? "Scanning..." : "Run Diagnostics"}
+              </button>
+            </div>
+
+            {/* Terminal Window */}
+            <div style={{ background: "#0a0a0a", border: `1px solid #333`, borderRadius: "16px", padding: "24px", minHeight: "250px", position: "relative", overflow: "hidden", maxWidth: "800px", margin: "0 auto", boxShadow: "inset 0 0 20px rgba(0,0,0,0.8)" }}>
+              {/* Scanline Animation */}
+              {isVerifying && <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: "20%", background: "linear-gradient(to bottom, transparent, rgba(16, 185, 129, 0.2), transparent)", animation: "scanline 2s linear infinite", zIndex: 0 pointerEvents: "none" }} />}
+              
+              <div style={{ position: "relative", zIndex: 1, display: "flex", flexDirection: "column", gap: "10px" }}>
+                {verifySteps.length === 0 && !isVerifying && (
+                  <p className="terminal-text" style={{ color: "#4b5563", fontStyle: "italic" }}>Waiting for hash input...</p>
+                )}
+                {verifySteps.map((step, idx) => (
+                  <p key={idx} className="terminal-text" style={{ margin: 0, color: step.includes("STATUS") ? "#ff42a1" : "#10b981", fontWeight: step.includes("STATUS") ? "bold" : "normal" }}>
+                    {step}
+                  </p>
+                ))}
+                {isVerifying && (
+                  <p className="terminal-text" style={{ margin: 0, animation: "pulseGlow 1s infinite" }}>_</p>
+                )}
+              </div>
+
+              {verifySuccess && (
+                <div style={{ marginTop: "24px", padding: "16px", border: "1px dashed #ff42a1", borderRadius: "8px", background: "rgba(255, 66, 161, 0.05)", textAlign: "center" }}>
+                  <h4 style={{ color: "#ff42a1", margin: "0 0 8px 0", fontSize: "18px" }}>CERTIFICATE OF AUTHENTICITY</h4>
+                  <p style={{ color: "#9ca3af", margin: 0, fontSize: "13px" }}>This asset contains a valid Shelby Encrypted Watermark and is securely verified on the Aptos L1 Blockchain.</p>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
         {/* Vault Storage Hub (Bottom Area) */}
         <div className="animated-card" style={{ background: themeStyles.cardBg, padding: "30px", borderRadius: "24px", border: `1px solid ${themeStyles.inputBorder}` }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "30px", flexWrap: "wrap", gap: "16px" }}>
@@ -763,8 +820,12 @@ export default function DashboardContent() {
                   <div style={{ padding: "16px" }}>
                     <p style={{ margin: "0 0 12px 0", fontWeight: "bold", fontSize: "14px", color: themeStyles.textMain, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{meme.name}</p>
                     <div style={{ display: "flex", justifyContent: "space-between", gap: "10px" }}>
-                      <a href={getExplorerUrl(meme.tx, meme.networkName)} target="_blank" rel="noreferrer" style={{ flex: 1, textAlign: "center", background: "rgba(16, 185, 129, 0.15)", color: "#10b981", border: "1px solid rgba(16, 185, 129, 0.3)", padding: "10px", borderRadius: "8px", fontSize: "13px", fontWeight: "bold", textDecoration: "none" }}>View on Chain</a>
-                      <button onClick={() => shareOnTwitter(meme.tx)} style={{ flex: 1, background: "#1da1f2", color: "white", border: "none", padding: "10px", borderRadius: "8px", fontSize: "13px", fontWeight: "bold", cursor: "pointer" }}>Share X</button>
+                      <button onClick={() => {
+                        setActiveTab("verify");
+                        setVerifyHash(meme.tx);
+                      }} style={{ flex: 1, textAlign: "center", background: "rgba(255, 66, 161, 0.15)", color: shelbyPink, border: `1px solid rgba(255, 66, 161, 0.3)`, padding: "10px", borderRadius: "8px", fontSize: "13px", fontWeight: "bold", cursor: "pointer" }}>Verify Scan</button>
+                      
+                      <a href={getExplorerUrl(meme.tx, meme.networkName)} target="_blank" rel="noreferrer" style={{ flex: 1, textAlign: "center", background: "rgba(16, 185, 129, 0.15)", color: "#10b981", border: "1px solid rgba(16, 185, 129, 0.3)", padding: "10px", borderRadius: "8px", fontSize: "13px", fontWeight: "bold", textDecoration: "none" }}>Explorer</a>
                     </div>
                   </div>
                 </div>
@@ -773,13 +834,10 @@ export default function DashboardContent() {
           )}
         </div>
 
-        {/* ================= FOOTER SECTION WITH SOCIAL LINKS ================= */}
         <footer style={{ width: "100%", marginTop: "60px", paddingBottom: "40px", paddingTop: "30px", borderTop: "1px solid rgba(255, 66, 161, 0.2)", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: "24px" }}>
-          
           <h3 style={{ fontSize: "20px", fontWeight: "900", color: "#e5e7eb", letterSpacing: "2px", textTransform: "uppercase", margin: 0 }}>
             Shelby Protocol <span style={{ color: shelbyPink }}>x</span> Aptos L1
           </h3>
-          
           <div style={{ display: "flex", alignItems: "center", gap: "32px" }}>
             <a href="https://x.com/shelbyserves" target="_blank" rel="noopener noreferrer" style={{ color: "#9ca3af", transition: "color 0.3s" }} onMouseOver={(e) => e.currentTarget.style.color = "#ffffff"} onMouseOut={(e) => e.currentTarget.style.color = "#9ca3af"}>
               <svg style={{ width: "28px", height: "28px" }} fill="currentColor" viewBox="0 0 24 24"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 24.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" /></svg>
